@@ -1,0 +1,31 @@
+Abstract & Paper	: October
+Writting		: 15-30 September
+Testing			: 01-15 September
+Implementation		: 01-31 July-August
+Study Implementation	: 08-31 June
+	Read G1 paper
+	Check JVM Tool Interface
+	Try jvisualvm + visualgc
+	Try SPECjvm2008
+	Try criu
+	Study Algorithm
+	Try DaCapo benchmarks
+Source Reading		: 01-07 June
+
+Ideas:
+	- the GC can decide the best time to start the migration given a time
+limit to start migration.
+	- the smaller the region size, the more fine grained if the space 
+management leading to smaller transmission overhead (transmitting unused space).
+
+Algorithm:
+	- start Migation (using criu?)
+		- migrate every thing but the heap (code cache, perm gen, all stuff that can be migrated)
+		- get bandwidth (can be calculated in the prev step)
+		- get occupance distribution (G1 statistics)
+	-stop application
+		- a) regions with > X% occupied can be transmitted
+		- b) regions with < X% or young are scheduled for GC
+			- transmit final regions (make sure that objects are not
+			  moved to one region that is already being transmited.
+	

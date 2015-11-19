@@ -1,0 +1,132 @@
+src
+| share
+| | vm
+| | | memory
+| | | | universe.hpp
+| | | | referenceProcessir.[h|c]pp
+| | | gc_implementation
+| | | | g1
+| | | | | g1CollectedHeap.[h|c]pp
+| | | | | g1CollectorPolicy.[h|c]pp
+| | | | | collectionSetChooser.[h|c]pp
+| | | | parallelScavenge
+| | | | | psScavenge.[c|h]pp
+| | | | | parallelScavengeHeap.hpp
+| | | | | psMarkSweep.[c|h]pp
+| | | | | psYoungGen.hpp
+| | | | | psOldGen.hpp
+| | | | shared
+| | | | | mutableSpace.hpp
+
+
+Terms:
+ oop - a pointer into a GC managed heap.
+ mt  - multy thread
+ lab - local allocation buffer?
+
+Side notes:
+ - there is one promotion manager per GC worker thread.
+ - investigate this as a way to setup the heap after transferring the data:
+	set_universe_heap (memoryService.cpp) 
+	<- universe_post_init (universe.cpp) 
+	<- init_globals (init.cpp) 
+	<- create_vm (thread.cpp)
+ - all young regions are selected for the collection set. Old regions are 
+   selected if they have already been marked (they have a value for 
+   gc_efficiency).
+ - internal G1 GCs are called using VM operations (check vm_operations_g1.cpp)
+
+g1CollectedHeap.[h|c]pp
+	I believe this is the most important class in this garbage collector.
+	It contains many important information regarding the heap and more. For
+	example, the list of regions is held in a variable named '_hrs'.
+	-> do_collection_pause_at_safepoint (SvcGCMarker::MINOR)
+	-> evacuate_collection_set (called from 
+	do_collection_pause_at_safepoint).
+	-> do_collection (SvcGCMarker::FULL), this will eventually call a 
+	MarkSweep implementation (is this full collection?).
+	-> checkpointRootsFinal (SvcGCMarker::OTHER), called from 
+	concurrentMarkThread
+	-> heap, this is a getter for the G1CollectedHeap. It might be my way
+	in the G1.
+
+g1CollectorPolicy.[h|c]pp
+	This is where the statistics are agregated and some important decisions
+	are taken.
+	-> finalize_cset (chooses a new collection set!)
+
+collectionSetChooser.[h|c]pp
+	This is the class that manages and orders regions that will be selected
+	for the collection_set. See order_regions.
+
+parallelScavengeHeap.hpp
+	A heap for the parallelScavenge GC (inherits from Collected Heap).
+	Very important start point for reading a GC implementation.
+	It has all the main components needed for the GC.
+	Some important methods:
+	-> collect: Used to support System.gc(). This will result in several 
+	function calls before ending up calling either: invoke_scavenge (minor
+	collection) or do_full_collection (both young and old gens are 
+	collected);
+	-> do_full_collection: TODO - comment (Mark-Sweep)!
+	-> invoke: this will redirect the call to psScavenge. This is where
+	this get real interesting.
+
+psScavenge.[c|h]pp
+	-> invoke: entry point for GC. Performs a minor GC (through 
+	invoke_no_policy) and then calls compact or MS GCs if a full
+	collection is necessary.
+	-> invoke_no_policy: this method performs a young copy collector. It 
+	has a lot of statistics/state/auxiliary stuff. The most important part
+	goes as follows:
+		1. create tasks to search heap roots. This will mark/copy the
+		root objects; This step will also prepare the references for
+		the next step. It will look into all kinds of roots including 
+		threads' stacks. PromotionManager->drain_stacks...
+		2. process found references. This will be accomplished by the
+		reference processor (check referenceProcessor.[h|c]pp) using
+		several different closures to define the appropriate behaviour
+		in a number of situations. I believe that these clusures define
+		the GC implementation (since the referenceProcessor algorithms
+		are shared). Check the code for comments to find where 
+		references are being traversed.
+		3. TODO - how unreachable objects are cleaned?
+
+	TODO - comment the three closures used!
+
+psMarkSweep.[c|h]pp
+	-> invoke_no_policy: this can be called from collect 
+	(parallelScavengeHeap.cpp) or from invoke_no_policy (psScavenge.cpp).
+	This will launch a full Mark-Sweep + Compaction generation. The GC 
+	operation is divided into four steps:
+		1. mark live objects (mark_sweep_phase1)
+		2. calculate new addresses (mark_sweep_phase2)
+		3. update pointers (mark_sweep_phase3)
+		4. move objects to new positions (mark_sweep_phase4).
+
+referenceProcessor.[h|c]pp
+	-> process_discovered_references: this method basically processes all 
+	kinds of references: soft, weak, final, phantom, and JNI. For each
+	type of references, the following method is called: 
+	process_discovered_reflist. 
+	-> process_discovered_reflist: done in three phases, i) remove 
+	unreachable soft-refs that should be kept alive, ii) remove refs whose 
+	referents are alive, iii) traverse the list and process the referents 
+	as approapriate).
+
+psYoungGen.hpp
+	Young generation of the Generational GC. It contains the respective
+	spaces: from, to, eden, and has several funtions to get statiscs for
+	example.
+
+psOldGen.hpp
+	Similar to the young generation.
+
+mutableSpace.hpp
+	Represents a segment of memory.
+	Contains several functions that can perform memory operations.
+	Can iterate oops and objects.
+
+universe.hpp
+	This is a special file which comprehends many important concepts: 
+	objects, heap, etc. Read better later.
