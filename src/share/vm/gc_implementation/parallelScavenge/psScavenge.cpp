@@ -235,9 +235,11 @@ bool PSScavenge::invoke() {
     policy->should_full_GC(heap->old_gen()->free_in_bytes());
   bool full_gc_done = false;
   
+  /*
   gclog_or_tty->print_cr("need_full_gc ? %s scavenge_done ? %s <underscore>", 
         need_full_gc ? "T" : "F",
         scavenge_done ? "T" : "F");
+  */
 
   if (UsePerfData) {
     PSGCAdaptivePolicyCounters* const counters = heap->gc_policy_counters();
