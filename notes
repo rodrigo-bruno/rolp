@@ -4,6 +4,8 @@ src
 | | | memory
 | | | | universe.hpp
 | | | | referenceProcessir.[h|c]pp
+| | | gc_interface
+| | | | collectedHeap.hpp
 | | | gc_implementation
 | | | | g1
 | | | | | g1CollectedHeap.[h|c]pp

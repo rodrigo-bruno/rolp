@@ -259,6 +259,7 @@ class Thread: public ThreadShadow {
   friend class GC_locker;
 
   ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
+  // <underscore> TODO - I will have to add another tlab (for old space).
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
                                                 // the Java heap
 

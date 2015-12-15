@@ -1,0 +1,19 @@
+NoGC timeline
+
+Tasks:
+1 - allow objects of specific classes to be allocated in the old generation. 
+Each thread should have another TLAB so that independent allocation into old
+generation is guaranteed.
+
+2 - find an alternative for having arbitrary objects allocated into the old
+generation: a) extend the new operator, b) set environment variables, c) other
+options?
+
+3 - experiment and measure performance improvements with: a) cassandra, 
+b) spark/storm. Find and explore other potential sources of performance 
+overhead.
+
+Deadlines:
+1 - Jan 1  2016
+2 - Fev 1  2016
+3 - Fev 15 2016

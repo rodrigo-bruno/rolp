@@ -530,6 +530,7 @@ protected:
   // NULL if unsuccessful.
   HeapWord* humongous_obj_allocate(size_t word_size);
 
+  // <underscore> Important entry points for allocation!
   // The following two methods, allocate_new_tlab() and
   // mem_allocate(), are the two main entry points from the runtime
   // into the G1's allocation routines. They have the following
