@@ -258,6 +258,21 @@ class Thread: public ThreadShadow {
   friend class ThreadLocalStorage;
   friend class GC_locker;
 
+  // <underscore>
+  // Where _tlab is used:
+  //  - tlab()
+  //  - TLAB_FIELD_OFFSET()
+  // Where tlab() is used:
+  //  - cleanup_failed_attach_current_thread() - retire thread, clean everything.
+  //  - accumulate_statistics_before_gc() - build some statistical information.
+  //  - cooked_allocated_bytes() - gets the number of allocated bytes.
+  //  - ensure_parsability() - calls make_parsable on tlab (retire tlab))
+  //  - resize_all_tlabs() - computes the size of new tlabs
+  //  - initialize_tlab() - inits the tlab
+  //  - startup_initialization() - calls initialize on tlab
+  //  - allocate_from tlab() - allocates some object from the current tlab!
+  //  - allocate_from_tlab_slow() - slow allocation path. Also important!
+  //  - exit() - calls make_parsable on tlab (retire tlab)
   ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
   // <underscore> TODO - I will have to add another tlab (for old space).
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
