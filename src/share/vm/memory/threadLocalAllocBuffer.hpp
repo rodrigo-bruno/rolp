@@ -29,6 +29,8 @@
 #include "oops/typeArrayOop.hpp"
 #include "runtime/perfData.hpp"
 
+#include "memory/nogc.h" // <underscore>
+
 class GlobalTLABStats;
 
 // ThreadLocalAllocBuffer: a descriptor for thread-local storage used by
