@@ -34,7 +34,7 @@
 inline HeapWord* ThreadLocalAllocBuffer::allocate(size_t size) {
 // <underscore>
 #if DEBUG_TLAB_ALLOCATION
-    gclog_or_tty->print_cr("<underscore> TLAB::allocate " SIZE_FORMAT, size);
+    gclog_or_tty->print_cr("<underscore> TLAB::allocate(size=" SIZE_FORMAT")", size);
 #endif
 // </undescore>
     invariants();

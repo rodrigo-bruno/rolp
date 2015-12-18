@@ -563,6 +563,12 @@ oop CollectedHeap::Class_obj_allocate(KlassHandle klass, int size, KlassHandle r
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
+  // <underscore>
+#if DEBUG_TLAB_ALLOCATION
+  gclog_or_tty->print("<underscore> CollectedHeap::Class_obj_allocate(size="SIZE_FORMAT") ", size);
+  //klass()->print_on(gclog_or_tty); -> throws sigsegv?
+#endif
+// </undescore>
   HeapWord* obj;
     assert(ScavengeRootsInCode > 0, "must be");
     obj = common_mem_allocate_init(real_klass, size, CHECK_NULL);
