@@ -175,7 +175,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
 HeapWord* CollectedHeap::common_mem_allocate_init(KlassHandle klass, size_t size, TRAPS) {
     // <underscore>
 #if DEBUG_TLAB_ALLOCATION
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_init ");
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_init(size="SIZE_FORMAT") ", size);
     //klass()->print_on(gclog_or_tty); -> throws sigsegv?
 #endif
 // </undescore>
@@ -211,13 +211,20 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   assert(size >= 0, "int won't convert to size_t");
 // <underscore>
 #if DEBUG_TLAB_ALLOCATION
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
-  //klass()->print_on(gclog_or_tty); -> throws sigsegv?
+  gclog_or_tty->print("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
+  klass()->print_on(gclog_or_tty);
 #endif
 // </undescore>
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
   post_allocation_setup_obj(klass, obj);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
+// <underscore>
+#if DEBUG_TLAB_ALLOCATION
+  gclog_or_tty->print("<underscore> return CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
+  klass()->print_on(gclog_or_tty);
+#endif
+// </undescore>
+
   return (oop)obj;
 }
 
@@ -231,7 +238,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   // <underscore>
 #if DEBUG_TLAB_ALLOCATION
   gclog_or_tty->print("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" length=%d) ", size, length);
-  //klass()->print_on(gclog_or_tty); -> throws sigsegv?
+  klass()->print_on(gclog_or_tty);
 #endif
 // </undescore>
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);

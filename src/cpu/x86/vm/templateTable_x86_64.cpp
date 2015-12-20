@@ -3288,7 +3288,10 @@ void TemplateTable::_new() {
   // 2) if fail and the object is large allocate in the shared Eden
   // 3) if the above fails (or is not applicable), go to a slow case
   // (creates a new TLAB, etc.)
-
+  
+  // <underscore>
+  gclog_or_tty->print_cr("<underscore> start template new!");
+  
   const bool allow_shared_alloc =
     Universe::heap()->supports_inline_contig_alloc() && !CMSIncrementalMode;
 
@@ -3403,6 +3406,10 @@ void TemplateTable::_new() {
 
   // continue
   __ bind(done);
+
+  // <underscore>
+  gclog_or_tty->print_cr("<underscore> end template new!");
+
 }
 
 void TemplateTable::newarray() {

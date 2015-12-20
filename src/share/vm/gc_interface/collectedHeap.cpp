@@ -565,7 +565,7 @@ oop CollectedHeap::Class_obj_allocate(KlassHandle klass, int size, KlassHandle r
   assert(size >= 0, "int won't convert to size_t");
   // <underscore>
 #if DEBUG_TLAB_ALLOCATION
-  gclog_or_tty->print("<underscore> CollectedHeap::Class_obj_allocate(size="SIZE_FORMAT") ", size);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::Class_obj_allocate(size="SIZE_FORMAT") ", size);
   //klass()->print_on(gclog_or_tty); -> throws sigsegv?
 #endif
 // </undescore>

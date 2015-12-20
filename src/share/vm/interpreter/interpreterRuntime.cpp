@@ -149,6 +149,13 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
 
+// <underscore>
+#if DEBUG_TLAB_ALLOCATION
+  gclog_or_tty->print("<underscore> InterpreterRuntime::_new(...) ");
+  k_oop->print_on(gclog_or_tty);
+#endif
+// </undescore>
+
   // Make sure we are not instantiating an abstract klass
   klass->check_valid_for_instantiation(true, CHECK);
 
@@ -171,6 +178,13 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   //       because the _breakpoint bytecode would be lost.
   oop obj = klass->allocate_instance(CHECK);
   thread->set_vm_result(obj);
+// <underscore>
+#if DEBUG_TLAB_ALLOCATION
+  gclog_or_tty->print("<underscore> return InterpreterRuntime::_new(...) ");
+  k_oop->print_on(gclog_or_tty);
+#endif
+// </undescore>
+
 IRT_END
 
 
