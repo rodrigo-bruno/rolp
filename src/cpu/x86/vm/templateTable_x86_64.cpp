@@ -3291,6 +3291,12 @@ void TemplateTable::_new() {
   
   // <underscore>
   gclog_or_tty->print_cr("<underscore> start template new!");
+  // <undescore>
+  __ get_constant_pool(c_rarg1);
+  __ get_unsigned_2_byte_index_at_bcp(c_rarg2, 1);
+  __ movl(c_rarg3, 0);
+  call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new), c_rarg1, c_rarg2, c_rarg3);
+  // </underscore>
   
   const bool allow_shared_alloc =
     Universe::heap()->supports_inline_contig_alloc() && !CMSIncrementalMode;
