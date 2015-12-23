@@ -187,19 +187,15 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 
 IRT_END
 
-
+// <underscore>
 IRT_ENTRY(void, InterpreterRuntime::_new2(JavaThread* thread, ConstantPool* pool, int index, jint gen))
   Klass* k_oop = pool->klass_at(index, CHECK);
-  instanceKlassHandle klass (THREAD, k_oop);
-
-// <underscore>
 #if DEBUG_TLAB_ALLOCATION
-  gclog_or_tty->print("<underscore> InterpreterRuntime::_new(gen=%d) ", gen);
+  gclog_or_tty->print("<underscore> InterpreterRuntime::_new2 (pool=%p, index=%d, gen=%d)!", pool, index, gen);
   k_oop->print_on(gclog_or_tty);
 #endif
-// </undescore>
-
 IRT_END
+// </undescore>
   
 IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
   oop obj = oopFactory::new_typeArray(type, size, CHECK);
