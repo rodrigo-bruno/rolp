@@ -273,8 +273,12 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab!
   //  - allocate_from_tlab_slow() - slow allocation path. Also important!
   //  - exit() - calls make_parsable on tlab (retire tlab)
-  ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
-  // <underscore> TODO - I will have to add another tlab (for old space).
+  ThreadLocalAllocBuffer _tlabEden;              // Thread-local eden
+  // <underscore> TLAB for allocations directly on the old generation.
+  ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
+  // <underscore> pointer to the TLAB being currently used.
+  ThreadLocalAllocBuffer* _tlab;
+  
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
                                                 // the Java heap
 
@@ -446,7 +450,7 @@ class Thread: public ThreadShadow {
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
   // Thread-Local Allocation Buffer (TLAB) support
-  ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
+  ThreadLocalAllocBuffer& tlab()                 { return *_tlab; }
   void initialize_tlab() {
     if (UseTLAB) {
       tlab().initialize();
@@ -631,8 +635,9 @@ public:
   static ByteSize stack_base_offset()            { return byte_offset_of(Thread, _stack_base ); }
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
 
+  // <underscore> - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
-  static ByteSize tlab_##name##_offset()         { return byte_offset_of(Thread, _tlab) + ThreadLocalAllocBuffer::name##_offset(); }
+  static ByteSize tlab_##name##_offset()         { return byte_offset_of(Thread, _tlabEden) + ThreadLocalAllocBuffer::name##_offset(); }
 
   TLAB_FIELD_OFFSET(start)
   TLAB_FIELD_OFFSET(end)

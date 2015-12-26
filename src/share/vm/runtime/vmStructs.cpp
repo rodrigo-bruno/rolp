@@ -901,7 +901,7 @@ typedef BinaryTreeDictionary<Metablock, FreeList> MetablockTreeDictionary;
   nonstatic_field(ThreadShadow,                _exception_line,                               int)                                   \
    volatile_nonstatic_field(Thread,            _suspend_flags,                                uint32_t)                              \
   nonstatic_field(Thread,                      _active_handles,                               JNIHandleBlock*)                       \
-  nonstatic_field(Thread,                      _tlab,                                         ThreadLocalAllocBuffer)                \
+  nonstatic_field(Thread,                      _tlab,                                         ThreadLocalAllocBuffer*)                \
   nonstatic_field(Thread,                      _allocated_bytes,                              jlong)                                 \
   nonstatic_field(Thread,                      _current_pending_monitor,                      ObjectMonitor*)                        \
   nonstatic_field(Thread,                      _current_pending_monitor_is_from_java,         bool)                                  \
