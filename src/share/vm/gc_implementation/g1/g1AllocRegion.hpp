@@ -44,6 +44,9 @@ class ar_ext_msg;
 class G1AllocRegion VALUE_OBJ_CLASS_SPEC {
   friend class ar_ext_msg;
 
+  // <underscore> Important class. How to extended this to have an allocation 
+  // region per generation?
+  
 private:
   // The active allocating region we are currently allocating out
   // of. The invariant is that if this object is initialized (i.e.,

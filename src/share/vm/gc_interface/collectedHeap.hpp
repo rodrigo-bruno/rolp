@@ -484,8 +484,14 @@ class CollectedHeap : public CHeapObj<mtInternal> {
  
   // This method asks the heap to send the free heap regions through the sock
   // file descriptor.
-  // Only the G1GC should override this method, for now. - underscore
+  // Only the G1GC should override this method, for now. - underscor
   virtual void send_free_regions(jint sockfd) { }
+  
+  // Sets the allocation generation (for the upcoming allocations).
+  // Only the G1GC should override this method, for now. - underscore
+  virtual void set_alloc_gen(jint gen) {
+      gclog_or_tty->print_cr("<underscore> set_alloc_gen %d", gen);
+  }
  
   // Returns the barrier set for this heap
   BarrierSet* barrier_set() { return _barrier_set; }

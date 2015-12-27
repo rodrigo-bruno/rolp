@@ -282,7 +282,7 @@ bool PSScavenge::invoke_no_policy() {
   scavenge_entry.update();
 
   if (GC_locker::check_active_before_gc()) {
-    gclog_or_tty->print_cr("check_active_before_gc -> T <underscore>");
+    //gclog_or_tty->print_cr("check_active_before_gc -> T <underscore>");
     return false;
   }
 
@@ -292,7 +292,7 @@ bool PSScavenge::invoke_no_policy() {
 
   // Check for potential problems.
   if (!should_attempt_scavenge()) {
-    gclog_or_tty->print_cr("should_attempt_scavenge -> F <underscore>");
+    //gclog_or_tty->print_cr("should_attempt_scavenge -> F <underscore>");
     return false;
   }
 
@@ -721,7 +721,7 @@ bool PSScavenge::invoke_no_policy() {
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
 
-  gclog_or_tty->print_cr("promotion_failure_occurred -> %s <underscore>", promotion_failure_occurred ? "T" : "F");
+  //gclog_or_tty->print_cr("promotion_failure_occurred -> %s <underscore>", promotion_failure_occurred ? "T" : "F");
   return !promotion_failure_occurred;
 }
 
