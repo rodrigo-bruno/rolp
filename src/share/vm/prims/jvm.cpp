@@ -423,7 +423,7 @@ JVM_END
 
 JVM_ENTRY_NO_ENV(void, JVM_SetAllocGen(jint gen))
   JVMWrapper("JVM_SetAllocGC");
-  Universe::heap()->collect(GCCause::_java_lang_system_gc);
+  Universe::heap()->set_alloc_gen(gen);
 JVM_END
 
 
