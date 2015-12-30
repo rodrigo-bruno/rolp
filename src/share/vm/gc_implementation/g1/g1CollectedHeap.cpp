@@ -856,9 +856,16 @@ HeapWord* G1CollectedHeap::allocate_new_tlab(size_t word_size) {
   assert_heap_not_locked_and_not_at_safepoint();
   assert(!isHumongous(word_size), "we do not allow humongous TLABs");
 
-  unsigned int dummy_gc_count_before;
-  int dummy_gclocker_retry_count = 0;
-  return attempt_allocation(word_size, &dummy_gc_count_before, &dummy_gclocker_retry_count);
+  // <underscore> I changed the code to introduce the if. Now, depending on
+  // _tlab_alloc_gen, memory will be taken from eden or old generations.
+  if (!_tlab_alloc_gen) {
+    unsigned int dummy_gc_count_before;
+    int dummy_gclocker_retry_count = 0;
+    return attempt_allocation(word_size, &dummy_gc_count_before, &dummy_gclocker_retry_count);
+  }
+  else {
+    return old_attempt_allocation(word_size);
+  }
 }
 
 HeapWord*
@@ -1960,6 +1967,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _dirty_cards_region_list(NULL),
   _worker_cset_start_region(NULL),
   _worker_cset_start_region_time_stamp(NULL),
+  _tlab_alloc_gen(0), // <underscore>
   _gc_timer_stw(new (ResourceObj::C_HEAP, mtGC) STWGCTimer()),
   _gc_timer_cm(new (ResourceObj::C_HEAP, mtGC) ConcurrentGCTimer()),
   _gc_tracer_stw(new (ResourceObj::C_HEAP, mtGC) G1NewTracer()),

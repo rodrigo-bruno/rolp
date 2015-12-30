@@ -280,23 +280,23 @@ private:
   // after heap shrinking (free_list_only == true).
   void rebuild_region_sets(bool free_list_only);
 
-  // <underscore> I could iterate this.
   // The sequence of all heap regions in the heap.
   HeapRegionSeq _hrs;
 
-  // <underscore> I can manipulate this to force the working set!
   // Alloc region used to satisfy mutator allocation requests.
   MutatorAllocRegion _mutator_alloc_region;
 
-  // <underscore> I can manipulate this to force the working set!
   // Alloc region used to satisfy allocation requests by the GC for
   // survivor objects.
   SurvivorGCAllocRegion _survivor_gc_alloc_region;
 
+  // <underscore> Integer specifying the generation from which a new tlab should
+  // be allocated from. 0 means eden. >0 means old.
+  int _tlab_alloc_gen;
+  
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
 
-  // <underscore> I can manipulate this to force the working set!
   // Alloc region used to satisfy allocation requests by the GC for
   // old objects.
   OldGCAllocRegion _old_gc_alloc_region;
@@ -1392,6 +1392,14 @@ public:
         _hrs.iterate(&sfr); 
         gclog_or_tty->print_cr("DONE G2 (sockfd=%d), regions=%d, free_pages=%d!", sockfd, sfr.get_n_regions(), sfr.get_free_pages()); // DEBUG
         gclog_or_tty->flush(); //DEBUG
+    }
+    
+    // <undersore> Changes the tlab allocation region
+    virtual void set_alloc_gen(jint gen) {
+      _tlab_alloc_gen = gen
+#if DEBUG_TLAB_ALLOCATION
+      gclog_or_tty->print("<underscore> set_alloc_gen (gen=%d) -> %s alloc region is now being used ", gen, gen ? "old" : "mutator");
+#endif
     }
 
   // The same as above but assume that the caller holds the Heap_lock.

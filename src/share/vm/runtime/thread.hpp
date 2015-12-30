@@ -449,6 +449,12 @@ class Thread: public ThreadShadow {
   GrowableArray<Metadata*>* metadata_handles() const          { return _metadata_handles; }
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
+  void set_alloc_gen(int gen) {
+      _tlab = gen ? _tlabOld : _tlabEden;
+#if DEBUG_TLAB_ALLOCATION
+      gclog_or_tty->print("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
+#endif
+  }
   // Thread-Local Allocation Buffer (TLAB) support
   ThreadLocalAllocBuffer& tlab()                 { return *_tlab; }
   void initialize_tlab() {
