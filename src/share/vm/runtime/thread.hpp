@@ -642,9 +642,9 @@ public:
   static ByteSize stack_base_offset()            { return byte_offset_of(Thread, _stack_base ); }
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
 
-  // <underscore> - check if these also need to be done for the old tlab.
+  // <underscore> - TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
-  static ByteSize tlab_##name##_offset()         { return byte_offset_of(Thread, _tlabEden) + ThreadLocalAllocBuffer::name##_offset(); }
+  static ByteSize tlab_##name##_offset()         { return byte_offset_of(Thread, _tlab) + ThreadLocalAllocBuffer::name##_offset(); }
 
   TLAB_FIELD_OFFSET(start)
   TLAB_FIELD_OFFSET(end)
