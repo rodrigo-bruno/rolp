@@ -188,6 +188,12 @@ HeapWord* CollectedHeap::common_mem_allocate_init(KlassHandle klass, size_t size
 HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, size_t size) {
   assert(UseTLAB, "should use UseTLAB");
 
+// <underscore>
+#if DEBUG_OBJ_ALLOC
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass=%s, thread=%p, size="SIZE_FORMAT") ", klass->name()->as_C_string(), thread, size);
+#endif
+// </undescore>
+
   HeapWord* obj = thread->tlab_gen().allocate(size);
   if (obj != NULL) {
     return obj;
