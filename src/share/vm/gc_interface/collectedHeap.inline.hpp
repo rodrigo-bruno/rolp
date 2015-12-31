@@ -190,7 +190,7 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass=%s, thread=%p, size="SIZE_FORMAT") ", klass->name()->as_C_string(), thread, size);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass=..., thread=%p, size="SIZE_FORMAT") ", thread, size);
 #endif
 // </undescore>
 
