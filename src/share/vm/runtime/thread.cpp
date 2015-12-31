@@ -250,7 +250,7 @@ Thread::Thread() {
   omFreeProvision = 32 ;
   omInUseList = NULL ;
   omInUseCount = 0 ;
-  _tlab = &_tlabEden;
+  _alloc_gen = 0; // <underscore>
 #ifdef ASSERT
   _visited_for_critical_count = false;
 #endif

@@ -273,11 +273,11 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab!
   //  - allocate_from_tlab_slow() - slow allocation path. Also important!
   //  - exit() - calls make_parsable on tlab (retire tlab)
-  ThreadLocalAllocBuffer _tlabEden;              // Thread-local eden
   // <underscore> TLAB for allocations directly on the old generation.
   ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
   // <underscore> pointer to the TLAB being currently used.
-  ThreadLocalAllocBuffer* _tlab;
+  ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
+  int _alloc_gen;                               // Indicates in which TLABs objects should be allocated.
   
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
                                                 // the Java heap
@@ -450,13 +450,14 @@ class Thread: public ThreadShadow {
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
   void set_alloc_gen(int gen) {
-      _tlab = gen ? _tlabOld : _tlabEden;
+      _alloc_gen = gen;
 #if DEBUG_TLAB_ALLOCATION
       gclog_or_tty->print("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
   }
   // Thread-Local Allocation Buffer (TLAB) support
-  ThreadLocalAllocBuffer& tlab()                 { return *_tlab; }
+  ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
+  ThreadLocalAllocBuffer& tlab_gen()             { return _alloc_gen ? _tlabOld : _tlab; }
   void initialize_tlab() {
     if (UseTLAB) {
       tlab().initialize();

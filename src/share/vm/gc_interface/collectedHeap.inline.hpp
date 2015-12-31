@@ -188,7 +188,7 @@ HeapWord* CollectedHeap::common_mem_allocate_init(KlassHandle klass, size_t size
 HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, size_t size) {
   assert(UseTLAB, "should use UseTLAB");
 
-  HeapWord* obj = thread->tlab().allocate(size);
+  HeapWord* obj = thread->tlab_gen().allocate(size);
   if (obj != NULL) {
     return obj;
   }
