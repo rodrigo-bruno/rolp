@@ -1396,9 +1396,9 @@ public:
     
     // <undersore> Changes the tlab allocation region
     virtual void set_alloc_gen(jint gen) {
-      _tlab_alloc_gen = gen
+      _tlab_alloc_gen = gen;
 #if DEBUG_TLAB_ALLOCATION
-      gclog_or_tty->print("<underscore> set_alloc_gen (gen=%d) -> %s alloc region is now being used ", gen, gen ? "old" : "mutator");
+      gclog_or_tty->print_cr("<underscore> set_alloc_gen (gen=%d) -> %s alloc region is now being used ", gen, gen ? "old" : "mutator");
 #endif
     }
 
