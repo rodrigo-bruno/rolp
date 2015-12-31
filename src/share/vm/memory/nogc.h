@@ -8,7 +8,8 @@
 #ifndef NOGC_H
 #define	NOGC_H
 
-#define DEBUG_TLAB_ALLOCATION 1
+#define DEBUG_OBJ_ALLOC 1
+#define DEBUG_TLAB_ALLOC 1
 
 #endif	/* NOGC_H */
 

@@ -856,6 +856,12 @@ HeapWord* G1CollectedHeap::allocate_new_tlab(size_t word_size) {
   assert_heap_not_locked_and_not_at_safepoint();
   assert(!isHumongous(word_size), "we do not allow humongous TLABs");
 
+  // <underscore>
+#if DEBUG_TLAB_ALLOC
+  gclog_or_tty->print_cr("<underscore> G1CollectedHeap::allocate_new_tlab %s ", _tlab_alloc_gen ? "old" : "eden");
+#endif
+  // </undescore>
+
   // <underscore> I changed the code to introduce the if. Now, depending on
   // _tlab_alloc_gen, memory will be taken from eden or old generations.
   if (!_tlab_alloc_gen) {

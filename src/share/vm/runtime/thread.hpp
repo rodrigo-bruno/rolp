@@ -451,7 +451,7 @@ class Thread: public ThreadShadow {
 
   void set_alloc_gen(int gen) {
       _alloc_gen = gen;
-#if DEBUG_TLAB_ALLOCATION
+#if DEBUG_OBJ_ALLOC
       gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
   }
@@ -461,6 +461,7 @@ class Thread: public ThreadShadow {
   void initialize_tlab() {
     if (UseTLAB) {
       tlab().initialize();
+      _tlabOld.initialize(); // <underscore>
     }
   }
 

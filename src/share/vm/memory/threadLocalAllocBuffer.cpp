@@ -185,6 +185,12 @@ void ThreadLocalAllocBuffer::initialize(HeapWord* start,
   set_pf_top(top);
   set_end(end);
   invariants();
+
+  // <underscore
+#if DEBUG_TLAB_ALLOC
+  gclog_or_tty->print_cr("<underscore> ThreadLocalAllocBuffer::initialize (start="INTPTR_FORMAT", top="INTPTR_FORMAT", end="INTPTR_FORMAT, start, top, end);
+#endif
+  // </undescore>
 }
 
 void ThreadLocalAllocBuffer::initialize() {

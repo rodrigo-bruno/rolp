@@ -174,7 +174,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
 // <underscore> alloc, init
 HeapWord* CollectedHeap::common_mem_allocate_init(KlassHandle klass, size_t size, TRAPS) {
     // <underscore>
-#if DEBUG_TLAB_ALLOCATION
+#if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_init(size="SIZE_FORMAT") ", size);
     //klass()->print_on(gclog_or_tty); -> throws sigsegv?
 #endif
@@ -210,7 +210,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
 // <underscore>
-#if DEBUG_TLAB_ALLOCATION
+#if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
   klass()->print_on(gclog_or_tty);
 #endif
@@ -219,7 +219,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   post_allocation_setup_obj(klass, obj);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
 // <underscore>
-#if DEBUG_TLAB_ALLOCATION
+#if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> return CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
   klass()->print_on(gclog_or_tty);
 #endif
@@ -236,7 +236,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
   // <underscore>
-#if DEBUG_TLAB_ALLOCATION
+#if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" length=%d) ", size, length);
   klass()->print_on(gclog_or_tty);
 #endif
@@ -255,7 +255,7 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
   // <underscore>
-#if DEBUG_TLAB_ALLOCATION
+#if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" length=%d) ", size, length);
   //klass()->print_on(gclog_or_tty); -> throws sigsegv?
 #endif
