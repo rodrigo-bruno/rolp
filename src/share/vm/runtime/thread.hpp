@@ -452,7 +452,7 @@ class Thread: public ThreadShadow {
   void set_alloc_gen(int gen) {
       *_tlab = gen ? _tlabOld : _tlabEden;
 #if DEBUG_TLAB_ALLOCATION
-      gclog_or_tty->print("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
+      gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
   }
   // Thread-Local Allocation Buffer (TLAB) support
