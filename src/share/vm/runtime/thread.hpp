@@ -462,6 +462,9 @@ class Thread: public ThreadShadow {
     if (UseTLAB) {
       tlab().initialize();
       _tlabOld.initialize(); // <underscore>
+#if DEBUG_OBJ_ALLOC
+      gclog_or_tty->print_cr("<underscore> thread::initializing tlabs");
+#endif
     }
   }
 
