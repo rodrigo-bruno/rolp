@@ -150,9 +150,15 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   instanceKlassHandle klass (THREAD, k_oop);
 
 // <underscore>
+  if(!strncmp(k_oop->name()->as_quoted_ascii(), "Item", 4)) {
+    klass.set_alloc_gen(1);
+  }
+  else {
+    klass.set_alloc_gen(0);
+  }
+
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> InterpreterRuntime::_new(...) ");
-  k_oop->print_on(gclog_or_tty);
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new(%s), k_oop->gen == %d", k_oop->name()->as_quoted_ascii(), klass.get_alloc_gen());
 #endif
 // </undescore>
 
@@ -180,8 +186,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   thread->set_vm_result(obj);
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> return InterpreterRuntime::_new(...) ");
-  k_oop->print_on(gclog_or_tty);
+  gclog_or_tty->print_cr("<underscore> return InterpreterRuntime::_new(%s)", k_oop->name()->as_quoted_ascii());
 #endif
 // </undescore>
 
@@ -192,7 +197,6 @@ IRT_ENTRY(void, InterpreterRuntime::_new2(JavaThread* thread, ConstantPool* pool
   Klass* k_oop = pool->klass_at(index, CHECK);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new2 (pool=%p, index=%d, gen=%d)!", pool, index, gen);
-  k_oop->print_on(gclog_or_tty);
 #endif
 IRT_END
 // </undescore>
