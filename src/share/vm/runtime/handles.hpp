@@ -177,6 +177,11 @@ DEF_METADATA_HANDLE(constantPool, ConstantPool)
 // could be removed when we don't have the Klass* typedef anymore.
 class KlassHandle : public StackObj {
   Klass* _value;
+
+  // <underscore> Integer that indicates in which generation the next instance
+  // should be allocated.
+  int _alloc_gen;
+
  protected:
    Klass* obj() const          { return _value; }
    Klass* non_null_obj() const { assert(_value != NULL, "resolving NULL _value"); return _value; }
@@ -194,6 +199,9 @@ class KlassHandle : public StackObj {
 
     bool is_null() const  { return _value == NULL; }
     bool not_null() const { return _value != NULL; }
+
+   int  get_alloc_gen() { return _alloc_gen; }
+   void set_alloc_gen(int alloc_gen) { _alloc_gen = alloc_gen; }
 };
 
 class instanceKlassHandle : public KlassHandle {
