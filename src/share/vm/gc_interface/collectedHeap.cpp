@@ -257,16 +257,16 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 
   // Retain tlab and allocate object in shared space if
   // the amount free in the tlab is too large to discard.
-  if (thread->tlab_gen().free() > thread->tlab_gen().refill_waste_limit()) {
-    thread->tlab_gen().record_slow_allocation(size);
+  if (thread->tlab_gen(klass.get_alloc_gen()).free() > thread->tlab_gen(klass.get_alloc_gen()).refill_waste_limit()) {
+    thread->tlab_gen(klass.get_alloc_gen()).record_slow_allocation(size);
     return NULL;
   }
 
   // Discard tlab and allocate a new one.
   // To minimize fragmentation, the last TLAB may be smaller than the rest.
-  size_t new_tlab_size = thread->tlab_gen().compute_size(size);
+  size_t new_tlab_size = thread->tlab_gen(klass.get_alloc_gen()).compute_size(size);
 
-  thread->tlab_gen().clear_before_allocation();
+  thread->tlab_gen(klass.get_alloc_gen()).clear_before_allocation();
 
   if (new_tlab_size == 0) {
     return NULL;
@@ -293,7 +293,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
     Copy::fill_to_words(obj + hdr_size, new_tlab_size - hdr_size, badHeapWordVal);
 #endif // ASSERT
   }
-  thread->tlab_gen().fill(obj, obj + size, new_tlab_size);
+  thread->tlab_gen(klass.get_alloc_gen()).fill(obj, obj + size, new_tlab_size);
   return obj;
 }
 

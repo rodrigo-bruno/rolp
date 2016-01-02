@@ -194,7 +194,7 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
 #endif
 // </undescore>
 
-  HeapWord* obj = thread->tlab_gen().allocate(size);
+  HeapWord* obj = thread->tlab_gen(klass.get_alloc_gen()).allocate(size);
   if (obj != NULL) {
     return obj;
   }
