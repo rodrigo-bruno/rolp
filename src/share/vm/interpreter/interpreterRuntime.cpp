@@ -149,24 +149,18 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
 
-// <underscore>
-  if(!strncmp(k_oop->name()->as_quoted_ascii(), "Item", 4)) {
-    klass.set_alloc_gen(1);
-  }
-  else {
-    klass.set_alloc_gen(0);
-  }
-
-#if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new(%s), k_oop->gen == %d", k_oop->name()->as_quoted_ascii(), klass.get_alloc_gen());
-#endif
-// </undescore>
-
   // Make sure we are not instantiating an abstract klass
   klass->check_valid_for_instantiation(true, CHECK);
 
   // Make sure klass is initialized
   klass->initialize(CHECK);
+
+// <undescore>
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new(...)");
+  // TODO - print Klass
+#endif
+// </undescore>
 
   // At this point the class may not be fully initialized
   // because of recursive initialization. If it is fully
@@ -184,9 +178,11 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   //       because the _breakpoint bytecode would be lost.
   oop obj = klass->allocate_instance(CHECK);
   thread->set_vm_result(obj);
-// <underscore>
+
+// <undescore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> return InterpreterRuntime::_new(%s)", k_oop->name()->as_quoted_ascii());
+  gclog_or_tty->print_cr("<underscore> return InterpreterRuntime::_new(...)");
+  // TODO - print Klass
 #endif
 // </undescore>
 
@@ -196,7 +192,7 @@ IRT_END
 IRT_ENTRY(void, InterpreterRuntime::_new2(JavaThread* thread, ConstantPool* pool, int index, jint gen))
   Klass* k_oop = pool->klass_at(index, CHECK);
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> InterpreterRuntime::_new2 (pool=%p, index=%d, gen=%d)!", pool, index, gen);
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new2 (pool=%p, index=%d, gen=%d)!", pool, index, gen);
 #endif
 IRT_END
 // </undescore>

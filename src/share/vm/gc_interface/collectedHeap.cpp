@@ -257,7 +257,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", kass.get_alloc_gen(), thread, size);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.get_alloc_gen(), thread, size);
 #endif
 // </undescore>
 

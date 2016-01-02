@@ -1099,6 +1099,19 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
 
   KlassHandle h_k(THREAD, this);
 
+  // <underscore>
+  if(this->name()->equals("Item", 4)){
+    h_k.set_alloc_gen(1);
+  }
+  else {
+    h_k.set_alloc_gen(0);
+  }
+
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print_cr("<underscore> InstanceKlass::allocate_instance, alloc_gen == %d", h_k.get_alloc_gen());
+#endif
+// </undescore>
+
   instanceOop i;
 
   i = (instanceOop)CollectedHeap::obj_allocate(h_k, size, CHECK_NULL);

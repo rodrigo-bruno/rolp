@@ -173,12 +173,6 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
 
 // <underscore> alloc, init
 HeapWord* CollectedHeap::common_mem_allocate_init(KlassHandle klass, size_t size, TRAPS) {
-    // <underscore>
-#if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_init(size="SIZE_FORMAT") ", size);
-    //klass()->print_on(gclog_or_tty); -> throws sigsegv?
-#endif
-// </undescore>
   HeapWord* obj = common_mem_allocate_noinit(klass, size, CHECK_NULL);
   init_obj(obj, size);
   return obj;
@@ -190,7 +184,7 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", kass.get_alloc_gen(), thread, size);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.get_alloc_gen(), thread, size);
 #endif
 // </undescore>
 

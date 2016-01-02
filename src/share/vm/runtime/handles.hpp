@@ -187,9 +187,9 @@ class KlassHandle : public StackObj {
    Klass* non_null_obj() const { assert(_value != NULL, "resolving NULL _value"); return _value; }
 
  public:
-   KlassHandle()                                 : _value(NULL) {}
-   KlassHandle(const Klass* obj)                 : _value(const_cast<Klass *>(obj)) {};
-   KlassHandle(Thread* thread, const Klass* obj) : _value(const_cast<Klass *>(obj)) {};
+   KlassHandle()                                 : _value(NULL),_alloc_gen(0) {}
+   KlassHandle(const Klass* obj)                 : _value(const_cast<Klass *>(obj)),_alloc_gen(0) {};
+   KlassHandle(Thread* thread, const Klass* obj) : _value(const_cast<Klass *>(obj)),_alloc_gen(0) {};
 
    Klass* operator () () const { return obj(); }
    Klass* operator -> () const { return non_null_obj(); }

@@ -457,7 +457,15 @@ class Thread: public ThreadShadow {
   }
   // Thread-Local Allocation Buffer (TLAB) support
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
-  ThreadLocalAllocBuffer& tlab_gen(int obj_type)             { return (_alloc_gen && obj_type) ? _tlabOld : _tlab; }
+  ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
+    if (_alloc_gen && obj_type) {
+      return _tlabOld;
+    }
+    else {
+      return _tlab;
+    }
+  }
+
   void initialize_tlab() {
     if (UseTLAB) {
       tlab().initialize();
