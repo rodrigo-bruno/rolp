@@ -273,11 +273,14 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab!
   //  - allocate_from_tlab_slow() - slow allocation path. Also important!
   //  - exit() - calls make_parsable on tlab (retire tlab)
-  // <underscore> TLAB for allocations directly on the old generation.
+
+  // <underscore>
   ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
-  // <underscore> pointer to the TLAB being currently used.
-  ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
+  bool _tlabOldInitialized;                     // true if the old tlab is already initialized.
   int _alloc_gen;                               // Indicates in which TLABs objects should be allocated.
+  // </underscore>
+
+  ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
   
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
                                                 // the Java heap
@@ -459,6 +462,13 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
   ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
     if (_alloc_gen && obj_type) {
+      if(!_tlabOldInitialized) {
+        _tlabOld.initialize();
+        _tlabOldInitialized = true;
+#if DEBUG_OBJ_ALLOC
+        gclog_or_tty->print_cr("<underscore> thread::tlab_gen(obj_type=%d) old tlab initialized", obj_type);
+#endif
+      }
       return _tlabOld;
     }
     else {
@@ -469,10 +479,6 @@ class Thread: public ThreadShadow {
   void initialize_tlab() {
     if (UseTLAB) {
       tlab().initialize();
-      _tlabOld.initialize(); // <underscore>
-#if DEBUG_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> thread::initializing tlabs");
-#endif
     }
   }
 

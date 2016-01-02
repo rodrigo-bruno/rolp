@@ -251,6 +251,7 @@ Thread::Thread() {
   omInUseList = NULL ;
   omInUseCount = 0 ;
   _alloc_gen = 0; // <underscore>
+  _tlabOldInitialized = false; // <underscore>
 #ifdef ASSERT
   _visited_for_critical_count = false;
 #endif
