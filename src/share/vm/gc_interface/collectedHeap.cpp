@@ -255,6 +255,12 @@ void CollectedHeap::check_for_valid_allocation_state() {
 
 HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thread, size_t size) {
 
+// <underscore>
+#if DEBUG_OBJ_ALLOC
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", kass.get_alloc_gen(), thread, size);
+#endif
+// </undescore>
+
   // Retain tlab and allocate object in shared space if
   // the amount free in the tlab is too large to discard.
   if (thread->tlab_gen(klass.get_alloc_gen()).free() > thread->tlab_gen(klass.get_alloc_gen()).refill_waste_limit()) {
@@ -278,6 +284,12 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
     return NULL;
   }
 
+// <underscore>
+#if DEBUG_OBJ_ALLOC
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> tlab allocated at %p", obj);
+#endif
+// </undescore>
+
   AllocTracer::send_allocation_in_new_tlab_event(klass, new_tlab_size * HeapWordSize, size * HeapWordSize);
 
   if (ZeroTLAB) {
@@ -294,6 +306,11 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 #endif // ASSERT
   }
   thread->tlab_gen(klass.get_alloc_gen()).fill(obj, obj + size, new_tlab_size);
+// <underscore>
+#if DEBUG_OBJ_ALLOC
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> obj allocated at %p", obj);
+#endif
+// </undescore>
   return obj;
 }
 
