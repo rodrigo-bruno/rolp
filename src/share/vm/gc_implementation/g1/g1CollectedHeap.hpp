@@ -187,6 +187,22 @@ public:
   : G1AllocRegion("Old GC Alloc Region", true /* bot_updates */) { }
 };
 
+// <underscore>
+class GenAllocRegion : public G1AllocRegion {
+private:
+    bool _initialized;
+protected:
+  virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
+  virtual void retire_region(HeapRegion* alloc_region, size_t allocated_bytes);
+public:
+  // TODO - decide where BOT updates should be on or off
+  GenAllocRegion()
+  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */), _initialized(false) { }
+  void setInitialized() { _initialized = true; }
+  bool getInitialized() { return _initialized; }
+};
+// </underscore>
+
 // The G1 STW is alive closure.
 // An instance is embedded into the G1CH and used as the
 // (optional) _is_alive_non_header closure in the STW
@@ -290,9 +306,8 @@ private:
   // survivor objects.
   SurvivorGCAllocRegion _survivor_gc_alloc_region;
 
-  // <underscore> Integer specifying the generation from which a new tlab should
-  // be allocated from. 0 means eden. >0 means old.
-  int _tlab_alloc_gen;
+  // <underscore> Special allocation region.
+  GenAllocRegion _gen_alloc_region;
   
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
@@ -622,6 +637,9 @@ protected:
 
   // Allocation attempt during GC for an old object / PLAB.
   inline HeapWord* old_attempt_allocation(size_t word_size);
+
+// <underscore> Allocation attempt for specific generation.
+  inline HeapWord* gen_attempt_allocation(int gen, size_t word_size);
 
   // These methods are the "callbacks" from the G1AllocRegion class.
 
@@ -1393,14 +1411,6 @@ public:
         gclog_or_tty->print_cr("DONE G2 (sockfd=%d), regions=%d, free_pages=%d!", sockfd, sfr.get_n_regions(), sfr.get_free_pages()); // DEBUG
         gclog_or_tty->flush(); //DEBUG
     }
-    
-    // <undersore> Changes the tlab allocation region
-    virtual void set_alloc_gen(jint gen) {
-      _tlab_alloc_gen = gen;
-#if DEBUG_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> set_alloc_gen (gen=%d) -> %s alloc region is now being used ", gen, gen ? "old" : "mutator");
-#endif
-    }
 
   // The same as above but assume that the caller holds the Heap_lock.
   void collect_locked(GCCause::Cause cause);
@@ -1484,6 +1494,7 @@ public:
   // Iterate over all spaces in use in the heap, in ascending address order.
   virtual void space_iterate(SpaceClosure* cl);
 
+  // <underscore> This method is used to mark all regions.
   // Iterate over heap regions, in address order, terminating the
   // iteration early if the "doHeapRegion" method returns "true".
   void heap_region_iterate(HeapRegionClosure* blk) const;

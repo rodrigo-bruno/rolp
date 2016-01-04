@@ -279,7 +279,17 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
   }
 
   // Allocate a new TLAB...
-  HeapWord* obj = Universe::heap()->allocate_new_tlab(new_tlab_size);
+  // <underscore> Introduced if to distinguish tlab allocated from eden or from
+  // any other generation.
+  HeapWord* obj;
+  if (!klass.get_alloc_gen()) {
+      obj = Universe::heap()->allocate_new_tlab(new_tlab_size);
+  }
+  else {
+      obj = Universe::heap()->allocate_new_gen_tlab(klass.get_alloc_gen(), new_tlab_size);
+  }
+  // </underscore>
+
   if (obj == NULL) {
     return NULL;
   }
@@ -494,6 +504,13 @@ HeapWord* CollectedHeap::allocate_new_tlab(size_t size) {
   guarantee(false, "thread-local allocation buffers not supported");
   return NULL;
 }
+
+// <underscore>
+HeapWord* CollectedHeap::allocate_new_gen_tlab(int gen, size_t size) {
+  guarantee(false, "thread-local allocation buffers not supported");
+  return NULL;
+}
+// </underscore>
 
 void CollectedHeap::ensure_parsability(bool retire_tlabs) {
   // The second disjunct in the assertion below makes a concession

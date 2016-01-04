@@ -127,6 +127,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   // Create a new tlab. All TLAB allocations must go through this.
   virtual HeapWord* allocate_new_tlab(size_t size);
+  // <underscore> The new tlab will be allocated from a specific generation.
+  virtual HeapWord* allocate_new_gen_tlab(int gen, size_t size);
 
   // Accumulate statistics on all tlabs.
   virtual void accumulate_statistics_all_tlabs();
@@ -487,10 +489,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Only the G1GC should override this method, for now. - underscore
   virtual void send_free_regions(jint sockfd) { }
   
-  // Sets the allocation region for the upcoming tlabs.
-  // Only the G1GC should override this method, for now. - underscore
-  virtual void set_alloc_gen(jint gen) { }
-
   // Returns the barrier set for this heap
   BarrierSet* barrier_set() { return _barrier_set; }
 

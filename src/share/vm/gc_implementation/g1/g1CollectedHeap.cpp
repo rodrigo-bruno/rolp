@@ -858,21 +858,27 @@ HeapWord* G1CollectedHeap::allocate_new_tlab(size_t word_size) {
 
   // <underscore>
 #if DEBUG_TLAB_ALLOC
-  gclog_or_tty->print_cr("<underscore> G1CollectedHeap::allocate_new_tlab %s ", _tlab_alloc_gen ? "old" : "eden");
+  gclog_or_tty->print_cr("<underscore> G1CollectedHeap::allocate_new_tlab");
 #endif
   // </undescore>
 
-  // <underscore> I changed the code to introduce the if. Now, depending on
-  // _tlab_alloc_gen, memory will be taken from eden or old generations.
-  if (!_tlab_alloc_gen) {
-    unsigned int dummy_gc_count_before;
-    int dummy_gclocker_retry_count = 0;
-    return attempt_allocation(word_size, &dummy_gc_count_before, &dummy_gclocker_retry_count);
-  }
-  else {
-    return old_attempt_allocation(word_size);
-  }
+  unsigned int dummy_gc_count_before;
+  int dummy_gclocker_retry_count = 0;
+  return attempt_allocation(word_size, &dummy_gc_count_before, &dummy_gclocker_retry_count);
 }
+
+// <underscore>
+HeapWord* G1CollectedHeap::allocate_new_gen_tlab(int gen, size_t word_size) {
+  assert_heap_not_locked_and_not_at_safepoint();
+  assert(!isHumongous(word_size), "we do not allow humongous TLABs");
+
+#if DEBUG_TLAB_ALLOC
+  gclog_or_tty->print_cr("<underscore> G1CollectedHeap::allocate_new_gen_tlab");
+#endif
+
+  return gen_attempt_allocation(gen, word_size);
+}
+// </undescore>
 
 HeapWord*
 G1CollectedHeap::mem_allocate(size_t word_size,
@@ -1973,7 +1979,6 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _dirty_cards_region_list(NULL),
   _worker_cset_start_region(NULL),
   _worker_cset_start_region_time_stamp(NULL),
-  _tlab_alloc_gen(0), // <underscore>
   _gc_timer_stw(new (ResourceObj::C_HEAP, mtGC) STWGCTimer()),
   _gc_timer_cm(new (ResourceObj::C_HEAP, mtGC) ConcurrentGCTimer()),
   _gc_tracer_stw(new (ResourceObj::C_HEAP, mtGC) G1NewTracer()),
@@ -6615,6 +6620,23 @@ void OldGCAllocRegion::retire_region(HeapRegion* alloc_region,
   _g1h->retire_gc_alloc_region(alloc_region, allocated_bytes,
                                GCAllocForTenured);
 }
+
+// <underscore>
+HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
+                                                  bool force) {
+  assert(!force, "not supported for Gen alloc regions");
+  // TODO - GCAllocForTenured will do the job. However, I should pick other reason.
+  return _g1h->new_gc_alloc_region(word_size, count(), GCAllocForTenured);
+}
+
+void GenAllocRegion::retire_region(HeapRegion* alloc_region,
+                                     size_t allocated_bytes) {
+// TODO - GCAllocForTenured will do the job. However, I should pick other reason.
+  _g1h->retire_gc_alloc_region(alloc_region, allocated_bytes,
+                               GCAllocForTenured);
+}
+// </underscore>
+
 // Heap region set verification
 
 class VerifyRegionListsClosure : public HeapRegionClosure {
