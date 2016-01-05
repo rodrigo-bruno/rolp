@@ -225,6 +225,7 @@ class G1CollectedHeap : public SharedHeap {
   friend class MutatorAllocRegion;
   friend class SurvivorGCAllocRegion;
   friend class OldGCAllocRegion;
+  friend class GenAllocRegion;
 
   // Closures used in implementation.
   template <bool do_gen_barrier, G1Barrier barrier, bool do_mark_object>
@@ -576,6 +577,9 @@ protected:
   //   will satisfy them with a special path.
 
   virtual HeapWord* allocate_new_tlab(size_t word_size);
+
+  // <underscore> allocates new tlabs in specific generation
+  virtual HeapWord* allocate_new_gen_tlab(int gen, size_t word_size);
 
   virtual HeapWord* mem_allocate(size_t word_size,
                                  bool*  gc_overhead_limit_was_exceeded);

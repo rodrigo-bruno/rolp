@@ -113,15 +113,17 @@ inline HeapWord* G1CollectedHeap::old_attempt_allocation(size_t word_size) {
   return result;
 }
 
-// <underscore>
+// <underscore> - inspired in attempt_allocation and old_attempt_allocation
 inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_size) {
-  assert(!isHumongous(word_size),
-         "we should not be seeing humongous-size allocations in this path");
+  assert(!isHumongous(word_size), "attempt_allocation() should not "
+         "be called for humongous allocation requests");
 
   if (!_gen_alloc_region.getInitialized()) {
       _gen_alloc_region.init();
   }
 
+  // <underscore> lock neecessary to execute 'attempt_allocation'
+  MutexLocker ml(Heap_lock);
   HeapWord* result = _gen_alloc_region.attempt_allocation(word_size,
                                                        true /* bot_updates */);
   if (result == NULL) {
