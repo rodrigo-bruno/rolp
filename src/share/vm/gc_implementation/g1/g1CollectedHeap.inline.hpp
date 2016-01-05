@@ -128,7 +128,7 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
                                                        true /* bot_updates */);
   if (result == NULL) {
     MutexLockerEx x(FreeList_lock, Mutex::_no_safepoint_check_flag);
-    result = _gen_alloc_region.attempt_allocation_locked(word_size,
+    result = _gen_alloc_region.attempt_allocation_force(word_size, // the force version does not try to allocate again.
                                                        true /* bot_updates */);
   }
   return result;
