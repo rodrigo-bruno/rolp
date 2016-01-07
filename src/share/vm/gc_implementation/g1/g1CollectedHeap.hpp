@@ -658,6 +658,11 @@ protected:
   void retire_gc_alloc_region(HeapRegion* alloc_region,
                               size_t allocated_bytes, GCAllocPurpose ap);
 
+  // For Gen alloc regions
+  HeapRegion* new_gen_alloc_region(size_t word_size, uint count);
+  void retire_gen_alloc_region(HeapRegion* alloc_region,
+                               size_t allocated_bytes);
+
   // - if explicit_gc is true, the GC is for a System.gc() or a heap
   //   inspection request and should collect the entire heap
   // - if clear_all_soft_refs is true, all soft references should be
