@@ -1905,6 +1905,7 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
 
   if (UseTLAB) {
     tlab().make_parsable(true);  // retire TLAB
+    make_gen_tlabs_parsable(true); // <underscore> - retire gen TLABs
   }
 
   if (JvmtiEnv::environments_might_exist()) {
@@ -1984,6 +1985,7 @@ void JavaThread::cleanup_failed_attach_current_thread() {
 
   if (UseTLAB) {
     tlab().make_parsable(true);  // retire TLAB, if any
+    make_gen_tlabs_parsable(true); // <underscore> - retire gen TLABs
   }
 
 #if INCLUDE_ALL_GCS

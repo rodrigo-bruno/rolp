@@ -263,16 +263,17 @@ class Thread: public ThreadShadow {
   //  - tlab()
   //  - TLAB_FIELD_OFFSET()
   // Where tlab() is used:
-  //  - cleanup_failed_attach_current_thread() - retire thread, clean everything.
   //  - accumulate_statistics_before_gc() - build some statistical information.
   //  - cooked_allocated_bytes() - gets the number of allocated bytes.
-  //  - ensure_parsability() - calls make_parsable on tlab (retire tlab))
   //  - resize_all_tlabs() - computes the size of new tlabs
-  //  - initialize_tlab() - inits the tlab
-  //  - startup_initialization() - calls initialize on tlab
-  //  - allocate_from tlab() - allocates some object from the current tlab!
-  //  - allocate_from_tlab_slow() - slow allocation path. Also important!
-  //  - exit() - calls make_parsable on tlab (retire tlab)
+
+  //  - cleanup_failed_attach_current_thread() - retire thread, clean everything. - done
+  //  - exit() - calls make_parsable on tlab (retire tlab) - done
+  //  - ensure_parsability() - calls make_parsable on tlab (retire tlab)) - done
+  //  - initialize_tlab() - inits the tlab - done
+  //  - startup_initialization() - calls initialize on tlab - done
+  //  - allocate_from tlab() - allocates some object from the current tlab! - done
+  //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
   // <underscore>
   ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
@@ -460,6 +461,8 @@ class Thread: public ThreadShadow {
   }
   // Thread-Local Allocation Buffer (TLAB) support
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
+
+  // <underscore>
   ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
     if (_alloc_gen && obj_type) {
       if(!_tlabOldInitialized) {
@@ -475,6 +478,11 @@ class Thread: public ThreadShadow {
       return _tlab;
     }
   }
+
+  void make_gen_tlabs_parsable(bool retire_tlabs) {
+      if (_tlabOldInitialized) { _tlabOld.make_parsable(retire_tlabs); }
+  }
+// </underscore>
 
   void initialize_tlab() {
     if (UseTLAB) {
