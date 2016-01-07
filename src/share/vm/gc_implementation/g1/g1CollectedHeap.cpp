@@ -6597,6 +6597,43 @@ void G1CollectedHeap::retire_gc_alloc_region(HeapRegion* alloc_region,
   _hr_printer.retire(alloc_region);
 }
 
+// <underscore>
+// Methods for the Gen alloc regions
+HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
+                                                 uint count) {
+  assert(FreeList_lock->owned_by_self(), "pre-condition");
+
+  // <underscore> using 'GCAllocForTenured' forces unlimited max regions
+  if (count < g1_policy()->max_regions(GCAllocForTenured)) {
+    HeapRegion* new_alloc_region = new_region(word_size,
+                                              true /* do_expand */);
+    if (new_alloc_region != NULL) {
+      // We really only need to do this for old regions given that we
+      // should never scan survivors. But it doesn't hurt to do it
+      // for survivors too.
+      new_alloc_region->set_saved_mark();
+      _hr_printer.alloc(new_alloc_region, G1HRPrinter::Old);
+      bool during_im = g1_policy()->during_initial_mark_pause();
+      new_alloc_region->note_start_of_copying(during_im);
+      return new_alloc_region;
+    } else {
+      // g1_policy()->note_alloc_region_limit_reached(ap); // TODO - we will always be allowed more regions
+      ;
+    }
+  }
+  return NULL;
+}
+
+void G1CollectedHeap::retire_gen_alloc_region(HeapRegion* alloc_region,
+                                             size_t allocated_bytes) {
+  bool during_im = g1_policy()->during_initial_mark_pause();
+  alloc_region->note_end_of_copying(during_im);
+  g1_policy()->record_bytes_copied_during_gc(allocated_bytes);
+  _old_set.add(alloc_region); // TODO - confirm this!
+  _hr_printer.retire(alloc_region);
+}
+// </underscore>
+
 HeapRegion* SurvivorGCAllocRegion::allocate_new_region(size_t word_size,
                                                        bool force) {
   assert(!force, "not supported for GC alloc regions");
@@ -6626,15 +6663,12 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
                                                   bool force) {
   // TODO - commented to work! Understand if this has any impact on correctness!
   // assert(!force, "not supported for Gen alloc regions");
-  // TODO - GCAllocForTenured will do the job. However, I should pick other reason.
-  return _g1h->new_gc_alloc_region(word_size, count(), GCAllocForTenured);
+  return _g1h->new_gen_alloc_region(word_size, count());
 }
 
 void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
-// TODO - GCAllocForTenured will do the job. However, I should pick other reason.
-  _g1h->retire_gc_alloc_region(alloc_region, allocated_bytes,
-                               GCAllocForTenured);
+  _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
 }
 // </underscore>
 
@@ -6657,6 +6691,7 @@ public:
   uint region_count() { return _region_count; }
 
   bool doHeapRegion(HeapRegion* hr) {
+    hr->print_on(gclog_or_tty); // <underscore> FIXME - debug
     _region_count += 1;
 
     if (hr->continuesHumongous()) {
