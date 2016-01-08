@@ -459,6 +459,10 @@ class Thread: public ThreadShadow {
       gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
   }
+
+  // <underscore> TODO - debug only
+  int get_alloc_gen() { return _alloc_gen; }
+
   // Thread-Local Allocation Buffer (TLAB) support
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
 
