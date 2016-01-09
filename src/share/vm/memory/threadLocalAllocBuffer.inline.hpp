@@ -32,12 +32,7 @@
 #include "utilities/copy.hpp"
 
 inline HeapWord* ThreadLocalAllocBuffer::allocate(size_t size) {
-// <underscore>
-#if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> TLAB::allocate(size=" SIZE_FORMAT")", size);
-#endif
-// </undescore>
-    invariants();
+  invariants();
   HeapWord* obj = top();
   if (pointer_delta(end(), obj) >= size) {
     // successful thread-local allocation

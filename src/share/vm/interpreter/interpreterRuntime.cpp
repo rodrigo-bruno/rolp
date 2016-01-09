@@ -157,8 +157,8 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 
 // <undescore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new(...)");
-  // TODO - print Klass
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new(thread=%p)", thread);
+  klass->print_on(gclog_or_tty);
 #endif
 // </undescore>
 
@@ -181,8 +181,8 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 
 // <undescore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> return InterpreterRuntime::_new(...)");
-  // TODO - print Klass
+  gclog_or_tty->print_cr("<underscore> return InterpreterRuntime::_new(thread=%p)", thread);
+  klass->print_on(gclog_or_tty);
 #endif
 // </undescore>
 

@@ -184,7 +184,7 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(alloc_gen=%d, thread_gen=%d, size="SIZE_FORMAT") ", klass.get_alloc_gen(), thread->get_alloc_gen(), size);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass->alloc_gen=%d, thread_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.get_alloc_gen(), thread->get_alloc_gen(), thread, size);
 #endif
 // </undescore>
 
@@ -214,21 +214,10 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
-// <underscore>
-#if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
-  klass()->print_on(gclog_or_tty);
-#endif
-// </undescore>
+
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
   post_allocation_setup_obj(klass, obj);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-// <underscore>
-#if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> return CollectedHeap::obj_allocate(size="SIZE_FORMAT") ", size);
-  klass()->print_on(gclog_or_tty);
-#endif
-// </undescore>
 
   return (oop)obj;
 }
