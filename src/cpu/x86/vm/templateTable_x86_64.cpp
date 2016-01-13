@@ -3255,6 +3255,13 @@ void TemplateTable::_new() {
   Label initialize_object; // including clearing the fields
   Label allocate_shared;
 
+  // <underscore>
+  __ push(c_rarg1);
+  __ get_method(c_rarg1);
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new3), c_rarg1, r13);
+  __ pop(c_rarg1);
+  // </underscore>
+
   __ get_cpool_and_tags(rsi, rax);
   // Make sure the class we're about to instantiate has been resolved.
   // This is done before loading InstanceKlass to be consistent with the order
@@ -3280,7 +3287,6 @@ void TemplateTable::_new() {
    __ pop(rdx);
    __ pop(rsi);
   // </underscore>
-
 
   // make sure klass is initialized & doesn't have finalizer
   // make sure klass is fully initialized

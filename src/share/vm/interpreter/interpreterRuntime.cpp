@@ -196,6 +196,25 @@ IRT_ENTRY(void, InterpreterRuntime::_new2(JavaThread* thread, ConstantPool* pool
 #endif
 IRT_END
 // </undescore>
+
+// <underscore>
+IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, address bcp, jint gen))
+  gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d)!", method, *bcp, method->bci_from(bcp), gen);
+  method->print_name(gclog_or_tty);
+  gclog_or_tty->print_cr("");
+
+  //AnnotationArray* aa = method->type_annotations();
+  AnnotationArray* aa = method->annotations();
+  //AnnotationArray* aa = method->annotation_default();
+  //AnnotationArray* aa = method->parameter_annotations();
+  if(aa != NULL) {
+     for (int i = 0; i< aa->length(); i++) {
+       gclog_or_tty->print_cr("<underscore> annotations %d", aa->at(i));
+     }
+  }
+IRT_END
+// </undescore>
+
   
 IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
   oop obj = oopFactory::new_typeArray(type, size, CHECK);
