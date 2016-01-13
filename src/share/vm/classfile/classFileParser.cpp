@@ -1934,6 +1934,12 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
 
   AnnotationArray* a;
 
+  // <underscore>
+  char buf[256];
+  cm->method()->name_and_sig_as_C_string(buf, 256);
+  gclog_or_tty->print_cr("ClassFileParser::copy_method_annotations(method=%s)", buf);
+  // </underscore>
+
   if (runtime_visible_annotations_length +
       runtime_invisible_annotations_length > 0) {
      a = assemble_annotations(runtime_visible_annotations,
@@ -1941,6 +1947,7 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
                               runtime_invisible_annotations,
                               runtime_invisible_annotations_length,
                               CHECK);
+    gclog_or_tty->print_cr("ClassFileParser::copy_method_annotations(method=%s) %d runtime_visible_annotations and %d runtime_invisible_annotations", runtime_visible_annotations_length, runtime_invisible_annotations_length);   // <underscore>
      cm->set_method_annotations(a);
   }
 
@@ -1951,6 +1958,7 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
                              runtime_invisible_parameter_annotations,
                              runtime_invisible_parameter_annotations_length,
                              CHECK);
+    gclog_or_tty->print_cr("ClassFileParser::copy_method_annotations(method=%s) %d runtime_visible_parameter_annotations and %d runtime_invisible_parameter_annotations", runtime_visible_parameter_annotations_length, runtime_invisible_parameter_annotations_length);   // <underscore>
     cm->set_parameter_annotations(a);
   }
 
@@ -1960,6 +1968,7 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
                              NULL,
                              0,
                              CHECK);
+    gclog_or_tty->print_cr("ClassFileParser::copy_method_annotations(method=%s) %d annotation_default", annotation_default_length);   // <underscore>
     cm->set_default_annotations(a);
   }
 
@@ -1970,6 +1979,7 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
                              runtime_invisible_type_annotations,
                              runtime_invisible_type_annotations_length,
                              CHECK);
+    gclog_or_tty->print_cr("ClassFileParser::copy_method_annotations(method=%s) %d runtime_visible_type_annotations and %d runtime_invisible_type_annotations", runtime_visible_type_annotations_length, runtime_invisible_type_annotations_length);   // <underscore>
     cm->set_type_annotations(a);
   }
 }
