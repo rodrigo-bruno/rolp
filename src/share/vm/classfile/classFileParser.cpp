@@ -3127,7 +3127,7 @@ AnnotationArray* ClassFileParser::assemble_annotations(u1* runtime_visible_annot
 }
 
 // <underscore> Added this method to assemble visible, alloc, and invisible type annotations.
-AnnotationArray* ClassFileParser::assemble_type_annotations(u1* runtime_visible_annotations,
+AnnotationArray* ClassFileParser::assemble_annotations(u1* runtime_visible_annotations,
                                                        int runtime_visible_annotations_length,
                                                        u1* runtime_alloc_annotations,
                                                        int runtime_alloc_annotations_length,
@@ -3139,7 +3139,7 @@ AnnotationArray* ClassFileParser::assemble_type_annotations(u1* runtime_visible_
       runtime_alloc_annotations != NULL) {
     annotations = MetadataFactory::new_array<u1>(_loader_data,
                                           runtime_visible_annotations_length +
-                                          runtime_alloc_annotations_lenght +
+                                          runtime_alloc_annotations_length +
                                           runtime_invisible_annotations_length,
                                           CHECK_(annotations));
     if (runtime_visible_annotations != NULL) {

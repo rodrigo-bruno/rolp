@@ -203,14 +203,78 @@ IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, ad
   method->print_name(gclog_or_tty);
   gclog_or_tty->print_cr("");
 
-  //AnnotationArray* aa = method->type_annotations();
-  AnnotationArray* aa = method->annotations();
-  //AnnotationArray* aa = method->annotation_default();
-  //AnnotationArray* aa = method->parameter_annotations();
+  AnnotationArray* aa = method->type_annotations();
   if(aa != NULL) {
-     for (int i = 0; i< aa->length(); i++) {
-       gclog_or_tty->print_cr("<underscore> annotations %d", aa->at(i));
-     }
+       u1* data = aa->data();
+       gclog_or_tty->print_cr("<underscore> type annotations array length = %d", aa->length());
+       // Get short (# of annotations)
+       gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", Bytes::get_Java_u2(data));
+       data += 2;
+       // byte target type (should be 68 == 0x44 == NEW)
+       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", *data);
+       data++;
+       // Get short (location, should be bci)
+       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", Bytes::get_Java_u2(data));
+       data += 2;
+       // byte loc data size -> N
+       gclog_or_tty->print_cr("<underscore> byte loc data size = %u", *data);
+       unsigned char n = *data;
+       data++;
+       // N bytes (regarding previous entry)
+       for (; n > 0; n--) { data++; }
+       // Get short (type index in constant pool, should be Old)
+       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu", Bytes::get_Java_u2(data));
+       data += 2;
+       // Get short (# of pair entries)
+       gclog_or_tty->print_cr("<underscore> number of pairs = %hu", Bytes::get_Java_u2(data));
+       unsigned short int n2 = Bytes::get_Java_u2(data);
+       data += 2;
+       for (; n2 > 0; n2--) {
+         // Get short (elem name index in constant pool)
+         gclog_or_tty->print_cr("<underscore> name index in cp = %hu", Bytes::get_Java_u2(data));
+         data += 2;
+         // byte tag (type of value: primitive, class, annotation, array, enum)
+         gclog_or_tty->print_cr("<underscore> type value tag = %u", *data);
+         unsigned char n3 = *data;
+         data++;
+          switch (n3) {
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'F':
+            case 'I':
+            case 'J':
+            case 'S':
+            case 'Z':
+            case 's':
+                gclog_or_tty->print_cr("<underscore> primitive index value = %hu", Bytes::get_Java_u2(data));
+                data += 2;
+                break;
+            case 'e':
+                gclog_or_tty->print_cr("<underscore> enum value");
+                data += 4;
+                break;
+            case 'c':
+                gclog_or_tty->print_cr("<underscore> class value");
+                data += 2;
+                break;
+            case '@':
+                // TODO - lead with this case.
+                gclog_or_tty->print_cr("<underscore> annotation value WARNING, not implemented yet!");
+                break;
+
+            case '[':
+                // TODO - lead with this case.
+                gclog_or_tty->print_cr("<underscore> array value WARNING, not implemented yet!");
+                break;
+            default:
+                gclog_or_tty->print_cr("<underscore> unknown value WARNING!");
+
+          }
+       }
+       for (int i = 0; i < aa->length(); i++) {
+         gclog_or_tty->print_cr("<underscore> type annotation[%d] = %u", i, aa->at(i));
+       }
   }
 IRT_END
 // </undescore>
