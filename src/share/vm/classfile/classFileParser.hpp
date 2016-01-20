@@ -435,6 +435,8 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                int runtime_invisible_parameter_annotations_length,
                                u1* runtime_visible_type_annotations,
                                int runtime_visible_type_annotations_length,
+                               u1* runtime_alloc_type_annotations,        // <underscore>
+                               int runtime_alloc_type_annotations_length, // <underscore>
                                u1* runtime_invisible_type_annotations,
                                int runtime_invisible_type_annotations_length,
                                u1* annotation_default,
