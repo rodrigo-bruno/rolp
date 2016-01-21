@@ -3127,6 +3127,7 @@ AnnotationArray* ClassFileParser::assemble_annotations(u1* runtime_visible_annot
 }
 
 // <underscore> Added this method to assemble visible, alloc, and invisible type annotations.
+// <underscore> Note: alloc annotations go first in the array.
 AnnotationArray* ClassFileParser::assemble_annotations(u1* runtime_visible_annotations,
                                                        int runtime_visible_annotations_length,
                                                        u1* runtime_alloc_annotations,
@@ -3142,14 +3143,14 @@ AnnotationArray* ClassFileParser::assemble_annotations(u1* runtime_visible_annot
                                           runtime_alloc_annotations_length +
                                           runtime_invisible_annotations_length,
                                           CHECK_(annotations));
-    if (runtime_visible_annotations != NULL) {
-      for (int i = 0; i < runtime_visible_annotations_length; i++) {
-        annotations->at_put(i, runtime_visible_annotations[i]);
-      }
-    }
     if (runtime_alloc_annotations != NULL) {
       for (int i = 0; i < runtime_alloc_annotations_length; i++) {
         annotations->at_put(i, runtime_alloc_annotations[i]);
+      }
+    }
+    if (runtime_visible_annotations != NULL) {
+      for (int i = 0; i < runtime_visible_annotations_length; i++) {
+        annotations->at_put(i, runtime_visible_annotations[i]);
       }
     }
     if (runtime_invisible_annotations != NULL) {

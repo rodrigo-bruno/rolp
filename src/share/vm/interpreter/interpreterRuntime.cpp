@@ -145,7 +145,7 @@ IRT_END
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
 
-IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index))
+IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp))
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
 
@@ -157,7 +157,8 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 
 // <undescore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p)", thread);
+  gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
+          thread,method, *bcp, method->bci_from(bcp));
   klass->print_on(gclog_or_tty);
 #endif
 // </undescore>
