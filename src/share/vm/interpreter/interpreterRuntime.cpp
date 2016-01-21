@@ -145,6 +145,49 @@ IRT_END
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
 
+// <underscore> This could be much improved.
+bool should_go_old(u1* data, u2 bci) {
+    u1 anno_target;
+    u2 anno_bci;
+    u1 dsize;
+    u2 anno_type_index;
+    char* type_name;
+
+    // byte target type (should be 68 == 0x44 == NEW)
+    anno_target = *data;
+    data++;
+    gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
+    if (anno_target != 68) {
+        return false;
+    }
+    // Get short (location, should be bci)
+    anno_bci = Bytes::get_Java_u2(data);
+    data += 2;
+    gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
+    if (anno_bci != bci) {
+        return false;
+    }
+
+    // byte loc data size (should be zero)
+    dsize = *data;
+    data++;
+    gclog_or_tty->print_cr("<underscore> byte loc data size = %u", dsize);
+    // dsize bytes to skip
+    for (int n = 0; n < dsize; n++) { data++; }
+
+    // Get short (type index in constant pool, should be Old)
+    anno_type_index = Bytes::get_Java_u2(data);
+    type_name = pool->string_at_noresolve(anno_type_index);
+    data += 2;
+    gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
+    if (!strncmp(type_name, "LOld;", 5)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp))
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
@@ -159,78 +202,25 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
           thread, method, *bcp, method->bci_from(bcp));
-
   klass->print_on(gclog_or_tty);
 
   AnnotationArray* aa = method->type_annotations();
   if(aa != NULL) {
-       u1* data = aa->data();
-       gclog_or_tty->print_cr("<underscore> type annotations array length = %d", aa->length());
-       // Get short (# of annotations)
-       gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", Bytes::get_Java_u2(data));
-       data += 2;
-       // byte target type (should be 68 == 0x44 == NEW)
-       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", *data);
-       data++;
-       // Get short (location, should be bci)
-       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", Bytes::get_Java_u2(data));
-       data += 2;
-       // byte loc data size -> N
-       gclog_or_tty->print_cr("<underscore> byte loc data size = %u", *data);
-       unsigned char n = *data;
-       data++;
-       // N bytes (regarding previous entry)
-       for (; n > 0; n--) { data++; }
-       // Get short (type index in constant pool, should be Old)
-       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", Bytes::get_Java_u2(data), pool->string_at_noresolve(Bytes::get_Java_u2(data)));
-       data += 2;
-       // Get short (# of pair entries)
-       gclog_or_tty->print_cr("<underscore> number of pairs = %hu", Bytes::get_Java_u2(data));
-       unsigned short int n2 = Bytes::get_Java_u2(data);
-       data += 2;
-       for (; n2 > 0; n2--) {
-         // Get short (elem name index in constant pool)
-         gclog_or_tty->print_cr("<underscore> name index in cp = %hu", Bytes::get_Java_u2(data));
-         data += 2;
-         // byte tag (type of value: primitive, class, annotation, array, enum)
-         gclog_or_tty->print_cr("<underscore> type value tag = %u", *data);
-         unsigned char n3 = *data;
-         data++;
-          switch (n3) {
-            case 'B':
-            case 'C':
-            case 'D':
-            case 'F':
-            case 'I':
-            case 'J':
-            case 'S':
-            case 'Z':
-            case 's':
-                gclog_or_tty->print_cr("<underscore> primitive index value = %hu", Bytes::get_Java_u2(data));
-                data += 2;
-                break;
-            case 'e':
-                gclog_or_tty->print_cr("<underscore> enum value");
-                data += 4;
-                break;
-            case 'c':
-                gclog_or_tty->print_cr("<underscore> class value");
-                data += 2;
-                break;
-            case '@':
-                // TODO - lead with this case.
-                gclog_or_tty->print_cr("<underscore> annotation value WARNING, not implemented yet!");
-                break;
+    gclog_or_tty->print_cr("<underscore> type annotations array length = %d", aa->length());
+    u1* data = aa->data();
 
-            case '[':
-                // TODO - lead with this case.
-                gclog_or_tty->print_cr("<underscore> array value WARNING, not implemented yet!");
-                break;
-            default:
-                gclog_or_tty->print_cr("<underscore> unknown value WARNING!");
-
-          }
-       }
+    // Get short (# of annotations)
+    u2 n_anno =Bytes::get_Java_u2(data)
+    gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", n_anno);
+    data += 2;
+    for (u2 i = 0; i < n_anno; i++) {
+      if (should_go_old(data, method->bci_from(bcp))) {
+          gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
+          break;
+      }
+      // <underscore> 6 is the number of bytes used a alloc annotation.
+      data += 6;
+    }
   }
 #endif
 // </undescore>
