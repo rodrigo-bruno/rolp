@@ -158,51 +158,9 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 // <undescore>
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
-          thread,method, *bcp, method->bci_from(bcp));
+          thread, method, *bcp, method->bci_from(bcp));
+
   klass->print_on(gclog_or_tty);
-#endif
-// </undescore>
-
-  // At this point the class may not be fully initialized
-  // because of recursive initialization. If it is fully
-  // initialized & has_finalized is not set, we rewrite
-  // it into its fast version (Note: no locking is needed
-  // here since this is an atomic byte write and can be
-  // done more than once).
-  //
-  // Note: In case of classes with has_finalized we don't
-  //       rewrite since that saves us an extra check in
-  //       the fast version which then would call the
-  //       slow version anyway (and do a call back into
-  //       Java).
-  //       If we have a breakpoint, then we don't rewrite
-  //       because the _breakpoint bytecode would be lost.
-  oop obj = klass->allocate_instance(CHECK);
-  thread->set_vm_result(obj);
-
-// <undescore>
-#if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> return InterpreterRuntime::_new(thread=%p)", thread);
-  klass->print_on(gclog_or_tty);
-#endif
-// </undescore>
-
-IRT_END
-
-// <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_new2(JavaThread* thread, ConstantPool* pool, int index, jint gen))
-  Klass* k_oop = pool->klass_at(index, CHECK);
-#if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new2 (pool=%p, index=%d, gen=%d)!", pool, index, gen);
-#endif
-IRT_END
-// </undescore>
-
-// <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, address bcp, jint gen))
-  gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d)!", method, *bcp, method->bci_from(bcp), gen);
-  method->print_name(gclog_or_tty);
-  gclog_or_tty->print_cr("");
 
   AnnotationArray* aa = method->type_annotations();
   if(aa != NULL) {
@@ -273,10 +231,50 @@ IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, ad
 
           }
        }
-       for (int i = 0; i < aa->length(); i++) {
-         gclog_or_tty->print_cr("<underscore> type annotation[%d] = %u", i, aa->at(i));
-       }
-  }
+
+#endif
+// </undescore>
+
+  // At this point the class may not be fully initialized
+  // because of recursive initialization. If it is fully
+  // initialized & has_finalized is not set, we rewrite
+  // it into its fast version (Note: no locking is needed
+  // here since this is an atomic byte write and can be
+  // done more than once).
+  //
+  // Note: In case of classes with has_finalized we don't
+  //       rewrite since that saves us an extra check in
+  //       the fast version which then would call the
+  //       slow version anyway (and do a call back into
+  //       Java).
+  //       If we have a breakpoint, then we don't rewrite
+  //       because the _breakpoint bytecode would be lost.
+  oop obj = klass->allocate_instance(CHECK);
+  thread->set_vm_result(obj);
+
+// <undescore>
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print("<underscore> return InterpreterRuntime::_new(thread=%p)", thread);
+  klass->print_on(gclog_or_tty);
+#endif
+// </undescore>
+
+IRT_END
+
+// <underscore>
+IRT_ENTRY(void, InterpreterRuntime::_new2(JavaThread* thread, ConstantPool* pool, int index, jint gen))
+  Klass* k_oop = pool->klass_at(index, CHECK);
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_new2 (pool=%p, index=%d, gen=%d)!", pool, index, gen);
+#endif
+IRT_END
+// </undescore>
+
+// <underscore>
+IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, address bcp, jint gen))
+  gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d)!", method, *bcp, method->bci_from(bcp), gen);
+  method->print_name(gclog_or_tty);
+  gclog_or_tty->print_cr("");
 IRT_END
 // </undescore>
 
