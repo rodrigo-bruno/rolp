@@ -182,7 +182,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
        // N bytes (regarding previous entry)
        for (; n > 0; n--) { data++; }
        // Get short (type index in constant pool, should be Old)
-       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu", Bytes::get_Java_u2(data));
+       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", Bytes::get_Java_u2(data), pool->string_at_noresolve(Bytes::get_Java_u2(data)));
        data += 2;
        // Get short (# of pair entries)
        gclog_or_tty->print_cr("<underscore> number of pairs = %hu", Bytes::get_Java_u2(data));
