@@ -1526,6 +1526,39 @@ void MacroAssembler::call_VM(Register oop_result,
   bind(E);
 }
 
+// <underscore>
+void MacroAssembler::call_VM(Register oop_result,
+                             address entry_point,
+                             Register arg_1,
+                             Register arg_2,
+                             Register arg_3,
+                             Register arg_4,
+                             bool check_exceptions) {
+  Label C, E;
+  call(C, relocInfo::none);
+  jmp(E);
+
+  bind(C);
+
+  LP64_ONLY(assert(arg_1 != c_rarg4, "smashed arg"));
+  LP64_ONLY(assert(arg_2 != c_rarg4, "smashed arg"));
+  LP64_ONLY(assert(arg_3 != c_rarg4, "smashed arg"));
+  pass_arg4(this, arg_4);
+
+  LP64_ONLY(assert(arg_1 != c_rarg3, "smashed arg"));
+  LP64_ONLY(assert(arg_2 != c_rarg3, "smashed arg"));
+  pass_arg3(this, arg_3);
+
+  LP64_ONLY(assert(arg_1 != c_rarg2, "smashed arg"));
+  pass_arg2(this, arg_2);
+
+  pass_arg1(this, arg_1);
+  call_VM_helper(oop_result, entry_point, 4, check_exceptions);
+  ret(0);
+
+  bind(E);
+}
+
 void MacroAssembler::call_VM(Register oop_result,
                              Register last_java_sp,
                              address entry_point,
