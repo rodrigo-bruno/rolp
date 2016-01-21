@@ -1936,10 +1936,6 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
 
   AnnotationArray* a;
 
-  // <underscore> DEBUG
-  gclog_or_tty->print_cr("ClassFileParser::copy_method_annotations(method=%s)", _cp->symbol_at(cm->name_index())->as_utf8());
-  // </underscore>
-
   if (runtime_visible_annotations_length +
       runtime_invisible_annotations_length > 0) {
      a = assemble_annotations(runtime_visible_annotations,
@@ -2102,9 +2098,6 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
     cfs->guarantee_more(6, CHECK_(nullHandle));  // method_attribute_name_index, method_attribute_length
     u2 method_attribute_name_index = cfs->get_u2_fast();
     u4 method_attribute_length = cfs->get_u4_fast();
-
-    gclog_or_tty->print_cr("ClassFileParser::parse_method method_attributes (name=%s, length=%u)", _cp->symbol_at(method_attribute_name_index)->as_utf8(), method_attribute_length);
-
     check_property(
       valid_symbol_at(method_attribute_name_index),
       "Invalid method attribute name index %u in class file %s",
@@ -2187,9 +2180,6 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
         calculated_attribute_length += code_attribute_length +
                                        sizeof(code_attribute_name_index) +
                                        sizeof(code_attribute_length);
-
-        gclog_or_tty->print_cr("ClassFileParser::parse_method code_attributes (name=%s, length=%u)", _cp->symbol_at(code_attribute_name_index)->as_utf8(), code_attribute_length);
-
         check_property(valid_symbol_at(code_attribute_name_index),
                        "Invalid code attribute name index %u in class file %s",
                        code_attribute_name_index,
@@ -2269,7 +2259,6 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
         // <underscore> Parsing runtime alloc type annotations
         else if (_major_version >= JAVA_8_VERSION &&
                  _cp->symbol_at(code_attribute_name_index) == vmSymbols::tag_runtime_visible_type_annotations()) {
-          gclog_or_tty->print_cr("<underscore> parsing runtime visible type annotations");
           if (runtime_alloc_type_annotations != NULL) {
             classfile_parse_error(
               "Multiple RuntimeAllocTypeAnnotations attributes for method in class file %s",
