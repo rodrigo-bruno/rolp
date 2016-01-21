@@ -231,7 +231,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 
           }
        }
-
+  }
 #endif
 // </undescore>
 
