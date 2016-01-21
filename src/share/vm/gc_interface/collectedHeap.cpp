@@ -603,7 +603,6 @@ oop CollectedHeap::Class_obj_allocate(KlassHandle klass, int size, KlassHandle r
   // <underscore>
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> CollectedHeap::Class_obj_allocate(size="SIZE_FORMAT") ", size);
-  //klass()->print_on(gclog_or_tty); -> throws sigsegv?
 #endif
 // </undescore>
   HeapWord* obj;

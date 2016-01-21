@@ -231,8 +231,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   assert(size >= 0, "int won't convert to size_t");
   // <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" length=%d) ", size, length);
-  klass()->print_on(gclog_or_tty);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" length=%d) ", size, length);
 #endif
 // </undescore>
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
@@ -251,7 +250,6 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   // <underscore>
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" length=%d) ", size, length);
-  //klass()->print_on(gclog_or_tty); -> throws sigsegv?
 #endif
 // </undescore>
   HeapWord* obj = common_mem_allocate_noinit(klass, size, CHECK_NULL);
