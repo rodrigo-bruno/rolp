@@ -3333,6 +3333,7 @@ void TemplateTable::_new() {
     }
   }
 
+  // <underscore> TODO - check if this case is important!
   // Allocation in the shared Eden, if allowed.
   //
   // rdx: instance size in bytes

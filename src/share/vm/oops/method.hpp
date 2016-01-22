@@ -635,6 +635,7 @@ class Method : public Metadata {
 #ifdef CC_INTERP
   static ByteSize result_index_offset()          { return byte_offset_of(Method, _result_index ); }
 #endif /* CC_INTERP */
+  static ByteSize alloc_anno_offset()                  { return byte_offset_of(Method, _alloc_anno); }
   static ByteSize from_compiled_offset()         { return byte_offset_of(Method, _from_compiled_entry); }
   static ByteSize code_offset()                  { return byte_offset_of(Method, _code); }
   static ByteSize method_data_offset()           {
