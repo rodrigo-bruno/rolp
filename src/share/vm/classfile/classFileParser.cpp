@@ -1977,10 +1977,6 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
                              runtime_invisible_type_annotations_length,
                              CHECK);
     cm->set_type_annotations(a);
-    // Sets alloc anno pointer in method object (means that we have alloc annos).
-    if (runtime_alloc_type_annotations_length > 0) {
-        cm->method()->set_alloc_anno(a);
-    }
   }
   // </underscore>
 }
@@ -2438,6 +2434,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
   m->set_constants(_cp);
   m->set_name_index(name_index);
   m->set_signature_index(signature_index);
+  m->set_alloc_anno(runtime_alloc_type_annotations); // <underscore>
 #ifdef CC_INTERP
   // hmm is there a gc issue here??
   ResultTypeFinder rtf(_cp->symbol_at(signature_index));
