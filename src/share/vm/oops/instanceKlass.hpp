@@ -730,6 +730,8 @@ class InstanceKlass: public Klass {
   }
   // allocation
   instanceOop allocate_instance(TRAPS);
+  // <underscore> Added new method that allows an allocation generation argument.
+  instanceOop allocate_instance(int alloc_gen, TRAPS);
 
   // additional member function to return a handle
   instanceHandle allocate_instance_handle(TRAPS)      { return instanceHandle(THREAD, allocate_instance(THREAD)); }

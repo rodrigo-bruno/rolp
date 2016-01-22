@@ -157,6 +157,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 
 // <undescore>
 #if DEBUG_OBJ_ALLOC
+  int alloc_gen = 0;
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
           thread, method, *bcp, method->bci_from(bcp));
   klass->print_on(gclog_or_tty);
@@ -188,6 +189,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
 
       if (anno_target == 68 && anno_bci == method->bci_from(bcp) && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
+        alloc_gen = 1;
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
         break;
       }
@@ -212,7 +214,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   //       Java).
   //       If we have a breakpoint, then we don't rewrite
   //       because the _breakpoint bytecode would be lost.
-  oop obj = klass->allocate_instance(CHECK);
+  oop obj = klass->allocate_instance(alloc_gen, CHECK);
   thread->set_vm_result(obj);
 
 // <undescore>

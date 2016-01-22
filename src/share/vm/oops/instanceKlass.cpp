@@ -1099,18 +1099,26 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
 
   KlassHandle h_k(THREAD, this);
 
-  // <underscore>
-  if(this->name()->equals("Item", 4)){
-    h_k.set_alloc_gen(1);
+  instanceOop i;
+
+  i = (instanceOop)CollectedHeap::obj_allocate(h_k, size, CHECK_NULL);
+  if (has_finalizer_flag && !RegisterFinalizersAtInit) {
+    i = register_finalizer(i, CHECK_NULL);
   }
-  else {
-    h_k.set_alloc_gen(0);
-  }
+  return i;
+}
+
+// <underscore> Added new method that allows an allocation generation argument.
+instanceOop InstanceKlass::allocate_instance(int alloc_gen, TRAPS) {
+  bool has_finalizer_flag = has_finalizer(); // Query before possible GC
+  int size = size_helper();  // Query before forming handle.
+
+  KlassHandle h_k(THREAD, this);
+  h_k.set_alloc_gen(alloc_gen);
 
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InstanceKlass::allocate_instance, klass->alloc_gen == %d", h_k.get_alloc_gen());
 #endif
-// </undescore>
 
   instanceOop i;
 
@@ -1120,6 +1128,7 @@ instanceOop InstanceKlass::allocate_instance(TRAPS) {
   }
   return i;
 }
+// </undescore>
 
 void InstanceKlass::check_valid_for_instantiation(bool throwError, TRAPS) {
   if (is_interface() || is_abstract()) {

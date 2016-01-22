@@ -3316,6 +3316,8 @@ void TemplateTable::_new() {
     Universe::heap()->supports_inline_contig_alloc() && !CMSIncrementalMode;
 
   if (UseTLAB) {
+    // TODO - method has new annotations? Yes -> call vm do decide tlab
+    // TODO - else, do nothing.
      __ jmp(slow_case); // <underscore> - force always slow path
     //__ movptr(rax, Address(r15_thread, in_bytes(JavaThread::tlab_top_offset())));
     //__ lea(rbx, Address(rax, rdx, Address::times_1));
