@@ -168,7 +168,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 #if DEBUG_ANNO_ALLOC
     gclog_or_tty->print_cr("<underscore> type annotations array length = %d: ", aa->length());
     for (int i = 0; i < aa->length(); i++) {
-        gclog_or_tty->print("%d", aa->at(i));
+        gclog_or_tty->print(" %d ", aa->at(i));
     }
     gclog_or_tty->print_cr("");
 #endif
@@ -205,8 +205,8 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 #endif
         break;
       }
-      // <underscore> 6 is the number of bytes used a alloc annotation.
-      data += 6;
+      // <underscore> 8 is the number of bytes used a alloc annotation.
+      data += 8;
     }
   }
 
