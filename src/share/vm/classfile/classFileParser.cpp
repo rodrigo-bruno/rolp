@@ -2434,7 +2434,6 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
   m->set_constants(_cp);
   m->set_name_index(name_index);
   m->set_signature_index(signature_index);
-  m->set_alloc_anno(runtime_alloc_type_annotations); // <underscore>
 #ifdef CC_INTERP
   // hmm is there a gc issue here??
   ResultTypeFinder rtf(_cp->symbol_at(signature_index));
@@ -2528,6 +2527,8 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
                           annotation_default,
                           annotation_default_length,
                           CHECK_NULL);
+
+  m->set_alloc_anno(m->constMethod()->type_annotations()); // <underscore>
 
   if (name == vmSymbols::finalize_method_name() &&
       signature == vmSymbols::void_method_signature()) {
