@@ -466,21 +466,22 @@ class Thread: public ThreadShadow {
   // Thread-Local Allocation Buffer (TLAB) support
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
 
-  // <underscore>
+  // <underscore> TODO - In future, _alloc_gen must be used to indicate the gen instance.
   ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
-    if (_alloc_gen && obj_type) {
-      if(!_tlabOldInitialized) {
-        _tlabOld.initialize();
-        _tlabOldInitialized = true;
+      switch (obj_type) {
+          case 0:
+              return _tlab;
+          case 1:
+          default:
+            if(!_tlabOldInitialized) {
+              _tlabOld.initialize();
+              _tlabOldInitialized = true;
 #if DEBUG_OBJ_ALLOC
-        gclog_or_tty->print_cr("<underscore> thread::tlab_gen(obj_type=%d) old tlab initialized", obj_type);
+              gclog_or_tty->print_cr("<underscore> thread::tlab_gen(obj_type=%d) old tlab initialized", obj_type);
 #endif
+            }
+            return _tlabOld;
       }
-      return _tlabOld;
-    }
-    else {
-      return _tlab;
-    }
   }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {

@@ -156,20 +156,25 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   klass->initialize(CHECK);
 
 // <undescore>
-#if DEBUG_OBJ_ALLOC
   int alloc_gen = 0;
+#if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
           thread, method, *bcp, method->bci_from(bcp));
+#endif
   klass->print_on(gclog_or_tty);
 
   AnnotationArray* aa = method->type_annotations();
   if(aa != NULL) {
+#if DEBUG_ANNO_ALLOC
     gclog_or_tty->print_cr("<underscore> type annotations array length = %d", aa->length());
+#endif
     u1* data = aa->data();
 
     // Get short (# of annotations)
     u2 n_anno =Bytes::get_Java_u2(data);
+#if DEBUG_ANNO_ALLOC
     gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", n_anno);
+#endif
     data += 2;
     for (u2 i = 0; i < n_anno; i++) {
       // byte target type (should be 68 == 0x44 == NEW)
@@ -183,21 +188,24 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
       // Get char* (type name, should be LOld;)
       char* type_name = pool->string_at_noresolve(anno_type_index);
 
+#if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
       gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
-
+#endif
       if (anno_target == 68 && anno_bci == method->bci_from(bcp) && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
         alloc_gen = 1;
+#if DEBUG_ANNO_ALLOC
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
+#endif
         break;
       }
       // <underscore> 6 is the number of bytes used a alloc annotation.
       data += 6;
     }
   }
-#endif
+
 // </undescore>
 
   // At this point the class may not be fully initialized
