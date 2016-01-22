@@ -145,49 +145,6 @@ IRT_END
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
 
-// <underscore> This could be much improved.
-bool should_go_old(u1* data, u2 bci) {
-    u1 anno_target;
-    u2 anno_bci;
-    u1 dsize;
-    u2 anno_type_index;
-    char* type_name;
-
-    // byte target type (should be 68 == 0x44 == NEW)
-    anno_target = *data;
-    data++;
-    gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
-    if (anno_target != 68) {
-        return false;
-    }
-    // Get short (location, should be bci)
-    anno_bci = Bytes::get_Java_u2(data);
-    data += 2;
-    gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
-    if (anno_bci != bci) {
-        return false;
-    }
-
-    // byte loc data size (should be zero)
-    dsize = *data;
-    data++;
-    gclog_or_tty->print_cr("<underscore> byte loc data size = %u", dsize);
-    // dsize bytes to skip
-    for (int n = 0; n < dsize; n++) { data++; }
-
-    // Get short (type index in constant pool, should be Old)
-    anno_type_index = Bytes::get_Java_u2(data);
-    type_name = pool->string_at_noresolve(anno_type_index);
-    data += 2;
-    gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
-    if (!strncmp(type_name, "LOld;", 5)) {
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
 IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp))
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
@@ -210,13 +167,29 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
     u1* data = aa->data();
 
     // Get short (# of annotations)
-    u2 n_anno =Bytes::get_Java_u2(data)
+    u2 n_anno =Bytes::get_Java_u2(data);
     gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", n_anno);
     data += 2;
     for (u2 i = 0; i < n_anno; i++) {
-      if (should_go_old(data, method->bci_from(bcp))) {
-          gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
-          break;
+      // byte target type (should be 68 == 0x44 == NEW)
+      u1 anno_target = *data;
+      // Get short (location, should be bci)
+      u2 anno_bci = Bytes::get_Java_u2(data + 1);
+      // byte loc data size (should be zero)
+      u1 dsize = *(data + 3);
+      // Get short (type index in constant pool, should be Old)
+      u2 anno_type_index = Bytes::get_Java_u2(data + 4);
+      // Get char* (type name, should be LOld;)
+      char* type_name = pool->string_at_noresolve(anno_type_index);
+
+      gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
+      gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
+      gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
+      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
+
+      if (anno_target == 68 && anno_bci == method->bci_from(bcp) && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
+        gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
+        break;
       }
       // <underscore> 6 is the number of bytes used a alloc annotation.
       data += 6;
