@@ -164,7 +164,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   klass->print_on(gclog_or_tty);
 
   AnnotationArray* aa = method->type_annotations();
-  if(aa != NULL) {
+  if(aa != NULL && method->alloc_anno() != NULL) {
 #if DEBUG_ANNO_ALLOC
     gclog_or_tty->print_cr("<underscore> type annotations array length = %d: ", aa->length());
     for (int i = 0; i < aa->length(); i++) {

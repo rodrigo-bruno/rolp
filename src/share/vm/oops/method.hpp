@@ -116,6 +116,7 @@ class Method : public Metadata {
                     _hidden           : 1,
                     _dont_inline      : 1,
                                       : 3;
+  AnnotationArray* _alloc_anno; // <underscore> NULL if there is no alloc anno.
 
 #ifndef PRODUCT
   int               _compiled_invocation_count;  // Number of nmethod invocations so far (for perf. debugging)
@@ -184,6 +185,9 @@ class Method : public Metadata {
   Symbol* generic_signature() const              { int idx = generic_signature_index(); return ((idx != 0) ? constants()->symbol_at(idx) : (Symbol*)NULL); }
   int generic_signature_index() const            { return constMethod()->generic_signature_index(); }
   void set_generic_signature_index(int index)    { constMethod()->set_generic_signature_index(index); }
+
+  AnnotationArray* alloc_anno()                  { return _alloc_anno; }  // <underscore>
+  void set_alloc_anno(AnnotationArray* ptr)      { _alloc_anno = ptr; }   // <underscore>
 
   // annotations support
   AnnotationArray* annotations() const           {

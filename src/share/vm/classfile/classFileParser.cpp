@@ -1977,6 +1977,10 @@ void ClassFileParser::copy_method_annotations(ConstMethod* cm,
                              runtime_invisible_type_annotations_length,
                              CHECK);
     cm->set_type_annotations(a);
+    // Sets alloc anno pointer in method object (means that we have alloc annos).
+    if (runtime_alloc_type_annotations_length > 0) {
+        cm->method()->set_alloc_anno(a);
+    }
   }
   // </underscore>
 }
