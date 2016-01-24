@@ -3258,11 +3258,32 @@ void TemplateTable::_new() {
   Label post_alloc; // <underscore>
 
   // <underscore>
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
   __ push(c_rarg1);
   __ get_method(c_rarg1);
   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new3), c_rarg1, r13);
   __ pop(c_rarg1);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+
   // </underscore>
+
+
+// <underscore>
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
+    __ get_constant_pool(rsi);
+    __ mov64(rdx, 0);
+    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+// </underscore>
 
   __ get_cpool_and_tags(rsi, rax);
   // Make sure the class we're about to instantiate has been resolved.
@@ -3272,6 +3293,19 @@ void TemplateTable::_new() {
   __ cmpb(Address(rax, rdx, Address::times_1, tags_offset),
           JVM_CONSTANT_Class);
   __ jcc(Assembler::notEqual, slow_case);
+
+// <underscore>
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
+    __ get_constant_pool(rsi);
+    __ mov64(rdx, 1);
+    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+// </underscore>
 
   // get InstanceKlass
   __ movptr(rsi, Address(rsi, rdx,
@@ -3284,6 +3318,20 @@ void TemplateTable::_new() {
           InstanceKlass::fully_initialized);
   __ jcc(Assembler::notEqual, slow_case);
 
+// <underscore>
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
+    __ get_constant_pool(rsi);
+    __ mov64(rdx, 2);
+    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+// </underscore>
+
+
   // get instance_size in InstanceKlass (scaled to a count of bytes)
   __ movl(rdx,
           Address(rsi,
@@ -3291,6 +3339,20 @@ void TemplateTable::_new() {
   // test to see if it has a finalizer or is malformed in some way
   __ testl(rdx, Klass::_lh_instance_slow_path_bit);
   __ jcc(Assembler::notZero, slow_case);
+
+// <underscore>
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
+    __ get_constant_pool(rsi);
+    __ mov64(rdx, 3);
+    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+// </underscore>
+
 
   // Allocate the instance
   // 1) Try to allocate in the TLAB
@@ -3303,17 +3365,15 @@ void TemplateTable::_new() {
 
   if (UseTLAB) {
     // <underscore>
-    __ get_method(rax);
-    __ movptr(rax, Address(rax, in_bytes(Method::alloc_anno_offset())));
-    __ testptr(rax, rax);
-    __ jcc(Assembler::zero, young_gen);
-
+    __ get_method(rbx);
+    __ cmpptr(Address(rbx, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
+    __ jcc(Assembler::equal, young_gen);
 
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
     __ get_constant_pool(rsi);
-    __ mov64(rdx, 1);
+    __ mov64(rdx, 4);
     __ get_unsigned_2_byte_index_at_bcp(rax, 1);
     __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
     __ pop(rax);
@@ -3322,7 +3382,7 @@ void TemplateTable::_new() {
 
     // TODO - if not zero, call vm to fix gen tlab end and top offset
     //__ jump(post_alloc);
-    __ jump(slow_case);
+    __ jmp(slow_case);
     __ bind(young_gen);
         // </underscore>
 
@@ -3433,6 +3493,20 @@ void TemplateTable::_new() {
   // slow case
   __ bind(slow_case);
 
+  // <undescore>
+   __ push(rsi);
+   __ push(rdx);
+   __ push(rax);
+  __ get_constant_pool(rsi);
+  __ mov64(rdx, 5);
+  __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+   __ pop(rax);
+   __ pop(rdx);
+   __ pop(rsi);
+  // </underscore>
+
+
   __ get_constant_pool(c_rarg1);
   __ get_unsigned_2_byte_index_at_bcp(c_rarg2, 1);
   __ get_method(c_rarg3);
@@ -3448,16 +3522,13 @@ void TemplateTable::_new() {
    __ push(rdx);
    __ push(rax);
   __ get_constant_pool(rsi);
-  __ mov64(rdx, 3);
+  __ mov64(rdx, 6);
   __ get_unsigned_2_byte_index_at_bcp(rax, 1);
    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
    __ pop(rax);
    __ pop(rdx);
    __ pop(rsi);
   // </underscore>
-
-  // <underscore>
-  gclog_or_tty->print_cr("<underscore> end template new!");
 
 }
 
