@@ -3275,19 +3275,6 @@ void TemplateTable::_new() {
   __ movptr(rsi, Address(rsi, rdx,
             Address::times_8, sizeof(ConstantPool)));
 
-  // <undescore>
-   __ push(rsi);
-   __ push(rdx);
-   __ push(rax);
-  __ get_constant_pool(rsi);
-  __ mov64(rdx, 1);
-  __ get_unsigned_2_byte_index_at_bcp(rax, 1);
-   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
-   __ pop(rax);
-   __ pop(rdx);
-   __ pop(rsi);
-  // </underscore>
-
   // make sure klass is initialized & doesn't have finalizer
   // make sure klass is fully initialized
   __ cmpb(Address(rsi,
@@ -3308,9 +3295,6 @@ void TemplateTable::_new() {
   // 2) if fail and the object is large allocate in the shared Eden
   // 3) if the above fails (or is not applicable), go to a slow case
   // (creates a new TLAB, etc.)
-  
-  // <underscore>
-  gclog_or_tty->print_cr("<underscore> start template new!");
   
   const bool allow_shared_alloc =
     Universe::heap()->supports_inline_contig_alloc() && !CMSIncrementalMode;
@@ -3428,22 +3412,9 @@ void TemplateTable::_new() {
   // slow case
   __ bind(slow_case);
 
-  // <undescore>
-   __ push(rsi);
-   __ push(rdx);
-   __ push(rax);
-  __ get_constant_pool(rsi);
-  __ mov64(rdx, 2);
-  __ get_unsigned_2_byte_index_at_bcp(rax, 1);
-   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
-   __ pop(rax);
-   __ pop(rdx);
-   __ pop(rsi);
-  // </underscore>
-
   __ get_constant_pool(c_rarg1);
   __ get_unsigned_2_byte_index_at_bcp(c_rarg2, 1);
-  __ get_method(c_rarg3); // <underscore> - TODO - check if there is any problem with c_arg3
+  __ get_method(c_rarg3);
    // <underscore> added c_rarg3 (current method) and r13 (byte code pointer).
   call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new), c_rarg1, c_rarg2, c_rarg3, r13);
   __ verify_oop(rax);

@@ -249,7 +249,7 @@ IRT_END
 
 // <underscore>
 IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, address bcp, jint gen))
-  gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d)!", method, *bcp, method->bci_from(bcp), gen);
+  gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d, method->alloc_anno=%p)!", method, *bcp, method->bci_from(bcp), gen, method->alloc_anno());
   method->print_name(gclog_or_tty);
   gclog_or_tty->print_cr("");
 IRT_END
