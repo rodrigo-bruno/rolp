@@ -3254,6 +3254,8 @@ void TemplateTable::_new() {
   Label initialize_header;
   Label initialize_object; // including clearing the fields
   Label allocate_shared;
+  Label young_gen;  // <underscore>
+  Label post_alloc; // <underscore>
 
   // <underscore>
   __ push(c_rarg1);
@@ -3304,14 +3306,33 @@ void TemplateTable::_new() {
     __ get_method(rax);
     __ movptr(rax, Address(rax, in_bytes(Method::alloc_anno_offset())));
     __ testptr(rax, rax);
-    __ jcc(Assembler::notZero, slow_case);
+    __ jcc(Assembler::zero, young_gen);
+
+
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
+    __ get_constant_pool(rsi);
+    __ mov64(rdx, 1);
+    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+
     // TODO - if not zero, call vm to fix gen tlab end and top offset
-    // </underscore>
+    //__ jump(post_alloc);
+    __ jump(slow_case);
+    __ bind(young_gen);
+        // </underscore>
+
     __ movptr(rax, Address(r15_thread, in_bytes(JavaThread::tlab_top_offset())));
     __ lea(rbx, Address(rax, rdx, Address::times_1));
     __ cmpptr(rbx, Address(r15_thread, in_bytes(JavaThread::tlab_end_offset())));
     __ jcc(Assembler::above, allow_shared_alloc ? allocate_shared : slow_case);
     __ movptr(Address(r15_thread, in_bytes(JavaThread::tlab_top_offset())), rbx);
+
+    __ bind(post_alloc); // <underscore>
     if (ZeroTLAB) {
       // the fields have been already cleared
       __ jmp(initialize_header);
