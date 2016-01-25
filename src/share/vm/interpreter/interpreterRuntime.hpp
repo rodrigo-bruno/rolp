@@ -77,9 +77,10 @@ class InterpreterRuntime: AllStatic {
   static void    resolve_ldc   (JavaThread* thread, Bytecodes::Code bytecode);
 
   // Allocation
-  static void    _new          (JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp);
-  static void    _new2         (JavaThread* thread, ConstantPool* pool, int index, jint gen);
-  static void    _new3         (JavaThread* thread, Method* method, address bcp, jint gen);
+  static void    _new          (JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp);    // <underscore>
+  static void    _get_gen_tlab (JavaThread* thread, ConstantPool* pool, Method*, address bcp);                      // <underscore>
+  static void    _new2         (JavaThread* thread, ConstantPool* pool, int index, jint gen);                       // <underscore>
+  static void    _new3         (JavaThread* thread, Method* method, address bcp, jint gen);                         // <underscore>
   static void    newarray      (JavaThread* thread, BasicType type, jint size);
   static void    anewarray     (JavaThread* thread, ConstantPool* pool, int index, jint size);
   static void    multianewarray(JavaThread* thread, jint* first_size_address);

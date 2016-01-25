@@ -3257,7 +3257,8 @@ void TemplateTable::_new() {
   Label young_gen;  // <underscore>
   Label post_alloc; // <underscore>
 
-  // <underscore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
@@ -3268,11 +3269,11 @@ void TemplateTable::_new() {
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
+#endif
 
-  // </underscore>
 
-
-// <underscore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
@@ -3283,7 +3284,7 @@ void TemplateTable::_new() {
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
-// </underscore>
+#endif
 
   __ get_cpool_and_tags(rsi, rax);
   // Make sure the class we're about to instantiate has been resolved.
@@ -3294,7 +3295,8 @@ void TemplateTable::_new() {
           JVM_CONSTANT_Class);
   __ jcc(Assembler::notEqual, slow_case);
 
-// <underscore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
@@ -3305,7 +3307,7 @@ void TemplateTable::_new() {
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
-// </underscore>
+#endif
 
   // get InstanceKlass
   __ movptr(rsi, Address(rsi, rdx,
@@ -3318,7 +3320,8 @@ void TemplateTable::_new() {
           InstanceKlass::fully_initialized);
   __ jcc(Assembler::notEqual, slow_case);
 
-// <underscore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
@@ -3329,7 +3332,7 @@ void TemplateTable::_new() {
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
-// </underscore>
+#endif
 
 
   // get instance_size in InstanceKlass (scaled to a count of bytes)
@@ -3340,7 +3343,8 @@ void TemplateTable::_new() {
   __ testl(rdx, Klass::_lh_instance_slow_path_bit);
   __ jcc(Assembler::notZero, slow_case);
 
-// <underscore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
@@ -3351,7 +3355,7 @@ void TemplateTable::_new() {
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
-// </underscore>
+#endif
 
 
   // Allocate the instance
@@ -3369,6 +3373,8 @@ void TemplateTable::_new() {
     __ cmpptr(Address(rbx, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, young_gen);
 
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
@@ -3379,12 +3385,17 @@ void TemplateTable::_new() {
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
-
-    // TODO - if not zero, call vm to fix gen tlab end and top offset
-    //__ jump(post_alloc);
-    __ jmp(slow_case);
+#endif
+    // <underscore>
+    call_VM(rbx, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rsi, rbx, r13);
+    __ movptr(rax, Address(rbx, in_bytes(ThreadLocalAllocBuffer::top_offset())));
+    __ lea(rbx, Address(rax, rdx, Address::times_1));
+    __ cmpptr(rbx, Address(rbx, in_bytes(ThreadLocalAllocBuffer::end_offset())));
+    __ jcc(Assembler::above, slow_case); // TODO - check what happens here!
+    __ movptr(Address(rbx, in_bytes(ThreadLocalAllocBuffer::top_offset())), rbx);
+    __ jump(post_alloc);
     __ bind(young_gen);
-        // </underscore>
+    // </underscore>
 
     __ movptr(rax, Address(r15_thread, in_bytes(JavaThread::tlab_top_offset())));
     __ lea(rbx, Address(rax, rdx, Address::times_1));
@@ -3493,7 +3504,8 @@ void TemplateTable::_new() {
   // slow case
   __ bind(slow_case);
 
-  // <undescore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
    __ push(rsi);
    __ push(rdx);
    __ push(rax);
@@ -3504,7 +3516,7 @@ void TemplateTable::_new() {
    __ pop(rax);
    __ pop(rdx);
    __ pop(rsi);
-  // </underscore>
+#endif
 
 
   __ get_constant_pool(c_rarg1);
@@ -3517,7 +3529,8 @@ void TemplateTable::_new() {
   // continue
   __ bind(done);
 
-  // <undescore>
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
    __ push(rsi);
    __ push(rdx);
    __ push(rax);
@@ -3528,7 +3541,7 @@ void TemplateTable::_new() {
    __ pop(rax);
    __ pop(rdx);
    __ pop(rsi);
-  // </underscore>
+#endif
 
 }
 
