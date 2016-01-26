@@ -276,6 +276,7 @@ class Thread: public ThreadShadow {
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
   // <underscore>
+  ThreadLocalAllocBuffer* _tlabGen;             // The tlab chosen for the last allocation.
   ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
   bool _tlabOldInitialized;                     // true if the old tlab is already initialized.
   int _alloc_gen;                               // Indicates in which TLABs objects should be allocated.
@@ -470,7 +471,7 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
       switch (obj_type) {
           case 0:
-              return _tlab;
+              _tlabGen = &_tlab;
           case 1:
           default:
             if(!_tlabOldInitialized) {
@@ -480,8 +481,9 @@ class Thread: public ThreadShadow {
               gclog_or_tty->print_cr("<underscore> thread::tlab_gen(obj_type=%d) old tlab initialized", obj_type);
 #endif
             }
-            return _tlabOld;
+            _tlabGen = &_tlabOld;
       }
+      return *_tlabGen;
   }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
@@ -672,6 +674,7 @@ public:
 
   static ByteSize stack_base_offset()            { return byte_offset_of(Thread, _stack_base ); }
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
+  static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _tlabGen ); } // <underscore>
 
   // <underscore> - TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \

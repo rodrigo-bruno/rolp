@@ -3387,13 +3387,18 @@ void TemplateTable::_new() {
     __ pop(rsi);
 #endif
     // <underscore>
-    call_VM(rbx, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rsi, rbx, r13);
-    __ movptr(rax, Address(rbx, in_bytes(ThreadLocalAllocBuffer::top_offset())));
+    // rsi -> constant pool; rbx -> method; r13 -> bcp
+    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rsi, rbx, r13);
+    // Load tlabGen into rcx
+    __ movptr(rcx, Address(r15_thread, in_bytes(JavaThread::gen_tlab_offset())));
+
+    __ movptr(rax, Address(rcx, in_bytes(ThreadLocalAllocBuffer::top_offset())));
     __ lea(rbx, Address(rax, rdx, Address::times_1));
-    __ cmpptr(rbx, Address(rbx, in_bytes(ThreadLocalAllocBuffer::end_offset())));
-    __ jcc(Assembler::above, slow_case); // TODO - check what happens here!
-    __ movptr(Address(rbx, in_bytes(ThreadLocalAllocBuffer::top_offset())), rbx);
-    __ jump(post_alloc);
+    __ cmpptr(rbx, Address(rcx, in_bytes(ThreadLocalAllocBuffer::end_offset())));
+    __ jcc(Assembler::above, slow_case);
+    __ movptr(Address(rcx, in_bytes(ThreadLocalAllocBuffer::top_offset())), rbx);
+
+    __ jmp(post_alloc);
     __ bind(young_gen);
     // </underscore>
 

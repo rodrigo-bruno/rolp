@@ -142,7 +142,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_ldc(JavaThread* thread, Bytecodes::C
 IRT_END
 
 
-int _get_alloc_gen(ConstantPool* pool, Method* method, address bcp) {
+int get_alloc_gen(ConstantPool* pool, Method* method, address bcp) {
   int alloc_gen = 0;
   AnnotationArray* aa = method->type_annotations();
   if(aa != NULL && method->alloc_anno() != NULL) {
@@ -207,7 +207,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   klass->initialize(CHECK);
 
 // <undescore>
-  int alloc_gen = _get_alloc_gen(pool, method, bcp);
+  int alloc_gen = get_alloc_gen(pool, method, bcp);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
           thread, method, *bcp, method->bci_from(bcp));
@@ -243,13 +243,12 @@ IRT_END
 
   // <underscore>
 IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread, ConstantPool* pool, Method* method, address bcp))
-  int alloc_gen = _get_alloc_gen(pool, method, bcp);
-  if (alloc_gen) {
-      thread->set_vm_result(thread->tlab_gen(alloc_gen));
-  }
-  else {
-      thread->set_vm_result(thread->tlab());
-  }
+  // get_alloc_gen will look into the annotaions and select the correct allocation gen
+  // 0 means young (eden); >0 means old.
+  int alloc_gen = get_alloc_gen(pool, method, bcp);
+  // tlab_gen will update the Thread's internal pointer to the allocation tlab
+  thread->tlab_gen(alloc_gen);
+
 IRT_END
 // </undescore>
 
