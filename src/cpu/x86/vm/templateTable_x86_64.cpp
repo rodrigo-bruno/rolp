@@ -3373,38 +3373,24 @@ void TemplateTable::_new() {
     __ cmpptr(Address(rax, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, young_gen);
 
-// <underscore> DEBUG block
-#if DEBUG_ASM_ALLOC
-    __ push(rsi);
-    __ push(rdx);
-    __ push(rax);
-    __ get_constant_pool(rsi);
-    //__ mov64(rdx, 4);
-    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
-    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
-    __ pop(rax);
-    __ pop(rdx);
-    __ pop(rsi);
-#endif
-    // <underscore>
-
-    // rax -> method; r13 -> bcp
-    // <underscore> Note: it seems that we need to save all registers that are
-    // being before performing a vm call.
-    // TODO - check for other registers that need to be saved!
-    __ push(rdx); // save obj size
+    __ push(rdx); // save instance size
     __ push(rsi); // save klass
+    // This call will update the tlabGen in current thread. rax -> method; r13 -> bcp
     __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rax, r13);
     __ pop(rsi);
     __ pop(rdx);
 
     // Load tlabGen into rcx
     __ movptr(rcx, Address(r15_thread, in_bytes(JavaThread::gen_tlab_offset())));
-
+    // Load tlabGen->top into rax
     __ movptr(rax, Address(rcx, in_bytes(ThreadLocalAllocBuffer::top_offset())));
+    // rbx = rax + rdx (instance size)
     __ lea(rbx, Address(rax, rdx, Address::times_1));
+    // compare new top with tlabGen->end
     __ cmpptr(rbx, Address(rcx, in_bytes(ThreadLocalAllocBuffer::end_offset())));
+    // if above -> go to slow case
     __ jcc(Assembler::above, slow_case);
+    // else, tlabGen->top = rbx
     __ movptr(Address(rcx, in_bytes(ThreadLocalAllocBuffer::top_offset())), rbx);
 
 // <underscore> DEBUG block

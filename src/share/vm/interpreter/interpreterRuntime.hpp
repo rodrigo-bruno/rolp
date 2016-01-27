@@ -79,7 +79,6 @@ class InterpreterRuntime: AllStatic {
   // Allocation
   static void    _new          (JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp);    // <underscore>
   static void    _get_gen_tlab (JavaThread* thread, Method*, address bcp);                      		    // <underscore>
-  static void    _print_tlab (JavaThread* thread, ThreadLocalAllocBuffer* tlab, int obj_size);                      // <underscore>
   static void    _new2         (JavaThread* thread, ConstantPool* pool, int index, jint gen);                       // <underscore>
   static void    _new3         (JavaThread* thread, Method* method, address bcp, jint gen);                         // <underscore>
   static void    newarray      (JavaThread* thread, BasicType type, jint size);

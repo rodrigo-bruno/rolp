@@ -268,14 +268,6 @@ IRT_END
 // </undescore>
 
 // <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_print_tlab(JavaThread* thread, ThreadLocalAllocBuffer* tlab, int obj_size))
-#if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_print_tlab=%p top=%p obj_size=%d", tlab, tlab->top(), obj_size);
-#endif
-IRT_END
-// </undescore>
-
-// <underscore>
 IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, address bcp, jint gen))
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d, method->alloc_anno=%p)!", method, *bcp, method->bci_from(bcp), gen, method->alloc_anno());
   method->print_name(gclog_or_tty);
