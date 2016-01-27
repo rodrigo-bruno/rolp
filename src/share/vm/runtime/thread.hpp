@@ -472,6 +472,7 @@ class Thread: public ThreadShadow {
       switch (obj_type) {
           case 0:
               _tlabGen = &_tlab;
+              break;
           case 1:
           default:
             if(!_tlabOldInitialized) {

@@ -3369,8 +3369,8 @@ void TemplateTable::_new() {
 
   if (UseTLAB) {
     // <underscore>
-    __ get_method(rbx);
-    __ cmpptr(Address(rbx, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
+    __ get_method(rax);
+    __ cmpptr(Address(rax, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, young_gen);
 
 // <underscore> DEBUG block
@@ -3379,7 +3379,7 @@ void TemplateTable::_new() {
     __ push(rdx);
     __ push(rax);
     __ get_constant_pool(rsi);
-    __ mov64(rdx, 4);
+    //__ mov64(rdx, 4);
     __ get_unsigned_2_byte_index_at_bcp(rax, 1);
     __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
     __ pop(rax);
@@ -3387,8 +3387,17 @@ void TemplateTable::_new() {
     __ pop(rsi);
 #endif
     // <underscore>
-    // rsi -> constant pool; rbx -> method; r13 -> bcp
-    call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rsi, rbx, r13);
+
+    // rax -> method; r13 -> bcp
+    // <underscore> Note: it seems that we need to save all registers that are
+    // being before performing a vm call.
+    // TODO - check for other registers that need to be saved!
+    __ push(rdx); // save obj size
+    __ push(rsi); // save klass
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rax, r13);
+    __ pop(rsi);
+    __ pop(rdx);
+
     // Load tlabGen into rcx
     __ movptr(rcx, Address(r15_thread, in_bytes(JavaThread::gen_tlab_offset())));
 
@@ -3397,6 +3406,21 @@ void TemplateTable::_new() {
     __ cmpptr(rbx, Address(rcx, in_bytes(ThreadLocalAllocBuffer::end_offset())));
     __ jcc(Assembler::above, slow_case);
     __ movptr(Address(rcx, in_bytes(ThreadLocalAllocBuffer::top_offset())), rbx);
+
+// <underscore> DEBUG block
+#if DEBUG_ASM_ALLOC
+    __ push(rsi);
+    __ push(rdx);
+    __ push(rax);
+    __ get_constant_pool(rsi);
+    //__ mov64(rdx, 4);
+    __ get_unsigned_2_byte_index_at_bcp(rax, 1);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new2), rsi, rax, rdx);
+    __ pop(rax);
+    __ pop(rdx);
+    __ pop(rsi);
+#endif
+    // <underscore>
 
     __ jmp(post_alloc);
     __ bind(young_gen);
