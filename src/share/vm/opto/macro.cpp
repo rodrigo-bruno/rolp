@@ -1151,6 +1151,60 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 // slow-path call.
 //
 
+// <underscore> This is an exact copy of the method already in
+// interpreterRuntime.ccp
+int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
+  int alloc_gen = 0;
+  AnnotationArray* aa = method->type_annotations();
+  if(aa != NULL && method->alloc_anno() != NULL) {
+#if DEBUG_ANNO_ALLOC
+    gclog_or_tty->print_cr("<underscore> type annotations array length = %d: ", aa->length());
+    for (int i = 0; i < aa->length(); i++) {
+      gclog_or_tty->print(" %d ", aa->at(i));
+    }
+    gclog_or_tty->print_cr("");
+#endif
+    u1* data = aa->data();
+
+    // Get short (# of annotations)
+    u2 n_anno =Bytes::get_Java_u2(data);
+#if DEBUG_ANNO_ALLOC
+    gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", n_anno);
+#endif
+    data += 2;
+    for (u2 i = 0; i < n_anno; i++) {
+      // byte target type (should be 68 == 0x44 == NEW)
+      u1 anno_target = *data;
+      // Get short (location, should be bci)
+      u2 anno_bci = Bytes::get_Java_u2(data + 1);
+      // byte loc data size (should be zero)
+      u1 dsize = *(data + 3);
+      // Get short (type index in constant pool, should be Old)
+      u2 anno_type_index = Bytes::get_Java_u2(data + 4);
+      // Get char* (type name, should be LOld;)
+      char* type_name = pool->string_at_noresolve(anno_type_index);
+
+#if DEBUG_ANNO_ALLOC
+      gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
+      gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
+      gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
+      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
+#endif
+      if (anno_target == 68 && anno_bci == bci && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
+        alloc_gen = 1;
+#if DEBUG_ANNO_ALLOC
+        gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
+#endif
+        break;
+      }
+      // <underscore> 8 is the number of bytes used a alloc annotation.
+      data += 8;
+    }
+  }
+  return alloc_gen;
+}
+// </underscore>
+
 void PhaseMacroExpand::expand_allocate_common(
             AllocateNode* alloc, // allocation node to be expanded
             Node* length,  // array length for an array allocation
@@ -1158,9 +1212,14 @@ void PhaseMacroExpand::expand_allocate_common(
             address slow_call_address  // Address of slow call
     )
 {
-  gclog_or_tty->print("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p)",
-    alloc->jvms()->bci(), alloc->jvms()->method()); // <underscore> DEBUG
+  int bci = alloc->jvms()->bci(); // <underscore>
+  Method* m = alloc->jvms()->method()->get_Method(); // <underscore>
+  ConstantPool* cp = m->constants(); // <underscore>
+  int alloc_gen = get_alloc_gen_2(cp, m, bci);
+  gclog_or_tty->print("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
+    alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen); // <underscore> DEBUG
   alloc->jvms()->method()->print(gclog_or_tty); // <underscore> DEBUG
+
   Node* ctrl = alloc->in(TypeFunc::Control);
   Node* mem  = alloc->in(TypeFunc::Memory);
   Node* i_o  = alloc->in(TypeFunc::I_O);
@@ -1196,6 +1255,10 @@ void PhaseMacroExpand::expand_allocate_common(
     initial_slow_test = NULL;
   }
 
+  // <underscore> I am forcing the slow path
+  always_slow = true;
+  initial_slow_test = NULL;
+  // </underscore>
 
   enum { too_big_or_final_path = 1, need_gc_path = 2 };
   Node *slow_region = NULL;

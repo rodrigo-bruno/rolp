@@ -229,6 +229,13 @@ void OptoRuntime::new_store_pre_barrier(JavaThread* thread) {
 // object allocation
 JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, JavaThread* thread))
   JRT_BLOCK;
+#if DEBUG_OBJ_ALLOC
+  // <underscore> DEBUG
+  gclog_or_tty->print("OptoRuntime::new_instance_C klass=");
+  klass->print_on(gclog_or_tty);
+  // </underscore> DEBUG
+#endif
+
 #ifndef PRODUCT
   SharedRuntime::_new_instance_ctr++;         // new instance requires GC
 #endif
