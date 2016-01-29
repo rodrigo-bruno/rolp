@@ -250,8 +250,9 @@ Thread::Thread() {
   omFreeProvision = 32 ;
   omInUseList = NULL ;
   omInUseCount = 0 ;
-  _alloc_gen = 0; // <underscore>
-  _tlabOldInitialized = false; // <underscore>
+  _alloc_gen = 0;               // <underscore>
+  _tlabOldInitialized = false;  // <underscore>
+  _tlabGen = NULL;              // <underscore>
 #ifdef ASSERT
   _visited_for_critical_count = false;
 #endif

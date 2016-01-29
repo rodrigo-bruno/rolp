@@ -142,7 +142,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_ldc(JavaThread* thread, Bytecodes::C
 IRT_END
 
 
-int get_alloc_gen(ConstantPool* pool, Method* method, address bcp) {
+int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
   int alloc_gen = 0;
   AnnotationArray* aa = method->type_annotations();
   if(aa != NULL && method->alloc_anno() != NULL) {
@@ -179,7 +179,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, address bcp) {
       gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == method->bci_from(bcp) && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
+      if (anno_target == 68 && anno_bci == bci && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
@@ -207,7 +207,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   klass->initialize(CHECK);
 
 // <undescore>
-  int alloc_gen = get_alloc_gen(pool, method, bcp);
+  int alloc_gen = get_alloc_gen(pool, method, method->bci_from(bcp));
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
           thread, method, *bcp, method->bci_from(bcp));
@@ -245,7 +245,7 @@ IRT_END
 IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread, Method* method, address bcp))
   // get_alloc_gen will look into the annotaions and select the correct allocation gen
   // 0 means young (eden); >0 means old.
-  int alloc_gen = get_alloc_gen(method->constants(), method, bcp);
+  int alloc_gen = get_alloc_gen(method->constants(), method, method->bci_from(bcp));
   // tlab_gen will update the Thread's internal pointer to the allocation tlab
   thread->tlab_gen(alloc_gen);
 #if DEBUG_OBJ_ALLOC
