@@ -227,11 +227,11 @@ void OptoRuntime::new_store_pre_barrier(JavaThread* thread) {
 }
 
 // object allocation
-JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, JavaThread* thread))
+JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, int alloc_gen, JavaThread* thread))
   JRT_BLOCK;
 #if DEBUG_OBJ_ALLOC
   // <underscore> DEBUG
-  gclog_or_tty->print("OptoRuntime::new_instance_C klass=");
+  gclog_or_tty->print("OptoRuntime::new_instance_C alloc_gen=%d klass=", alloc_gen);
   klass->print_on(gclog_or_tty);
   // </underscore> DEBUG
 #endif
@@ -452,9 +452,12 @@ JRT_END
 
 const TypeFunc *OptoRuntime::new_instance_Type() {
   // create input type (domain)
-  const Type **fields = TypeTuple::fields(1);
+  // <underscore> changed number of fields to 2
+  const Type **fields = TypeTuple::fields(2);
   fields[TypeFunc::Parms+0] = TypeInstPtr::NOTNULL; // Klass to be allocated
-  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+1, fields);
+  fields[TypeFunc::Parms+1] = TypeInt::INT;         // <underscore> alloc gen
+  // <underscore> changed number of fields to 2
+  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+2, fields);
 
   // create result type (range)
   fields = TypeTuple::fields(1);

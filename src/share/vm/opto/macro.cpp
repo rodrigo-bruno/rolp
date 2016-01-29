@@ -1540,9 +1540,15 @@ void PhaseMacroExpand::expand_allocate_common(
   call->init_req( TypeFunc::FramePtr, alloc->in(TypeFunc::FramePtr) );
 
   call->init_req(TypeFunc::Parms+0, klass_node);
+
   if (length != NULL) {
     call->init_req(TypeFunc::Parms+1, length);
   }
+  // <underscore> Send alloc gen. TODO - in future this also applies to arrays.
+  else {
+    call->init_req(TypeFunc::Parms+1, new (C) TypeNode(TypeInt::make(alloc_gen),0));
+  }
+  // </underscore>
 
   // Copy debug information and adjust JVMState information, then replace
   // allocate node with the call
