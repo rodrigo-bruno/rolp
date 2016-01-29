@@ -52,6 +52,7 @@ class ciMethod : public ciMetadata {
   friend class ciBytecodeStream;
   friend class ciMethodHandle;
   friend class ciReplay;
+  friend class PhaseMacroExpand; // <underscore> Needed to access method from macros.
 
  private:
   // General method information.
