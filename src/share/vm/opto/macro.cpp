@@ -1158,7 +1158,9 @@ void PhaseMacroExpand::expand_allocate_common(
             address slow_call_address  // Address of slow call
     )
 {
-
+  gclog_or_tty->print("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p)",
+    alloc->jvms()->bci(), alloc->jvms()->method()); // <underscore> DEBUG
+  alloc->jvms()->method()->print(gclog_or_tty); // <underscore> DEBUG
   Node* ctrl = alloc->in(TypeFunc::Control);
   Node* mem  = alloc->in(TypeFunc::Memory);
   Node* i_o  = alloc->in(TypeFunc::I_O);

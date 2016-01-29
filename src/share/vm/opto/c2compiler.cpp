@@ -100,6 +100,7 @@ void C2Compiler::initialize() {
 
   // Note that this is being called from a compiler thread not the
   // main startup thread.
+  gclog_or_tty->print_cr("<underscore> C2Compiler::initialize()"); // <underscore> DEBUG
   if (should_perform_init()) {
     bool successful = C2Compiler::init_c2_runtime();
     int new_state = (successful) ? initialized : failed;
@@ -110,6 +111,7 @@ void C2Compiler::initialize() {
 void C2Compiler::compile_method(ciEnv* env, ciMethod* target, int entry_bci) {
   assert(is_initialized(), "Compiler thread must be initialized");
 
+  gclog_or_tty->print_cr("<underscore> C2Compiler::compile_method()"); // <underscore> DEBUG
   bool subsume_loads = SubsumeLoads;
   bool do_escape_analysis = DoEscapeAnalysis && !env->jvmti_can_access_local_variables();
   bool eliminate_boxing = EliminateAutoBox;
