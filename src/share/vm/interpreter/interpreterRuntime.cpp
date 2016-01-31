@@ -171,15 +171,15 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
       // Get short (type index in constant pool, should be Old)
       u2 anno_type_index = Bytes::get_Java_u2(data + 4);
       // Get char* (type name, should be LOld;)
-      char* type_name = pool->string_at_noresolve(anno_type_index);
+      Symbol* type_name = pool->symbol_at(anno_type_index);
 
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
       gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
-      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
+      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == bci && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
+      if (anno_target == 68 && anno_bci == bci && dsize == 0 && type_name->equals("LOld;", 5)) {
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");

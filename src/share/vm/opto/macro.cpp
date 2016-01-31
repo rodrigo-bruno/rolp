@@ -1546,7 +1546,7 @@ void PhaseMacroExpand::expand_allocate_common(
   }
   // <underscore> Send alloc gen. TODO - in future this also applies to arrays.
   else {
-    call->init_req(TypeFunc::Parms+1, new (C) TypeNode(TypeInt::make(alloc_gen),0));
+    call->init_req(TypeFunc::Parms+1, intcon(alloc_gen));
   }
   // </underscore>
 

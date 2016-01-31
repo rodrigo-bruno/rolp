@@ -227,6 +227,7 @@ void OptoRuntime::new_store_pre_barrier(JavaThread* thread) {
 }
 
 // object allocation
+// <underscore> added alloc gen
 JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, int alloc_gen, JavaThread* thread))
   JRT_BLOCK;
 #if DEBUG_OBJ_ALLOC
@@ -259,7 +260,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, int alloc_gen, J
 
   if (klass != NULL) {
     // Scavenge and allocate an instance.
-    oop result = InstanceKlass::cast(klass)->allocate_instance(THREAD);
+    oop result = InstanceKlass::cast(klass)->allocate_instance(alloc_gen, THREAD);
     thread->set_vm_result(result);
 
     // Pass oops back through thread local storage.  Our apparent type to Java
