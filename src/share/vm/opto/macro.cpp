@@ -1063,14 +1063,21 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
   return true;
 }
 
+// <underscore> Added alloc_gen to arguments.
 //---------------------------set_eden_pointers-------------------------
-void PhaseMacroExpand::set_eden_pointers(Node* &eden_top_adr, Node* &eden_end_adr) {
+void PhaseMacroExpand::set_eden_pointers(int alloc_gen, Node* &eden_top_adr, Node* &eden_end_adr) {
   if (UseTLAB) {                // Private allocation: load from TLS
     Node* thread = transform_later(new (C) ThreadLocalNode());
-    int tlab_top_offset = in_bytes(JavaThread::tlab_top_offset());
-    int tlab_end_offset = in_bytes(JavaThread::tlab_end_offset());
-    eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset);
-    eden_end_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_end_offset);
+    int tlab_top_offset = in_bytes(JavaThread::tlab_top_offset()); // <underscore> delete
+    int tlab_end_offset = in_bytes(JavaThread::tlab_end_offset()); // <underscore> delete
+    // int tlab_gen_offset = in_bytes(JavaThread::gen_tlab_offset() + alloc_gen); // TODO - make array...
+    // Node* gen_tlab = make_load(ctrl, mem, thread, tlab_gen_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
+    // int tlab_top_offset = in_bytes(ThreadLocalAllocationBuffer::top_offset());
+    // int tlab_end_offset = in_bytes(ThreadLocalAllocationBuffer::end_offset());
+    // eden_top_adr = basic_plust_adr(top(), gen_tlab, tlab_top_offset)
+    // eden_end_adr = basic_plust_adr(top(), gen_tlab, tlab_end_offset)
+    eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset); // <underscore> delete
+    eden_end_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_end_offset); // <underscore> delete
   } else {                      // Shared allocation: load from globals
     CollectedHeap* ch = Universe::heap();
     address top_adr = (address)ch->top_addr();
@@ -1296,7 +1303,7 @@ void PhaseMacroExpand::expand_allocate_common(
     Node* eden_top_adr;
     Node* eden_end_adr;
 
-    set_eden_pointers(eden_top_adr, eden_end_adr);
+    set_eden_pointers(alloc_gen, eden_top_adr, eden_end_adr);
 
     // Load Eden::end.  Loop invariant and hoisted.
     //

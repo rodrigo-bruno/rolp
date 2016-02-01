@@ -468,6 +468,7 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
 
   // <underscore> TODO - In future, _alloc_gen must be used to indicate the gen instance.
+  // <underscore> TODO - In future, this could be an indexing of an array.
   ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
       switch (obj_type) {
           case 0:
