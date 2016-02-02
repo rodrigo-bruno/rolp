@@ -677,6 +677,7 @@ public:
   static ByteSize stack_base_offset()            { return byte_offset_of(Thread, _stack_base ); }
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _tlabGen ); } // <underscore>
+  static ByteSize old_tlab_offset()              { return byte_offset_of(Thread, _tlabOld ); } // <underscore> Temporary?
 
   // <underscore> - TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
