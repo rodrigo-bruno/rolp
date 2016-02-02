@@ -1076,9 +1076,9 @@ void PhaseMacroExpand::set_eden_pointers(int alloc_gen, Node* &eden_top_adr, Nod
     } else {
       // <underscore> Note: in future, I will have to call the VM because of
       // multiple regions belonging to the same type.
-      int tlab_old_offset = in_bytes(JavaThread::gen_old_offset());
-      tlab_top_offset = tlab_old_offset + in_bytes(ThreadLocalAllocationBuffer::top_offset());
-      tlab_end_offset = tlab_old_offset + in_bytes(ThreadLocalAllocationBuffer::end_offset());
+      int tlab_old_offset = in_bytes(JavaThread::old_tlab_offset());
+      tlab_top_offset = tlab_old_offset + in_bytes(ThreadLocalAllocBuffer::top_offset());
+      tlab_end_offset = tlab_old_offset + in_bytes(ThreadLocalAllocBuffer::end_offset());
     }
     eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset);
     eden_end_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_end_offset);
@@ -1383,7 +1383,7 @@ void PhaseMacroExpand::expand_allocate_common(
     // Slow-path does no I/O so just set it to the original I/O.
     result_phi_i_o->init_req(slow_result_path, i_o);
 
-    i_o = prefetch_allocation(i_o, needgc_false, contended_phi_rawmem,
+    i_o = prefetch_allocation(alloc_gen, i_o, needgc_false, contended_phi_rawmem,
                               old_eden_top, new_eden_top, length);
 
     // Name successful fast-path variables
