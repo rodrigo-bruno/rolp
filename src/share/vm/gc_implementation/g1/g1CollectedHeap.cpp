@@ -6693,6 +6693,8 @@ public:
   bool doHeapRegion(HeapRegion* hr) {
     _region_count += 1;
 
+    hr->print_on(gclog_or_tty); // <underscore> DEBUG
+
     if (hr->continuesHumongous()) {
       return false;
     }

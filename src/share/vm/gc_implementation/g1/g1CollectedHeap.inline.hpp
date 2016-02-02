@@ -120,6 +120,8 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
 
   if (!_gen_alloc_region.getInitialized()) {
       _gen_alloc_region.init();
+      // <underscore> TODO - will this be a problem when we get another alloc region?
+      _gen_alloc_region.setInitialized();
   }
 
   // <underscore> lock neecessary to execute 'attempt_allocation'
