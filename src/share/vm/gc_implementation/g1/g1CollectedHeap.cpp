@@ -1388,6 +1388,8 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
       // Make sure we'll choose a new allocation region afterwards.
       release_mutator_alloc_region();
       abandon_gc_alloc_regions();
+      release_gen_alloc_regions(); // <underscore>
+
       g1_rem_set()->cleanupHRRS();
 
       // We should call this after we retire any currently active alloc
@@ -1553,6 +1555,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
       clear_cset_fast_test();
 
       init_mutator_alloc_region();
+      init_gen_alloc_regions(); // <underscore>
 
       double end = os::elapsedTime();
       g1_policy()->record_full_collection_end();
@@ -2212,6 +2215,7 @@ jint G1CollectedHeap::initialize() {
   G1AllocRegion::setup(this, dummy_region);
 
   init_mutator_alloc_region();
+  init_gen_alloc_regions(); // <underscore>
 
   // Do create of the monitoring and management support so that
   // values in the heap have been properly initialized.
@@ -4447,6 +4451,18 @@ void G1CollectedHeap::abandon_gc_alloc_regions() {
   assert(_old_gc_alloc_region.get() == NULL, "pre-condition");
   _retained_old_gc_alloc_region = NULL;
 }
+
+// <underscore>
+void G1CollectedHeap::init_gen_alloc_regions() {
+  assert(_gen_alloc_region.get() == NULL, "pre-condition");
+  _gen_alloc_region.init();
+}
+
+void G1CollectedHeap::release_gen_alloc_regions() {
+  _gen_alloc_region.release();
+  assert(_gen_alloc_region.get() == NULL, "post-condition");
+}
+// </undersore>
 
 void G1CollectedHeap::init_for_evac_failure(OopsInHeapRegionClosure* cl) {
   _drain_in_progress = false;

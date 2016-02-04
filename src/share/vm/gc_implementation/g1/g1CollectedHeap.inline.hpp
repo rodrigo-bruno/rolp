@@ -118,12 +118,6 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
   assert(!isHumongous(word_size), "attempt_allocation() should not "
          "be called for humongous allocation requests");
 
-  if (!_gen_alloc_region.getInitialized()) {
-      // <underscore> TODO - Possible race here?
-      _gen_alloc_region.init();
-      _gen_alloc_region.setInitialized();
-  }
-
   // <underscore> lock neecessary to execute 'attempt_allocation'
   MutexLocker ml(Heap_lock);
   HeapWord* result = _gen_alloc_region.attempt_allocation(word_size, true /* bot_updates */);
