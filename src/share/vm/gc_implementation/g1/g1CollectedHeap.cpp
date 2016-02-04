@@ -6387,11 +6387,6 @@ public:
       _g1h(g1h), _old_set(old_set) { }
 
   bool doHeapRegion(HeapRegion* r) {
-    // <underscore> The current gen alloc region does not belong to any set.
-    if (_g1h->is_gen_alloc_region(r)) {
-      return false;
-    } else
-    // </underscore>
     if (r->is_empty()) {
       // We ignore empty regions, we'll empty the free list afterwards
     } else if (r->is_young()) {
@@ -6399,7 +6394,13 @@ public:
     } else if (r->isHumongous()) {
       // We ignore humongous regions, we're not tearing down the
       // humongous region set
-    } else {
+    }
+    // <underscore>
+    else if (_g1h->is_gen_alloc_region(r)) {
+      //The current gen alloc region does not belong to any set.
+    }
+    // </underscore>
+    else {
       // The rest should be old
       _old_set->remove(r);
     }
@@ -6456,14 +6457,15 @@ public:
       _free_list->add_as_tail(r);
     } else if (!_free_list_only) {
       assert(!r->is_young(), "we should not come across young regions");
-      // <underscore>
-      if (_g1h->is_gen_alloc_region(r)) {
-        // Ignore, we do not want it to be added to the old gen.
-      } else
-      // </underscore>
       if (r->isHumongous()) {
         // We ignore humongous regions, we left the humongous set unchanged
-      } else {
+      }
+      // <underscore>
+      else if (_g1h->is_gen_alloc_region(r)) {
+        // Ignore, we do not want it to be added to the old gen.
+      }
+      // </underscore>
+      else {
         // The rest should be old, add them to the old set
         _old_set->add(r);
       }
@@ -6714,12 +6716,6 @@ public:
 
     hr->print_on(gclog_or_tty); // <underscore> DEBUG
 
-    // <underscore> The current gen alloc region does not belong to any set.
-    if (_g1h->is_gen_alloc_region(hr)) {
-      return false;
-    }
-    // </underscore>
-
     if (hr->continuesHumongous()) {
       return false;
     }
@@ -6730,7 +6726,13 @@ public:
       _humongous_set->verify_next_region(hr);
     } else if (hr->is_empty()) {
       _free_list->verify_next_region(hr);
-    } else {
+    }
+    // <underscore>
+    else if (_g1h->is_gen_alloc_region(hr)) {
+      // The current gen alloc region does not belong to any set.
+    }
+    // </underscore>
+    else {
       _old_set->verify_next_region(hr);
     }
     return false;
