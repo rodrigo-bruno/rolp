@@ -119,20 +119,19 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
          "be called for humongous allocation requests");
 
   if (!_gen_alloc_region.getInitialized()) {
+      // <underscore> TODO - Possible race here?
       _gen_alloc_region.init();
-      // <underscore> TODO - will this be a problem when we get another alloc region?
       _gen_alloc_region.setInitialized();
   }
 
   // <underscore> lock neecessary to execute 'attempt_allocation'
   MutexLocker ml(Heap_lock);
-  HeapWord* result = _gen_alloc_region.attempt_allocation(word_size,
-                                                       true /* bot_updates */);
+  HeapWord* result = _gen_alloc_region.attempt_allocation(word_size, true /* bot_updates */);
   if (result == NULL) {
-    MutexLockerEx x(FreeList_lock, Mutex::_no_safepoint_check_flag);
-    result = _gen_alloc_region.attempt_allocation_force(word_size, // the force version does not try to allocate again.
-                                                       true /* bot_updates */);
-    _old_set.add(_gen_alloc_region.get()); // TODO - check this!
+    // TODO - check if there is no possible race because we do not lock free lists
+    // (I assume that heap lock already locks free lists?)
+    result = _gen_alloc_region.attempt_allocation_locked(word_size, true /* bot_updates */);
+   // _old_set.add(_gen_alloc_region.get()); // TODO - I am trying to keep alloc regions out.
   }
   return result;
 }

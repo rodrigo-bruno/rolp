@@ -6379,12 +6379,19 @@ bool G1CollectedHeap::check_young_list_empty(bool check_heap, bool check_sample)
 
 class TearDownRegionSetsClosure : public HeapRegionClosure {
 private:
+  G1CollectedHeap* _g1h; // <underscore>
   OldRegionSet *_old_set;
 
 public:
-  TearDownRegionSetsClosure(OldRegionSet* old_set) : _old_set(old_set) { }
+  TearDownRegionSetsClosure(G1CollectedHeap* g1h, OldRegionSet* old_set) : 
+      _g1h(g1h), _old_set(old_set) { }
 
   bool doHeapRegion(HeapRegion* r) {
+    // <underscore> The current gen alloc region does not belong to any set.
+    if (_g1h->is_gen_alloc_region(r)) {
+      return false;
+    } else
+    // </underscore>
     if (r->is_empty()) {
       // We ignore empty regions, we'll empty the free list afterwards
     } else if (r->is_young()) {
@@ -6408,7 +6415,8 @@ void G1CollectedHeap::tear_down_region_sets(bool free_list_only) {
   assert_at_safepoint(true /* should_be_vm_thread */);
 
   if (!free_list_only) {
-    TearDownRegionSetsClosure cl(&_old_set);
+    // <underscore> Added _g1h.
+    TearDownRegionSetsClosure cl(_g1h, &_old_set);
     heap_region_iterate(&cl);
 
     // Need to do this after the heap iteration to be able to
@@ -6420,14 +6428,16 @@ void G1CollectedHeap::tear_down_region_sets(bool free_list_only) {
 
 class RebuildRegionSetsClosure : public HeapRegionClosure {
 private:
+  G1CollectedHeap* _g1h; // <underscore>
   bool            _free_list_only;
   OldRegionSet*   _old_set;
   FreeRegionList* _free_list;
   size_t          _total_used;
 
 public:
-  RebuildRegionSetsClosure(bool free_list_only,
+  RebuildRegionSetsClosure(G1CollectedHeap* g1h, bool free_list_only,
                            OldRegionSet* old_set, FreeRegionList* free_list) :
+    _g1h(g1h),
     _free_list_only(free_list_only),
     _old_set(old_set), _free_list(free_list), _total_used(0) {
     assert(_free_list->is_empty(), "pre-condition");
@@ -6446,7 +6456,11 @@ public:
       _free_list->add_as_tail(r);
     } else if (!_free_list_only) {
       assert(!r->is_young(), "we should not come across young regions");
-
+      // <underscore>
+      if (_g1h->is_gen_alloc_region(r)) {
+        // Ignore, we do not want it to be added to the old gen.
+      } else
+      // </underscore>
       if (r->isHumongous()) {
         // We ignore humongous regions, we left the humongous set unchanged
       } else {
@@ -6467,7 +6481,7 @@ public:
 void G1CollectedHeap::rebuild_region_sets(bool free_list_only) {
   assert_at_safepoint(true /* should_be_vm_thread */);
 
-  RebuildRegionSetsClosure cl(free_list_only, &_old_set, &_free_list);
+  RebuildRegionSetsClosure cl(_g1h, free_list_only, &_old_set, &_free_list);
   heap_region_iterate(&cl);
 
   if (!free_list_only) {
@@ -6601,7 +6615,7 @@ void G1CollectedHeap::retire_gc_alloc_region(HeapRegion* alloc_region,
 // Methods for the Gen alloc regions
 HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
                                                  uint count) {
-  assert(FreeList_lock->owned_by_self(), "pre-condition");
+  assert(Heap_lock->owned_by_self(), "pre-condition");
 
   // <underscore> using 'GCAllocForTenured' forces unlimited max regions
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
@@ -6617,7 +6631,8 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
       new_alloc_region->note_start_of_copying(during_im);
       return new_alloc_region;
     } else {
-      // g1_policy()->note_alloc_region_limit_reached(ap); // TODO - we will always be allowed more regions
+      // <underscore> Note: we will always be allowed more regions
+      // g1_policy()->note_alloc_region_limit_reached(ap);
       ;
     }
   }
@@ -6629,7 +6644,8 @@ void G1CollectedHeap::retire_gen_alloc_region(HeapRegion* alloc_region,
   bool during_im = g1_policy()->during_initial_mark_pause();
   alloc_region->note_end_of_copying(during_im);
   g1_policy()->record_bytes_copied_during_gc(allocated_bytes);
-  _old_set.add(alloc_region); // TODO - confirm this!
+  // <underscore> Note: we do not need to add because it is already there.
+  _old_set.add(alloc_region);
   _hr_printer.retire(alloc_region);
 }
 // </underscore>
@@ -6676,16 +6692,19 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
 
 class VerifyRegionListsClosure : public HeapRegionClosure {
 private:
+// <underscore> Added this field and filled it in the contructor.
+  G1CollectedHeap*    _g1h;
   FreeRegionList*     _free_list;
   OldRegionSet*       _old_set;
   HumongousRegionSet* _humongous_set;
   uint                _region_count;
 
 public:
-  VerifyRegionListsClosure(OldRegionSet* old_set,
+  VerifyRegionListsClosure(G1CollectedHeap* g1h,
+                           OldRegionSet* old_set,
                            HumongousRegionSet* humongous_set,
                            FreeRegionList* free_list) :
-    _old_set(old_set), _humongous_set(humongous_set),
+    _g1h(g1h), _old_set(old_set), _humongous_set(humongous_set),
     _free_list(free_list), _region_count(0) { }
 
   uint region_count() { return _region_count; }
@@ -6694,6 +6713,12 @@ public:
     _region_count += 1;
 
     hr->print_on(gclog_or_tty); // <underscore> DEBUG
+
+    // <underscore> The current gen alloc region does not belong to any set.
+    if (_g1h->is_gen_alloc_region(hr)) {
+      return false;
+    }
+    // </underscore>
 
     if (hr->continuesHumongous()) {
       return false;
@@ -6761,7 +6786,8 @@ void G1CollectedHeap::verify_region_sets() {
   _humongous_set.verify_start();
   _free_list.verify_start();
 
-  VerifyRegionListsClosure cl(&_old_set, &_humongous_set, &_free_list);
+  // <underscore> Added _g1h to cl.
+  VerifyRegionListsClosure cl(_g1h, &_old_set, &_humongous_set, &_free_list);
   heap_region_iterate(&cl);
 
   _old_set.verify_end();

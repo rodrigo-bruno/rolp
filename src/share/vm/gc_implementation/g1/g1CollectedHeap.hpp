@@ -1323,6 +1323,10 @@ public:
     return hr == _retained_old_gc_alloc_region;
   }
 
+  bool is_gen_alloc_region(HeapRegion* hr) {
+    return hr == _gen_alloc_region.get();
+  }
+
   // Perform a collection of the heap; intended for use in implementing
   // "System.gc".  This probably implies as full a collection as the
   // "CollectedHeap" supports.
