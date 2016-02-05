@@ -2386,6 +2386,11 @@ size_t G1CollectedHeap::used() const {
   HeapRegion* hr = _mutator_alloc_region.get();
   if (hr != NULL)
     result += hr->used();
+  hr = _gen_alloc_region.get();
+  // <underscore> We should also add from gen alloc region.
+  if (hr != NULL)
+    result += ht->used();
+  // <underscore>
   return result;
 }
 
