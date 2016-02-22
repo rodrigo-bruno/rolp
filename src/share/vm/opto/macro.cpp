@@ -1076,9 +1076,9 @@ void PhaseMacroExpand::set_eden_pointers(int alloc_gen, Node* &eden_top_adr, Nod
     } else {
       // <underscore> Note: in future, I will have to call the VM because of
       // multiple regions belonging to the same type.
-      int tlab_old_offset = in_bytes(JavaThread::gen_old_offset());
-      tlab_top_offset = tlab_old_offset + in_bytes(ThreadLocalAllocationBuffer::top_offset());
-      tlab_end_offset = tlab_old_offset + in_bytes(ThreadLocalAllocationBuffer::end_offset());
+      int tlab_old_offset = in_bytes(JavaThread::old_tlab_offset());
+      tlab_top_offset = tlab_old_offset + in_bytes(ThreadLocalAllocBuffer::top_offset());
+      tlab_end_offset = tlab_old_offset + in_bytes(ThreadLocalAllocBuffer::end_offset());
     }
     eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset);
     eden_end_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_end_offset);
@@ -1194,15 +1194,15 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
       // Get short (type index in constant pool, should be Old)
       u2 anno_type_index = Bytes::get_Java_u2(data + 4);
       // Get char* (type name, should be LOld;)
-      char* type_name = pool->string_at_noresolve(anno_type_index);
+      Symbol* type_name = pool->symbol_at(anno_type_index);
 
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
       gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
-      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %s", anno_type_index, type_name);
+      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == bci && dsize == 0 && !strncmp(type_name, "LOld;", 5)) {
+      if (anno_target == 68 && anno_bci == bci && dsize == 0 && type_name->equals("LOld;", 5)) {
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
@@ -1214,6 +1214,7 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
     }
   }
   return alloc_gen;
+
 }
 // </underscore>
 
@@ -1383,7 +1384,7 @@ void PhaseMacroExpand::expand_allocate_common(
     // Slow-path does no I/O so just set it to the original I/O.
     result_phi_i_o->init_req(slow_result_path, i_o);
 
-    i_o = prefetch_allocation(i_o, needgc_false, contended_phi_rawmem,
+    i_o = prefetch_allocation(alloc_gen, i_o, needgc_false, contended_phi_rawmem,
                               old_eden_top, new_eden_top, length);
 
     // Name successful fast-path variables

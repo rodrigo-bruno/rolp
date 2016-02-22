@@ -189,17 +189,13 @@ public:
 
 // <underscore>
 class GenAllocRegion : public G1AllocRegion {
-private:
-    bool _initialized;
 protected:
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
   virtual void retire_region(HeapRegion* alloc_region, size_t allocated_bytes);
 public:
   // TODO - decide where BOT updates should be on or off
   GenAllocRegion()
-  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */), _initialized(false) { }
-  void setInitialized() { _initialized = true; }
-  bool getInitialized() { return _initialized; }
+  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) { }
 };
 // </underscore>
 
@@ -364,6 +360,14 @@ private:
   // It does any cleanup that needs to be done on the GC alloc regions
   // before a Full GC.
   void abandon_gc_alloc_regions();
+
+  // <underscore>
+  // It resets the gen alloc regions before new allocations take place.
+  void init_gen_alloc_regions();
+
+  // It releases the gen alloc regions.
+  void release_gen_alloc_regions();
+  // </underscore>
 
   // Helper for monitoring and management support.
   G1MonitoringSupport* _g1mm;
@@ -1321,6 +1325,10 @@ public:
   // old GC alloc region.
   bool is_old_gc_alloc_region(HeapRegion* hr) {
     return hr == _retained_old_gc_alloc_region;
+  }
+
+  bool is_gen_alloc_region(HeapRegion* hr) {
+    return hr == _gen_alloc_region.get();
   }
 
   // Perform a collection of the heap; intended for use in implementing

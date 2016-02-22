@@ -296,7 +296,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> tlab allocated at %p", obj);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> tlab allocated at %p (size=%zu)", obj, new_tlab_size * HeapWordSize);
 #endif
 // </undescore>
 

@@ -1558,7 +1558,9 @@ public:
       // We will skip any region that's currently used as an old GC
       // alloc region (we should not consider those for collection
       // before we fill them up).
-      if (_hrSorted->should_add(r) && !_g1h->is_old_gc_alloc_region(r)) {
+      if (_hrSorted->should_add(r) &&
+          !_g1h->is_old_gc_alloc_region(r) &&
+          !_g1h->is_gen_alloc_region(r)) { // <underscore> no alloc region in cset.
         _hrSorted->add_region(r);
       }
     }
@@ -1582,7 +1584,9 @@ public:
       // We will skip any region that's currently used as an old GC
       // alloc region (we should not consider those for collection
       // before we fill them up).
-      if (_cset_updater.should_add(r) && !_g1h->is_old_gc_alloc_region(r)) {
+      if (_cset_updater.should_add(r) &&
+          !_g1h->is_old_gc_alloc_region(r) &&
+          !_g1h->is_gen_alloc_region(r)) { // <underscore> no alloc region in cset.
         _cset_updater.add_region(r);
       }
     }
