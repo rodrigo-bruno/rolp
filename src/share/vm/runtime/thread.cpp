@@ -1640,6 +1640,8 @@ void JavaThread::run() {
   // initialize thread-local alloc buffer related fields
   this->initialize_tlab();
 
+  // <underscore> TODO - initizalize gen tlabs
+
   // used to test validitity of stack trace backs
   this->record_base_of_stack_pointer();
 
