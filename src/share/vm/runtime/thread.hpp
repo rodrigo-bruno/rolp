@@ -282,7 +282,7 @@ class Thread: public ThreadShadow {
 
   // TODO - N - when a gen is created, tlabs in all threads must be created and initialized.
   // TODO - N - when a gen is collected, all tlabs and alloc region must be re-initialized
-  CHeapArray<ThreadLocalAllocBuffer*> _tlabGenArray;
+  //GrowableArray<ThreadLocalAllocBuffer*> _tlabGenArray;
   ThreadLocalAllocBuffer* _tlabGen;             // The tlab chosen for the last allocation.
   ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
   int _alloc_gen;                               // Indicates in which TLABs objects should be allocated.

@@ -224,6 +224,7 @@ Thread::Thread() {
   set_active_handles(NULL);
   set_free_handle_block(NULL);
   set_last_handle_mark(NULL);
+//  _tlabGenArray = GrowableArray<ThreadLocalAllocBuffer*>(16,true); // <underscore>
 
   // This initial value ==> never claimed.
   _oops_do_parity = 0;
