@@ -285,7 +285,6 @@ class Thread: public ThreadShadow {
   CHeapArray<ThreadLocalAllocBuffer*> _tlabGenArray;
   ThreadLocalAllocBuffer* _tlabGen;             // The tlab chosen for the last allocation.
   ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
-  bool _tlabOldInitialized;                     // true if the old tlab is already initialized.
   int _alloc_gen;                               // Indicates in which TLABs objects should be allocated.
   // </underscore>
 
@@ -483,20 +482,13 @@ class Thread: public ThreadShadow {
               break;
           case 1:
           default:
-            if(!_tlabOldInitialized) {
-              _tlabOld.initialize();
-              _tlabOldInitialized = true;
-#if DEBUG_OBJ_ALLOC
-              gclog_or_tty->print_cr("<underscore> thread::tlab_gen(obj_type=%d) old tlab initialized", obj_type);
-#endif
-            }
             _tlabGen = &_tlabOld;
       }
       return *_tlabGen;
   }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
-      if (_tlabOldInitialized) { _tlabOld.make_parsable(retire_tlabs); }
+      _tlabOld.make_parsable(retire_tlabs);
   }
 // </underscore>
 
@@ -505,6 +497,14 @@ class Thread: public ThreadShadow {
       tlab().initialize();
     }
   }
+
+  // <underscore>
+  void initialize_gen_tlabs() {
+    if (UseTLAB) {
+      _tlabOld.initialize();
+    }
+  }
+  // <underscore>
 
   jlong allocated_bytes()               { return _allocated_bytes; }
   void set_allocated_bytes(jlong value) { _allocated_bytes = value; }

@@ -251,7 +251,6 @@ Thread::Thread() {
   omInUseList = NULL ;
   omInUseCount = 0 ;
   _alloc_gen = 0;               // <underscore>
-  _tlabOldInitialized = false;  // <underscore>
   _tlabGen = NULL;              // <underscore>
 #ifdef ASSERT
   _visited_for_critical_count = false;
@@ -1639,8 +1638,7 @@ JavaThread::~JavaThread() {
 void JavaThread::run() {
   // initialize thread-local alloc buffer related fields
   this->initialize_tlab();
-
-  // <underscore> TODO - initizalize gen tlabs
+  this->initialize_gen_tlabs();
 
   // used to test validitity of stack trace backs
   this->record_base_of_stack_pointer();
