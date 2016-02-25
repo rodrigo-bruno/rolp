@@ -276,8 +276,7 @@ class Thread: public ThreadShadow {
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
   // <underscore>
-  // TODO - check if tlabOld can be allocated with new. If this is possible. move it into a list.
-  // TODO - 1 - check where _tlab is initialized. We want to init all gen tlabs there as well.
+  // TODO - 1 - check how interpreted code and c2 can work with growable array
   // TODO - 2 - when a thread is created, we must know how many gens there are (to init all tlabs) -> get this from heap
 
   // TODO - N - when a gen is created, tlabs in all threads must be created and initialized.
