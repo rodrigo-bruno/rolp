@@ -472,7 +472,7 @@ class Thread: public ThreadShadow {
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen) {
     _alloc_gen = gen;
-    _genTlab = *(gen_tlabs()->at(_alloc_gen));
+    _genTlab = (gen_tlabs()->at(_alloc_gen));
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
@@ -481,7 +481,7 @@ class Thread: public ThreadShadow {
   // TODO - change name to gen_tlab
   ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
 
-  void set_curr_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
+  void set_cur_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {

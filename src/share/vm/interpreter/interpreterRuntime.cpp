@@ -246,8 +246,8 @@ IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread, Method* me
   // get_alloc_gen will look into the annotaions and select the correct allocation gen
   // 0 means young (eden); >0 means old.
   int alloc_gen = get_alloc_gen(method->constants(), method, method->bci_from(bcp));
-  // set_curr_tlab will update the Thread's internal pointer to the current allocation tlab
-  thread->set_curr_tlab(alloc_gen != 0);
+  // set_cur_tlab will update the Thread's internal pointer to the current allocation tlab
+  thread->set_cur_tlab(alloc_gen != 0);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_get_gen_tlab (pool=%p, method=%p, alloc_gen=%d, tlabGen->top %p )!",
     method->constants(), method, alloc_gen, thread->curr_tlab().top());

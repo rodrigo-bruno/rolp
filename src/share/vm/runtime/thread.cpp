@@ -255,7 +255,7 @@ Thread::Thread() {
   omInUseList = NULL ;
   omInUseCount = 0 ;
   // <underscore> This adds the default gen tlab.
-  gen_tlabs()->push(_tlabOld);
+  gen_tlabs()->push(&_tlabOld);
   // <underscore> This will make old gen default for gen allocations.
   set_alloc_gen(0);
   // <underscore> This will make eden tlab the 'last used tlab'.
