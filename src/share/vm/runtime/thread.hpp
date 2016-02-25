@@ -502,6 +502,9 @@ class Thread: public ThreadShadow {
   void initialize_gen_tlabs() {
     if (UseTLAB) {
       _tlabOld.initialize();
+      if (Universe::heap() != NULL) {
+          _tlabGenArray->push(new ThreadLocalAllocBuffer()); // Just for testing.
+      }
     }
   }
   // <underscore>
