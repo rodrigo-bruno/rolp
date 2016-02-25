@@ -3381,7 +3381,7 @@ void TemplateTable::_new() {
     __ pop(rdx);
 
     // Load tlabGen into rcx
-    __ movptr(rcx, Address(r15_thread, in_bytes(JavaThread::gen_tlab_offset())));
+    __ movptr(rcx, Address(r15_thread, in_bytes(JavaThread::cur_tlab_offset())));
     // Load tlabGen->top into rax
     __ movptr(rax, Address(rcx, in_bytes(ThreadLocalAllocBuffer::top_offset())));
     // rbx = rax + rdx (instance size)

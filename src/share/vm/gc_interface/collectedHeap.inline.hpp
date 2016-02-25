@@ -184,13 +184,13 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass->alloc_gen=%d, thread_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.get_alloc_gen(), thread->get_alloc_gen(), thread, size);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass->alloc_gen=%d, thread_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.alloc_gen(), thread->alloc_gen(), thread, size);
 #endif
-// </undescore>
 
-  HeapWord* obj = thread->tlab_gen(klass.get_alloc_gen()).allocate(size);
+  HeapWord* obj = klass.alloc_gen() ?
+      thread->tlab_gen().allocate(size) : thread->tlab().allocate(size);
   if (obj != NULL) {
-// <underscore>
+
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab -> obj allocated at %p", obj);
 #endif

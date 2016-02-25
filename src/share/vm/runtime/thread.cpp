@@ -223,7 +223,7 @@ Thread::Thread() {
   set_metadata_handles(new (ResourceObj::C_HEAP, mtClass) GrowableArray<Metadata*>(30, true));
   // <underscore> - NOTE: for some stange reason, the tlabGenArray could not be allocated further
   // below. It would crash...
-  _tlabGenArray =      new (ResourceObj::C_HEAP, mtClass) GrowableArray<ThreadLocalAllocBuffer*>(16,true);
+  set_gen_tlabs(new (ResourceObj::C_HEAP, mtClass) GrowableArray<ThreadLocalAllocBuffer*>(16,true));
   // </underscore>
   set_active_handles(NULL);
   set_free_handle_block(NULL);
@@ -254,8 +254,12 @@ Thread::Thread() {
   omFreeProvision = 32 ;
   omInUseList = NULL ;
   omInUseCount = 0 ;
-  _alloc_gen = 0;               // <underscore>
-  _tlabGen = NULL;              // <underscore>
+  // <underscore> This adds the default gen tlab.
+  gen_tlabs()->push(_tlabOld);
+  // <underscore> This will make old gen default for gen allocations.
+  set_alloc_gen(0);
+  // <underscore> This will make eden tlab the 'last used tlab'.
+  set_cur_tlab(false);
 #ifdef ASSERT
   _visited_for_critical_count = false;
 #endif

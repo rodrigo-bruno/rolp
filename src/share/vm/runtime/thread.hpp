@@ -275,16 +275,22 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab! - done
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
-  // <underscore>
   // TODO - 1 - check how interpreted code and c2 can work with growable array
-  // TODO - 2 - when a thread is created, we must know how many gens there are (to init all tlabs) -> get this from heap
-
+  // TODO - N - when a thread is created, we must know how many gens there are (to init all tlabs) -> get this from heap
   // TODO - N - when a gen is created, tlabs in all threads must be created and initialized.
   // TODO - N - when a gen is collected, all tlabs and alloc region must be re-initialized
+  // TODO - N - merge _tlab into array as well.
+
+  // Array of gen TLABs.
   GrowableArray<ThreadLocalAllocBuffer*>* _tlabGenArray;
-  ThreadLocalAllocBuffer* _tlabGen;             // The tlab chosen for the last allocation.
-  ThreadLocalAllocBuffer _tlabOld;              // Thread-local old gen
-  int _alloc_gen;                               // Indicates in which TLABs objects should be allocated.
+  // The gen TLAB in use (same as indexing gen TLAB array using _alloc_gen). Used in c2.
+  ThreadLocalAllocBuffer* _genTlab;
+  // The TLAB chosen for the last allocation. Used in interpreter.
+  ThreadLocalAllocBuffer* _curTlab;
+  // TODO - Deprecated, remove, eventually.
+  ThreadLocalAllocBuffer _tlabOld;
+  // Indicates in which gen we are currently allocating.
+  int _alloc_gen;
   // </underscore>
 
   ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
@@ -459,37 +465,32 @@ class Thread: public ThreadShadow {
   GrowableArray<Metadata*>* metadata_handles() const          { return _metadata_handles; }
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
+  // <underscore>
+  GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs() const                { return _tlabGenArray; }
+  void set_gen_tlabs(GrowableArray<ThreadLocalAllocBuffer*>* tlabGenArray) { _tlabGenArray = tlabGenArray; }
+
+  int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen) {
-      _alloc_gen = gen;
+    _alloc_gen = gen;
+    _genTlab = *(gen_tlabs()->at(_alloc_gen));
 #if DEBUG_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
+    gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
   }
 
-  // <underscore> TODO - debug only
-  int get_alloc_gen() { return _alloc_gen; }
+  // TODO - change name to gen_tlab
+  ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
 
-  // Thread-Local Allocation Buffer (TLAB) support
-  ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
-
-  // <underscore> TODO - In future, _alloc_gen must be used to indicate the gen instance.
-  // <underscore> TODO - In future, this could be an indexing of an array.
-  ThreadLocalAllocBuffer& tlab_gen(int obj_type) {
-      switch (obj_type) {
-          case 0:
-              _tlabGen = &_tlab;
-              break;
-          case 1:
-          default:
-            _tlabGen = &_tlabOld;
-      }
-      return *_tlabGen;
-  }
+  void set_curr_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
+  ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
       _tlabOld.make_parsable(retire_tlabs);
   }
 // </underscore>
+
+  // Thread-Local Allocation Buffer (TLAB) support
+  ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
 
   void initialize_tlab() {
     if (UseTLAB) {
@@ -502,7 +503,7 @@ class Thread: public ThreadShadow {
     if (UseTLAB) {
       _tlabOld.initialize();
       if (Universe::heap() != NULL) {
-          _tlabGenArray->push(new ThreadLocalAllocBuffer()); // Just for testing.
+         // _tlabGenArray->push(new ThreadLocalAllocBuffer()); // Just for testing.
       }
     }
   }
@@ -685,8 +686,9 @@ public:
 
   static ByteSize stack_base_offset()            { return byte_offset_of(Thread, _stack_base ); }
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
-  static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _tlabGen ); } // <underscore>
-  static ByteSize old_tlab_offset()              { return byte_offset_of(Thread, _tlabOld ); } // <underscore> Temporary?
+  static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
+  static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
+  static ByteSize old_tlab_offset()              { return byte_offset_of(Thread, _tlabOld ); } // <underscore> TODO - Temporary?
 
   // <underscore> - TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \

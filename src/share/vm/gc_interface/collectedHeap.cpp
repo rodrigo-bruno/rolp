@@ -257,22 +257,23 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.get_alloc_gen(), thread, size);
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow(alloc_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.alloc_gen(), thread, size);
 #endif
 // </undescore>
 
+    ThreadLocalAllocBuffer tlab = klass.alloc_gen() ? thread->tlab_gen() : thread->tlab();
   // Retain tlab and allocate object in shared space if
   // the amount free in the tlab is too large to discard.
-  if (thread->tlab_gen(klass.get_alloc_gen()).free() > thread->tlab_gen(klass.get_alloc_gen()).refill_waste_limit()) {
-    thread->tlab_gen(klass.get_alloc_gen()).record_slow_allocation(size);
+  if (tlab.free() > tlab.refill_waste_limit()) {
+    tlab.record_slow_allocation(size);
     return NULL;
   }
 
   // Discard tlab and allocate a new one.
   // To minimize fragmentation, the last TLAB may be smaller than the rest.
-  size_t new_tlab_size = thread->tlab_gen(klass.get_alloc_gen()).compute_size(size);
+  size_t new_tlab_size = tlab.compute_size(size);
 
-  thread->tlab_gen(klass.get_alloc_gen()).clear_before_allocation();
+  tlab.clear_before_allocation();
 
   if (new_tlab_size == 0) {
     return NULL;
@@ -282,11 +283,11 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
   // <underscore> Introduced if to distinguish tlab allocated from eden or from
   // any other generation.
   HeapWord* obj;
-  if (!klass.get_alloc_gen()) {
+  if (!klass.alloc_gen()) {
       obj = Universe::heap()->allocate_new_tlab(new_tlab_size);
   }
   else {
-      obj = Universe::heap()->allocate_new_gen_tlab(klass.get_alloc_gen(), new_tlab_size);
+      obj = Universe::heap()->allocate_new_gen_tlab(klass.alloc_gen(), new_tlab_size);
   }
   // </underscore>
 
@@ -315,7 +316,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
     Copy::fill_to_words(obj + hdr_size, new_tlab_size - hdr_size, badHeapWordVal);
 #endif // ASSERT
   }
-  thread->tlab_gen(klass.get_alloc_gen()).fill(obj, obj + size, new_tlab_size);
+  tlab.fill(obj, obj + size, new_tlab_size);
 // <underscore>
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> obj allocated at %p", obj);

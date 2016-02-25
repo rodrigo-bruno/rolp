@@ -200,7 +200,7 @@ class KlassHandle : public StackObj {
     bool is_null() const  { return _value == NULL; }
     bool not_null() const { return _value != NULL; }
 
-   int  get_alloc_gen() { return _alloc_gen; }
+   int  alloc_gen() { return _alloc_gen; }
    void set_alloc_gen(int alloc_gen) { _alloc_gen = alloc_gen; }
 };
 

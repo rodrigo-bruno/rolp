@@ -1117,7 +1117,7 @@ instanceOop InstanceKlass::allocate_instance(int alloc_gen, TRAPS) {
   h_k.set_alloc_gen(alloc_gen);
 
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InstanceKlass::allocate_instance, klass->alloc_gen == %d", h_k.get_alloc_gen());
+  gclog_or_tty->print_cr("<underscore> InstanceKlass::allocate_instance, klass->alloc_gen == %d", h_k.alloc_gen());
 #endif
 
   instanceOop i;
