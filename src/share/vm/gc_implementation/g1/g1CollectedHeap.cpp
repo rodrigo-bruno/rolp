@@ -1966,7 +1966,10 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _old_set("Old Set"),
   _humongous_set("Master Humongous Set"),
   _free_regions_coming(false),
-  _min_migration_bandwidth(0), // <underscore> added initialization.
+  // <underscore> added initialization.
+  _min_migration_bandwidth(0),
+  // <underscore> added initialization.
+  _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),

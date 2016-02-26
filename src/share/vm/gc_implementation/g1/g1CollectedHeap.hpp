@@ -305,6 +305,7 @@ private:
 
   // <underscore> Special allocation region.
   GenAllocRegion _gen_alloc_region;
+  GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
   
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
