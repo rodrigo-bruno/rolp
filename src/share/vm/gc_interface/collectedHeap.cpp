@@ -261,7 +261,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 #endif
 // </undescore>
 
-    ThreadLocalAllocBuffer tlab = klass.alloc_gen() ? thread->tlab_gen() : thread->tlab();
+    ThreadLocalAllocBuffer& tlab = klass.alloc_gen() ? thread->tlab_gen() : thread->tlab();
   // Retain tlab and allocate object in shared space if
   // the amount free in the tlab is too large to discard.
   if (tlab.free() > tlab.refill_waste_limit()) {
