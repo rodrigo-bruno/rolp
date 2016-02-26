@@ -1083,7 +1083,7 @@ void PhaseMacroExpand::set_eden_pointers(int alloc_gen, Node* &eden_top_adr, Nod
       // Get offset of gen tlab inside Thread
       int gen_tlab_offset = in_bytes(JavaThread::gen_tlab_offset());
       // Get the address of gen tlab
-      Node gen_tlab_addr = basic_plus_adr(top()/*not oop*/, thread, gen_tlab_offset);
+      Node* gen_tlab_addr = basic_plus_adr(top()/*not oop*/, thread, gen_tlab_offset);
       // Get the addressed taking as base pointer the gen tlab addr.
       eden_top_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_addr, tlab_top_offset);
       eden_end_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_addr, tlab_end_offset);
@@ -1795,13 +1795,19 @@ Node* PhaseMacroExpand::prefetch_allocation(int alloc_gen, Node* i_o, Node*& nee
       Node *thread = new (C) ThreadLocalNode();
       transform_later(thread);
 
-      // <underscore> This only works because we have only two generations.
-      int tlab_pdf_top_offset = alloc_gen ?
-          in_bytes(JavaThread::old_tlab_offset()) + in_bytes(ThreadLocalAllocBuffer::pf_top_offset()) :
-          in_bytes(JavaThread::tlab_pf_top_offset());
-
-      Node *eden_pf_adr = new (C) AddPNode( top()/*not oop*/, thread,
-                   _igvn.MakeConX(tlab_pdf_top_offset));
+      // <underscore> Introduced an if to allow pf with gen tlabs.
+      Node *eden_pf_adr = NULL;
+      if (alloc_gen) {
+        int gen_tlab_offset = in_bytes(JavaThread::gen_tlab_offset());
+        Node* gen_tlab_addr = basic_plus_adr(top()/*not oop*/, thread, gen_tlab_offset);
+        int tlab_pf_top_offset = in_bytes(ThreadLocalAllocBuffer::pf_top_offset());
+        eden_pf_adr = new (C) AddPNode( top()/*not oop*/, gen_tlab_addr,
+                   _igvn.MakeConX(tlab_pf_top_offset));
+      } else {
+        int tlab_pf_top_offset = in_bytes(JavaThread::tlab_pf_top_offset());
+        eden_pf_adr = new (C) AddPNode( top()/*not oop*/, thread,
+                   _igvn.MakeConX(tlab_pf_top_offset));
+      }
       transform_later(eden_pf_adr);
 
       Node *old_pf_wm = new (C) LoadPNode( needgc_false,
