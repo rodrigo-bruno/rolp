@@ -275,7 +275,6 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab! - done
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
-  // TODO - 1 - check how interpreted code and c2 can work with growable array
   // TODO - N - when a thread is created, we must know how many gens there are (to init all tlabs) -> get this from heap
   // TODO - N - when a gen is created, tlabs in all threads must be created and initialized.
   // TODO - N - when a gen is collected, all tlabs and alloc region must be re-initialized
@@ -287,7 +286,7 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer* _genTlab;
   // The TLAB chosen for the last allocation. Used in interpreter.
   ThreadLocalAllocBuffer* _curTlab;
-  // TODO - Deprecated, remove, eventually.
+  // The default gen tlab. This is here just to facilitate its allocation.
   ThreadLocalAllocBuffer _tlabOld;
   // Indicates in which gen we are currently allocating.
   int _alloc_gen;
@@ -485,7 +484,9 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
-      _tlabOld.make_parsable(retire_tlabs);
+      for (int i = 0; i < _tlabGenArray->length(); i++) {
+          _tlabGenArray->at(i)->make_parsable(retire_tlabs);
+      }
   }
 // </underscore>
 
@@ -501,10 +502,13 @@ class Thread: public ThreadShadow {
   // <underscore>
   void initialize_gen_tlabs() {
     if (UseTLAB) {
-      _tlabOld.initialize();
-      if (Universe::heap() != NULL) {
-         // _tlabGenArray->push(new ThreadLocalAllocBuffer()); // Just for testing.
+      for (int i = 0; i < _tlabGenArray->length(); i++) {
+          _tlabGenArray->at(i)->initialize();
       }
+      // TODO - fix?
+      //if (Universe::heap() != NULL) {
+         // _tlabGenArray->push(new ThreadLocalAllocBuffer()); // Just for testing.
+      //}
     }
   }
   // <underscore>
@@ -688,7 +692,6 @@ public:
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
   static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
-  static ByteSize old_tlab_offset()              { return byte_offset_of(Thread, _tlabOld ); } // <underscore> TODO - Temporary?
 
   // <underscore> - TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
