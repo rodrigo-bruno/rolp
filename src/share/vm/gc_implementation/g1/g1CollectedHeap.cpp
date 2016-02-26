@@ -2021,6 +2021,8 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
   
   /* <underscore> */
+  _gen_alloc_regions->push(&_gen_alloc_region);
+  _gen_alloc_regions->push(new GenAllocRegion()); // TODO - seems to work!
   gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
   /* </underscore> */
 }

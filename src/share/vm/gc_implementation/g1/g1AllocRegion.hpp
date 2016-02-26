@@ -41,7 +41,9 @@ class ar_ext_msg;
 // and a lock will need to be taken when the active region needs to be
 // replaced.
 
-class G1AllocRegion VALUE_OBJ_CLASS_SPEC {
+// <underscore> changed the superclass to allow dynamic allocation
+//class G1AllocRegion VALUE_OBJ_CLASS_SPEC {
+class G1AllocRegion: public CHeapObj<mtGC> {
   friend class ar_ext_msg;
 
   // <underscore> Important class. How to extended this to have an allocation 
