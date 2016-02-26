@@ -1073,16 +1073,30 @@ void PhaseMacroExpand::set_eden_pointers(int alloc_gen, Node* &eden_top_adr, Nod
     if(alloc_gen == 0) {
       tlab_top_offset = in_bytes(JavaThread::tlab_top_offset());
       tlab_end_offset = in_bytes(JavaThread::tlab_end_offset());
+      eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset);
+      eden_end_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_end_offset);
     } else {
-      // <underscore> Note: in future, I will have to call the VM because of
-      // multiple regions belonging to the same type.
+      // New way
+      tlab_top_offset = in_bytes(ThreadLocalAllocBuffer::top_offset());
+      tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
+
+      // Get offset of gen tlab inside Thread
+      int gen_tlab_offset = in_bytes(JavaThread::gen_tlab_offset());
+      // Get the address of gen tlab
+      Node gen_tlab_addr = basic_plus_adr(top()/*not oop*/, thread, gen_tlab_offset);
+      // Get the addressed taking as base pointer the gen tlab addr.
+      eden_top_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_addr, tlab_top_offset);
+      eden_end_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_addr, tlab_end_offset);
+
+/*
+      // Old way
       int tlab_old_offset = in_bytes(JavaThread::old_tlab_offset());
       tlab_top_offset = tlab_old_offset + in_bytes(ThreadLocalAllocBuffer::top_offset());
       tlab_end_offset = tlab_old_offset + in_bytes(ThreadLocalAllocBuffer::end_offset());
+      eden_top_adr = basic_plus_adr(top(), thread, tlab_top_offset);
+      eden_end_adr = basic_plus_adr(top(), thread, tlab_end_offset);
+ */
     }
-    eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset);
-    eden_end_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_end_offset);
-
   } else {                      // Shared allocation: load from globals
     CollectedHeap* ch = Universe::heap();
     address top_adr = (address)ch->top_addr();
