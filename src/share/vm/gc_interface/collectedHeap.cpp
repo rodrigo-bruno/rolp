@@ -287,7 +287,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
       obj = Universe::heap()->allocate_new_tlab(new_tlab_size);
   }
   else {
-      obj = Universe::heap()->allocate_new_gen_tlab(klass.alloc_gen(), new_tlab_size);
+      obj = Universe::heap()->allocate_new_gen_tlab(thread->alloc_gen(), new_tlab_size);
   }
   // </underscore>
 
