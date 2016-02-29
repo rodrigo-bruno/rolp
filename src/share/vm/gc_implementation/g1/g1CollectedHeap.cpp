@@ -6707,12 +6707,16 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
                                                   bool force) {
   // TODO - commented to work! Understand if this has any impact on correctness!
   // assert(!force, "not supported for Gen alloc regions");
-  return _g1h->new_gen_alloc_region(word_size, count());
+  HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
+  region->set_gen(this->_gen);
+  region->set_gen_alloc_region(true);
+  return region;
 }
 
 void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
+  alloc_region->set_gen_alloc_region(false);
 }
 // </underscore>
 

@@ -358,7 +358,8 @@ HeapRegion::HeapRegion(uint hrs_index,
 #endif // ASSERT
      _young_index_in_cset(-1), _surv_rate_group(NULL), _age_index(-1),
     _rem_set(NULL), _recorded_rs_length(0), _predicted_elapsed_time_ms(0),
-    _predicted_bytes_to_copy(0)
+    _predicted_bytes_to_copy(0),
+    _is_gen_alloc_region(false), _gen(-1) // <underscore> Added initialization.
 {
   _rem_set = new HeapRegionRemSet(sharedOffsetArray, this);
   _orig_end = mr.end();

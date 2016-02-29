@@ -189,13 +189,18 @@ public:
 
 // <underscore>
 class GenAllocRegion : public G1AllocRegion {
+    int _gen;
 protected:
+
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
   virtual void retire_region(HeapRegion* alloc_region, size_t allocated_bytes);
 public:
   // TODO - decide where BOT updates should be on or off
-  GenAllocRegion()
-  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) { }
+  GenAllocRegion(int gen = 0)
+  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , _gen(gen) { }
+
+  int gen() { return _gen; }
+  void set_gen(int gen) { _gen = gen; }
 };
 // </underscore>
 
@@ -1329,7 +1334,7 @@ public:
   }
 
   bool is_gen_alloc_region(HeapRegion* hr) {
-    return hr == _gen_alloc_region.get();
+    return hr->is_gen_alloc_region();
   }
 
   // Perform a collection of the heap; intended for use in implementing

@@ -298,6 +298,12 @@ class HeapRegion: public G1OffsetTableContigSpace {
   SurvRateGroup* _surv_rate_group;
   int  _age_index;
 
+  // <underscore> The generation this region is in. -1 means no gen tracking.
+  // TODO - this value only chages when there is a gen collection or a Full GC.
+  int _gen;
+  // <underscore> Boolean indicating if this region is a gen alloc region.
+  bool _is_gen_alloc_region;
+
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
   // of the region for which no marking was done, i.e. objects may
@@ -349,6 +355,13 @@ class HeapRegion: public G1OffsetTableContigSpace {
   static size_t GrainBytes;
   static size_t GrainWords;
   static size_t CardsPerRegion;
+
+  // <underscore>
+  int gen()             { return _gen; }
+  void set_gen(int gen) { _gen = gen; }
+  bool is_gen_alloc_region()                    { return _is_gen_alloc_region; }
+  set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
+  // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
     return (sz + (size_t) GrainBytes - 1) &
