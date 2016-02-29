@@ -360,7 +360,7 @@ class HeapRegion: public G1OffsetTableContigSpace {
   int gen()             { return _gen; }
   void set_gen(int gen) { _gen = gen; }
   bool is_gen_alloc_region()                    { return _is_gen_alloc_region; }
-  set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
+  void set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {

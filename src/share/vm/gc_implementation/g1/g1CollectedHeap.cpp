@@ -4464,16 +4464,16 @@ void G1CollectedHeap::abandon_gc_alloc_regions() {
 
 // <underscore>
 void G1CollectedHeap::init_gen_alloc_regions() {
-  for (int i = 0; i < _gen_alloc_region->length(); i++) {
-    assert(_gen_alloc_region.get() == NULL, "pre-condition");
-    _gen_alloc_region->at(i)->init();
+  for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+    assert(_gen_alloc_regions->at(i)->get() == NULL, "pre-condition");
+    _gen_alloc_regions->at(i)->init();
   }
 }
 
 void G1CollectedHeap::release_gen_alloc_regions() {
-  for (int i = 0; i < _gen_alloc_region->length(); i++) {
-    _gen_alloc_region->at(i)->release();
-    assert(_gen_alloc_region->at(i)->get() == NULL, "post-condition");
+  for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+    _gen_alloc_regions->at(i)->release();
+    assert(_gen_alloc_regions->at(i)->get() == NULL, "post-condition");
   }
 }
 // </undersore>
