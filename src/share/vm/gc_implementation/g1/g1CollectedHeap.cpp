@@ -595,6 +595,7 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
     // do_expand to true. So, we should only reach here during a
     // safepoint. If this assumption changes we might have to
     // reconsider the use of _expand_heap_after_alloc_failure.
+    // <underscore> TODO - this has failed once!!
     assert(SafepointSynchronize::is_at_safepoint(), "invariant");
 
     ergo_verbose1(ErgoHeapSizing,
