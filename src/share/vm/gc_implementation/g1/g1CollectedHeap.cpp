@@ -2395,7 +2395,7 @@ size_t G1CollectedHeap::used() const {
 
   // <underscore> Add from all active gen alloc regions.
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
-    hr = _gen_alloc_regions->at(i);
+    hr = _gen_alloc_regions->at(i)->get();
     if (hr != NULL) {
       result += hr->used();
     }
