@@ -309,9 +309,7 @@ void ThreadLocalAllocBuffer::verify() {
 }
 
 Thread* ThreadLocalAllocBuffer::myThread() {
-  return (Thread*)(((char *)this) +
-                   in_bytes(start_offset()) -
-                   in_bytes(Thread::tlab_start_offset()));
+  return _my_thread;
 }
 
 
