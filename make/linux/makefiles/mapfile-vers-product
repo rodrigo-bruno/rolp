@@ -94,6 +94,9 @@ SUNWprivate_1.1 {
                 JVM_FreeMemory;
                 JVM_GC;
                 JVM_SetAllocGen;
+                JVM_GetAllocGen;
+                JVM_NewAllocGen;
+                JVM_CollectAllocGen;
                 JVM_GetAllThreads;
                 JVM_GetArrayElement;
                 JVM_GetArrayLength;
