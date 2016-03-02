@@ -421,11 +421,27 @@ JVM_ENTRY_NO_ENV(void, JVM_GC(void))
   }
 JVM_END
 
+// <underscore>
 JVM_ENTRY_NO_ENV(void, JVM_SetAllocGen(jint gen))
   JVMWrapper("JVM_SetAllocGC");
   thread->set_alloc_gen(gen);
 JVM_END
 
+JVM_ENTRY_NO_ENV(jint, JVM_GetAllocGen())
+  JVMWrapper("JVM_GetAllocGC");
+  return thread->alloc_gen();
+JVM_END
+
+JVM_ENTRY_NO_ENV(jint, JVM_NewAllocGen())
+  JVMWrapper("JVM_NewAllocGC");
+  // TODO - be implemented
+JVM_END
+
+JVM_ENTRY_NO_ENV(void, JVM_CollectAllocGen(jint gen))
+  JVMWrapper("JVM_CollectAllocGC");
+  // TODO - be implemented
+JVM_END
+// </underscore>
 
 JVM_LEAF(jlong, JVM_MaxObjectInspectionAge(void))
   JVMWrapper("JVM_MaxObjectInspectionAge");
