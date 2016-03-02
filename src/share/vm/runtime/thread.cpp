@@ -208,7 +208,7 @@ void Thread::operator delete(void* p) {
 // JavaThread
 
 
-Thread::Thread() {
+Thread::Thread() : _tlab(this), _tlabOld(this) {
   // stack and get_thread
   set_stack_base(NULL);
   set_stack_size(0);

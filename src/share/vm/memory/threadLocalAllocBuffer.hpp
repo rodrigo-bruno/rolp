@@ -103,13 +103,7 @@ private:
   static GlobalTLABStats* global_stats() { return _global_stats; }
 
 public:
-  ThreadLocalAllocBuffer() : _allocation_fraction(TLABAllocationWeight) {
-    _my_thread = (Thread*)(((char *)this) +
-                   in_bytes(start_offset()) -
-                   in_bytes(Thread::tlab_start_offset()));
-    // do nothing.  tlabs must be inited by initialize() calls
-  }
-
+  // <underscore> Added constructor receiving thread.
   ThreadLocalAllocBuffer(Thread* my_thread) :
     _my_thread(my_thread), _allocation_fraction(TLABAllocationWeight) {
     // do nothing.  tlabs must be inited by initialize() calls
