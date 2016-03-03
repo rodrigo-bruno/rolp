@@ -1376,10 +1376,9 @@ public:
     GenAllocRegion* new_gen = NULL;
     int gen;
 
-    assert(_next_free_gen >= 0,
-      "next_free_gen should be >= 0 (%d)", _next_free_gen);
+    assert(_next_free_gen >= 0, "next_free_gen should be >= 0");
     assert(_next_free_gen <= _gen_alloc_regions->length(),
-      "next_free_gen should be <= gen_alloc_regions->length (%d)", _next_free_gen);
+      "next_free_gen should be <= gen_alloc_regions->length");
     {
       // TODO - check synchronization. MutexLockerEx ml(Threads_lock);
       gen = _next_free_gen;
