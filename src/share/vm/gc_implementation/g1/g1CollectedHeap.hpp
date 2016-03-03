@@ -1341,8 +1341,29 @@ public:
   // "System.gc".  This probably implies as full a collection as the
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
-  
-  
+
+  // <underscore>
+  virtual jint new_alloc_gen() {
+    // This must be synchronized!
+    // TODO - check if there is any empty stop on the gen groable array (spot with null)
+      // - save an integer of the next new generation
+    // TODO - if not, setup a new alloc gen.
+      // - new gen, inc next pointer integer
+    // TODO - for each thread, add a new tlab
+      // - this must be done before this call returns!
+    return 0;
+  }
+
+  virtual void collect_alloc_gen(jint gen) {
+    // TODO - for each region belonging to this gen, mark it for collection
+    // TODO - force a minor gc or wait until the next one?
+      // - inside the minor GC, make sure that tlabs belonging to this generation
+      // are deleted
+    // TODO - delete alloc gen
+      // - decrement next gen integer.
+  }
+  // </underscore>
+
     // <underscore> used to print used heap regions
     class PrintHeapRegion: public HeapRegionClosure {
         outputStream* _st;

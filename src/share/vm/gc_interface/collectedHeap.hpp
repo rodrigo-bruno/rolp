@@ -488,7 +488,14 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // file descriptor.
   // Only the G1GC should override this method, for now. - underscore
   virtual void send_free_regions(jint sockfd) { }
-  
+
+  // <underscore>
+  // Ask the heap to prepare a new allocation generation.
+  virtual jint new_alloc_gen() {}
+  // Ask the heap to collect an allocation generation.
+  virtual void collect_alloc_gen(jint gen) {}
+  // </underscore>
+
   // Returns the barrier set for this heap
   BarrierSet* barrier_set() { return _barrier_set; }
 
