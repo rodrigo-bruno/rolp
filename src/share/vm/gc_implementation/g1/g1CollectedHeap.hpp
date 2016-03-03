@@ -1344,22 +1344,22 @@ public:
 
   // <underscore>
   virtual jint new_alloc_gen() {
-    // This must be synchronized!
+    // This must be synchronized! - create new lock
     // TODO - check if there is any empty stop on the gen groable array (spot with null)
       // - save an integer of the next new generation
     // TODO - if not, setup a new alloc gen.
       // - new gen, inc next pointer integer
-    // TODO - for each thread, add a new tlab
+    // TODO - for each thread, add a new tlab (this does not need to be executed at a safepoint)
       // - this must be done before this call returns!
     return 0;
   }
 
   virtual void collect_alloc_gen(jint gen) {
     // TODO - for each region belonging to this gen, mark it for collection
-    // TODO - force a minor gc or wait until the next one?
+    // TODO - force a minor gc or wait until the next one, only if it avoids full GCs?
       // - inside the minor GC, make sure that tlabs belonging to this generation
       // are deleted
-    // TODO - delete alloc gen
+      // - delete alloc gen
       // - decrement next gen integer.
   }
   // </underscore>
