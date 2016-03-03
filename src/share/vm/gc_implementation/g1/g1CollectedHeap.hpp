@@ -1406,6 +1406,8 @@ public:
 
   virtual void collect_alloc_gen(jint gen) {
     // TODO - for each region belonging to this gen, mark it for collection
+      // maybe have an integer saying if we need to collect a gen. Then the 
+      // policy iterates regions and selects regions belonging to the generation -> slow?
     // TODO - force a minor gc or wait until the next one, only if it avoids full GCs?
       // - inside the minor GC, make sure that tlabs belonging to this generation are deleted
       // - delete alloc gen
