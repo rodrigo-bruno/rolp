@@ -1387,7 +1387,7 @@ public:
     }
     if (_gen_alloc_regions->length() == gen) {
       new_gen = new GenAllocRegion(gen);
-      // TODO - do I need to initialize it?
+      new_gen->init();
       _gen_alloc_regions->push(new_gen);
     } else {
       new_gen = _gen_alloc_regions->at(gen);
