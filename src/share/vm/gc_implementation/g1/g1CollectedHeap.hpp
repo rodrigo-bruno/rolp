@@ -308,10 +308,13 @@ private:
   // survivor objects.
   SurvivorGCAllocRegion _survivor_gc_alloc_region;
 
-  // <underscore> Special allocation region.
+  // <underscore> By default gen allocation region.
   GenAllocRegion _gen_alloc_region;
+  // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
-  
+  // <underscore> Index of the first available allocation region.
+  int _next_free_gen;
+
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
 
@@ -1342,25 +1345,74 @@ public:
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
 
+  // <underscore> Gets the next available gen slot starting from 'start'.
+  virtual int get_next_free_gen(int start) {
+    int i = start;
+    for (; i < _gen_alloc_regions->length(); i++) {
+      if (_gen_alloc_regions->at(i)->get() == NULL) {
+          break;
+      }
+    }
+    return i;
+  }
+
+  // <underscore> Thread closure to add tlab when a new generation is created.
+  class ThreadNewGenClosure: public ThreadClosure {
+    private:
+      int _gen;
+    public:
+      ThreadNewGenClosure(int gen) : _gen(gen) { }
+
+      virtual void do_thread(Thread* thread) {
+        ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
+        thread->gen_tlabs()->push(gen_tlab);
+        // TODO - confirm that this can be called outside a safepoint
+        gen_tlab->initialize();
+      }
+};
+
   // <underscore>
   virtual jint new_alloc_gen() {
-    // This must be synchronized! - create new lock
-    // TODO - check if there is any empty stop on the gen groable array (spot with null)
-      // - save an integer of the next new generation
-    // TODO - if not, setup a new alloc gen.
-      // - new gen, inc next pointer integer
-    // TODO - for each thread, add a new tlab (this does not need to be executed at a safepoint)
-      // - this must be done before this call returns!
-    return 0;
+    GenAllocRegion* new_gen = NULL;
+    int gen;
+
+    assert(_next_free_gen >= 0,
+      "next_free_gen should be >= 0 (%d)", _next_free_gen);
+    assert(_next_free_gen <= _gen_alloc_regions->length(),
+      "next_free_gen should be <= gen_alloc_regions->length (%d)", _next_free_gen);
+    {
+      // TODO - check synchronization. MutexLockerEx ml(Threads_lock);
+      gen = _next_free_gen;
+      _next_free_gen = get_next_free_gen(_next_free_gen);
+    }
+    if (_gen_alloc_regions->length() == gen) {
+      new_gen = new GenAllocRegion(gen);
+      // TODO - do I need to initialize it?
+      _gen_alloc_regions->push(new_gen);
+    } else {
+      new_gen = _gen_alloc_regions->at(gen);
+    }
+    assert(new_gen->get() == NULL,
+      "New gen allocation region shouldn't be initialized.");
+    new_gen->set_gen(gen);
+
+    ThreadNewGenClosure tc(gen);
+    {
+      MutexLockerEx ml(Threads_lock);
+      Threads::threads_do(&tc);
+    }
+
+    return gen;
   }
 
   virtual void collect_alloc_gen(jint gen) {
     // TODO - for each region belonging to this gen, mark it for collection
     // TODO - force a minor gc or wait until the next one, only if it avoids full GCs?
-      // - inside the minor GC, make sure that tlabs belonging to this generation
-      // are deleted
+      // - inside the minor GC, make sure that tlabs belonging to this generation are deleted
       // - delete alloc gen
       // - decrement next gen integer.
+      // if gen == zero, create a new alloc gen for zero.
+      // set threads that were using this gen (that got collected to default gen).
   }
   // </underscore>
 

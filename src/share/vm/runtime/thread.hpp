@@ -275,13 +275,13 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab! - done
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
-  // TODO - N - add gen into print of each region.
   // TODO - N - when a minor collection takes place, gen tlabs should not be affected.
   // TODO - N - when a thread is created, we must know how many gens there are (to init all tlabs) -> get this from heap
-  // TODO - N - when a gen is created, tlabs in all threads must be created and initialized.
-  // TODO - N - when a gen is collected, all tlabs and alloc region must be re-initialized
+
+  // TODO - N - add gen into print of each region.
   // TODO - N - merge _tlab into array as well.
   // TODO - N - change set_alloc_gen to is_alloc_gen in handles and instanceKlass
+  // TODO - N - protect set_alloc_gen to handle weird cases: collect and then set as alloc gen.
 
   // Array of gen TLABs.
   GrowableArray<ThreadLocalAllocBuffer*>* _tlabGenArray;

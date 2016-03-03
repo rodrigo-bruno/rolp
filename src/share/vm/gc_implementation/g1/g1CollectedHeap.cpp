@@ -2023,6 +2023,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   
   /* <underscore> */
   _gen_alloc_regions->push(&_gen_alloc_region);
+  _next_free_gen = 1;
   //_gen_alloc_regions->push(new GenAllocRegion()); // TODO - seems to work!
   gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
   /* </underscore> */
