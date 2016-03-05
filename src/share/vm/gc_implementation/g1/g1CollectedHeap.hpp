@@ -190,6 +190,7 @@ public:
 // <underscore>
 class GenAllocRegion : public G1AllocRegion {
     int _gen;
+    bool _should_collect;
 protected:
 
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
@@ -197,10 +198,14 @@ protected:
 public:
   // TODO - decide where BOT updates should be on or off
   GenAllocRegion(int gen = 0)
-  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , _gen(gen) { }
+  : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
+    _gen(gen), 
+    _should_collect(false) { }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }
+  bool should_collect() { return _should_collect; }
+  void set_should_collect(bool should_collect) { _should_collect = should_collect; }
 };
 // </underscore>
 
@@ -1376,11 +1381,12 @@ public:
     GenAllocRegion* new_gen = NULL;
     int gen;
 
+    // TODO - I don't need _free_free_gen any more...
     assert(_next_free_gen >= 0, "next_free_gen should be >= 0");
     assert(_next_free_gen <= _gen_alloc_regions->length(),
       "next_free_gen should be <= gen_alloc_regions->length");
     {
-      // TODO - check synchronization. MutexLockerEx ml(Threads_lock);
+      // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
       gen = _next_free_gen;
       _next_free_gen = get_next_free_gen(_next_free_gen);
     }
@@ -1404,16 +1410,29 @@ public:
     return gen;
   }
 
+  // TODO - use epochs in regions
   virtual void collect_alloc_gen(jint gen) {
-    // TODO - for each region belonging to this gen, mark it for collection
-      // maybe have an integer saying if we need to collect a gen. Then the 
-      // policy iterates regions and selects regions belonging to the generation -> slow?
-    // TODO - force a minor gc or wait until the next one, only if it avoids full GCs?
-      // - inside the minor GC, make sure that tlabs belonging to this generation are deleted
-      // - delete alloc gen
-      // - decrement next gen integer.
-      // if gen == zero, create a new alloc gen for zero.
-      // set threads that were using this gen (that got collected to default gen).
+    // TODO - asserts!
+    bool force = false; // TODO - heap_usage > max_heap * .75
+    GenAllocRegion* collect_gen = _gen_alloc_regions->at(gen);
+    if (collect_gen->shloud_collect()) {
+        return;
+    }
+
+    // TODO - gen increase epoch
+    collect_gen->set_should_collect(true);
+    if (force) {
+      // TODO - instruct minor gc to withdraw tlabs and alloc gen.
+        collect(GCCause::_prepare_migration);
+        // TODO - minor GC should:
+          // fill tlabs for this gen, 
+          // releaase alloc genc for this gen
+          // search gens that should be collected.
+    } else {
+      // TODO - schedule safepoint to:
+        // 1 - fill tlabs
+        // 2 - release? alloc gen
+    }
   }
   // </underscore>
 
