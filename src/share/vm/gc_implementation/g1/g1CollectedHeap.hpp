@@ -1363,6 +1363,7 @@ public:
         ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
         thread->gen_tlabs()->push(gen_tlab);
         // TODO - confirm that this can be called outside a safepoint
+        // TODO - assert that the _gen is in fact the index of the new tlab.
         gen_tlab->initialize();
       }
 };
@@ -1376,7 +1377,7 @@ public:
       ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
       virtual void do_thread(Thread* thread) {
-          ThreadLocalAllocBuffer* gen_tlab  = thread->gen_tlabs()->at(gen);
+          ThreadLocalAllocBuffer* gen_tlab  = thread->gen_tlabs()->at(_gen);
           assert(gen_tlab != NULL, "Gen TLAB should't be null.");
           gen_tlab->make_parsable(true);
       }
