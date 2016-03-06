@@ -12,5 +12,7 @@
 #define DEBUG_TLAB_ALLOC 1
 #define DEBUG_ANNO_ALLOC 1
 #define DEBUG_ASM_ALLOC 1
+#define DEBUG_NEW_GEN 1
+#define DEBUG_COLLECT_GEN 1
 #endif	/* NOGC_H */
 

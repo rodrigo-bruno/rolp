@@ -2023,7 +2023,6 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   
   /* <underscore> */
   _gen_alloc_regions->push(&_gen_alloc_region);
-  _next_free_gen = 1;
   //_gen_alloc_regions->push(new GenAllocRegion()); // TODO - seems to work!
   gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
   /* </underscore> */
@@ -6721,6 +6720,7 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
+  region->set_epoch(this->_epoch);
   return region;
 }
 

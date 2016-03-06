@@ -190,6 +190,7 @@ public:
 // <underscore>
 class GenAllocRegion : public G1AllocRegion {
     int _gen;
+    int _epoch;
     bool _should_collect;
 protected:
 
@@ -200,12 +201,15 @@ public:
   GenAllocRegion(int gen = 0)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen), 
-    _should_collect(false) { }
+    _should_collect(false),
+    _epoch(0) { }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }
   bool should_collect() { return _should_collect; }
   void set_should_collect(bool should_collect) { _should_collect = should_collect; }
+  int epoch() { return _epoch; }
+  void new_epoch() { _epoch++; }
 };
 // </underscore>
 
@@ -317,8 +321,6 @@ private:
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
-  // <underscore> Index of the first available allocation region.
-  int _next_free_gen;
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
@@ -1350,17 +1352,6 @@ public:
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
 
-  // <underscore> Gets the next available gen slot starting from 'start'.
-  virtual int get_next_free_gen(int start) {
-    int i = start;
-    for (; i < _gen_alloc_regions->length(); i++) {
-      if (_gen_alloc_regions->at(i)->get() == NULL) {
-          break;
-      }
-    }
-    return i;
-  }
-
   // <underscore> Thread closure to add tlab when a new generation is created.
   class ThreadNewGenClosure: public ThreadClosure {
     private:
@@ -1376,30 +1367,39 @@ public:
       }
 };
 
-  // <underscore>
-  virtual jint new_alloc_gen() {
-    GenAllocRegion* new_gen = NULL;
-    int gen;
+  // <underscore> Thread closure to release threads TLAB.
+  // <underscore> NOTE: This must be called inside a safepoint.
+  class ThreadCollectGenClosure: public ThreadClosure {
+    private:
+      int _gen;
+    public:
+      ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
-    // TODO - I don't need _free_free_gen any more...
-    assert(_next_free_gen >= 0, "next_free_gen should be >= 0");
-    assert(_next_free_gen <= _gen_alloc_regions->length(),
-      "next_free_gen should be <= gen_alloc_regions->length");
-    {
-      // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
-      gen = _next_free_gen;
-      _next_free_gen = get_next_free_gen(_next_free_gen);
-    }
-    if (_gen_alloc_regions->length() == gen) {
-      new_gen = new GenAllocRegion(gen);
-      new_gen->init();
-      _gen_alloc_regions->push(new_gen);
-    } else {
-      new_gen = _gen_alloc_regions->at(gen);
-    }
-    assert(new_gen->get() == NULL,
-      "New gen allocation region shouldn't be initialized.");
+      virtual void do_thread(Thread* thread) {
+          ThreadLocalAllocBuffer* gen_tlab  = thread->gen_tlabs()->at(gen);
+          assert(gen_tlab != NULL, "Gen TLAB should't be null.");
+          gen_tlab->make_parsable(true);
+      }
+};
+
+  virtual void rebase_alloc_gen(int gen) {
+    assert_at_safepoint(true /* should_be_vm_thread */);
+    // TODO - check that I do not need a lock on Threads_lock
+    ThreadNewGenClosure tc(gen);
+    Threads::threads_do(&tc);
+
+    GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
+    assert(rebase_gen != NULL, "Gen alloc region should't be null.");
+    rebase_gen->release();
+  }
+
+  virtual jint new_alloc_gen() {
+    // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
+    int gen = _gen_alloc_regions->length();
+    GenAllocRegion*  new_gen = new GenAllocRegion(gen);
+    new_gen->init();
     new_gen->set_gen(gen);
+    _gen_alloc_regions->push(new_gen);
 
     ThreadNewGenClosure tc(gen);
     {
@@ -1410,28 +1410,41 @@ public:
     return gen;
   }
 
-  // TODO - use epochs in regions
   virtual void collect_alloc_gen(jint gen) {
-    // TODO - asserts!
-    bool force = false; // TODO - heap_usage > max_heap * .75
-    GenAllocRegion* collect_gen = _gen_alloc_regions->at(gen);
-    if (collect_gen->shloud_collect()) {
-        return;
+
+    if (gen >= _gen_alloc_regions->length()) {
+      return;
     }
 
-    // TODO - gen increase epoch
+    int unused_threshold = 75;
+    bool force = used_unlocked() > (max_capacity() * (unused_threshold/100));
+
+#if DEBUG_COLLECT_GEN
+    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force",
+      used_unlocked(), max_capacity(), force ? "true" : "false");
+#endif
+
+    GenAllocRegion* collect_gen = _gen_alloc_regions->at(gen);
+    assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
+
+    collect_gen->new_epoch();
     collect_gen->set_should_collect(true);
     if (force) {
-      // TODO - instruct minor gc to withdraw tlabs and alloc gen.
-        collect(GCCause::_prepare_migration);
+#if DEBUG_COLLECT_GEN
+      gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
+#endif
+        // collect(GCCause::_prepare_migration);
         // TODO - minor GC should:
-          // fill tlabs for this gen, 
-          // releaase alloc genc for this gen
-          // search gens that should be collected.
+          // fill tlabs for this gen, (begin)
+          // releaase alloc genc for this gen (begin)
+          // search gens that should be collected. (policy)
     } else {
-      // TODO - schedule safepoint to:
-        // 1 - fill tlabs
-        // 2 - release? alloc gen
+#if DEBUG_COLLECT_GEN
+      gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen");
+#endif
+      // This is going to rebase this gen within a safepoint.
+      VM_Rebase_Gen op(gen);
+      VMThread::execute(&op);
     }
   }
   // </underscore>

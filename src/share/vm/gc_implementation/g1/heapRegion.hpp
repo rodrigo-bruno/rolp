@@ -299,8 +299,12 @@ class HeapRegion: public G1OffsetTableContigSpace {
   int  _age_index;
 
   // <underscore> The generation this region is in. -1 means no gen tracking.
-  // TODO - this value only chages when there is a gen collection or a Full GC.
+  // TODO - this value only changes when there is a gen collection or a Full GC.
   int _gen;
+  // <underscore> The epoch of the corresponding generation. -1 means no gen
+  // tracking.
+  // TODO - this value only changes when there is a gen collection or a Full GC.
+  int _epoch;
   // <underscore> Boolean indicating if this region is a gen alloc region.
   bool _is_gen_alloc_region;
 
@@ -361,6 +365,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_gen(int gen) { _gen = gen; }
   bool is_gen_alloc_region()                    { return _is_gen_alloc_region; }
   void set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
+  int epoch() { return _epoch; }
+  void set_epoch(int epoch) { _epoch = epoch; }
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
