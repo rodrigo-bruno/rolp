@@ -321,6 +321,8 @@ private:
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
+  // <underscore> Index of a gen alloc region needing rebase. -1 means no need.
+  int _rebase_gar;
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;

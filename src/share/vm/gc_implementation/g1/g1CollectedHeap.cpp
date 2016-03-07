@@ -1971,6 +1971,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
+  _rebase_gar(-1),
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
@@ -4027,6 +4028,15 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     { // Call to jvmpi::post_class_unload_events must occur outside of active GC
       IsGCActiveMark x;
 
+      // <underscore> Introduced if to rebase gen.
+      if (gc_cause() == GCCause::_collect_gen) {
+          assert(_rebase_gar >= 0 && _rebase_gar < _gen_alloc_regions->length() ,
+            "Invalid rebase gen alloc.");
+          assert(_gen_alloc_regions->at(_rebase_gar)->should_collect(),
+            "Rebase gen alloc region should collect.");
+          rebase_alloc_gen(_rebase_gar);
+      }
+
       // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
@@ -4054,7 +4064,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // Forget the current alloc region (we might even choose it to be part
         // of the collection set!).
         release_mutator_alloc_region();
-        // <underscore> TODO - release the correct gen alloc region!
 
         // We should call this after we retire the mutator alloc
         // region(s) so that all the ALLOC / RETIRE events are generated
@@ -4256,7 +4265,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 #endif // YOUNG_LIST_VERBOSE
 
         init_mutator_alloc_region();
-        // <underscore> TODO - init gen alloc region?
 
         {
           size_t expand_bytes = g1_policy()->expansion_amount();
@@ -7102,6 +7110,11 @@ public:
 
 void G1CollectedHeap::rebase_alloc_gen(int gen) {
   assert_at_safepoint(true /* should_be_vm_thread */);
+
+#if DEBUG_COLLECT_GEN
+    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen %d", gen);
+#endif
+
   // TODO - check that I do not need a lock on Threads_lock
   ThreadNewGenClosure tc(gen);
   Threads::threads_do(&tc);
@@ -7154,15 +7167,13 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif
+    // _rebase_gar tells GC to rebase the gen indexed by it.
+    _rebase_gar = gen;
     collect(GCCause::_collect_gen);
     // TODO - set gcs are not young and check if it actually goes mixed.
       // TODO - minor GC should:
-        // rebase gen
         // search gens that should be collected. (policy)
   } else {
-#if DEBUG_COLLECT_GEN
-    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen");
-#endif
     // This is going to rebase this gen within a safepoint.
     VM_Rebase_Gen op(gen);
     VMThread::execute(&op);
