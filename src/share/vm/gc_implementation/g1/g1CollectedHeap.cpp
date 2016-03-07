@@ -7070,99 +7070,99 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
 }
 
 // <underscore> Thread closure to add tlab when a new generation is created.
-  class ThreadNewGenClosure: public ThreadClosure {
-    private:
-      int _gen;
-    public:
-      ThreadNewGenClosure(int gen) : _gen(gen) { }
+class ThreadNewGenClosure: public ThreadClosure {
+private:
+  int _gen;
+public:
+  ThreadNewGenClosure(int gen) : _gen(gen) { }
 
-      virtual void do_thread(Thread* thread) {
-        ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
-        thread->gen_tlabs()->push(gen_tlab);
-        assert(thread->gen_tlabs()->length() == _gen, "Thread with incorrect number of TLABs");
-        // TODO - confirm that this can be called outside a safepoint
-        gen_tlab->initialize();
-      }
+  virtual void do_thread(Thread* thread) {
+    ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
+    thread->gen_tlabs()->push(gen_tlab);
+    assert(thread->gen_tlabs()->length() == _gen, "Thread with incorrect number of TLABs");
+    // TODO - confirm that this can be called outside a safepoint
+    gen_tlab->initialize();
+  }
 };
 
-  // <underscore> Thread closure to release threads TLAB.
-  // <underscore> NOTE: This must be called inside a safepoint.
-  class ThreadCollectGenClosure: public ThreadClosure {
-    private:
-      int _gen;
-    public:
-      ThreadCollectGenClosure(int gen) : _gen(gen) { }
+// <underscore> Thread closure to release threads TLAB.
+// <underscore> NOTE: This must be called inside a safepoint.
+class ThreadCollectGenClosure: public ThreadClosure {
+private:
+  int _gen;
+public:
+  ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
-      virtual void do_thread(Thread* thread) {
-          ThreadLocalAllocBuffer* gen_tlab  = thread->gen_tlabs()->at(_gen);
-          assert(gen_tlab != NULL, "Gen TLAB should't be null.");
-          gen_tlab->make_parsable(true);
-      }
+  virtual void do_thread(Thread* thread) {
+    ThreadLocalAllocBuffer* gen_tlab  = thread->gen_tlabs()->at(_gen);
+    assert(gen_tlab != NULL, "Gen TLAB should't be null.");
+    gen_tlab->make_parsable(true);
+  }
 };
 
-  virtual void rebase_alloc_gen(int gen) {
-    assert_at_safepoint(true /* should_be_vm_thread */);
-    // TODO - check that I do not need a lock on Threads_lock
-    ThreadNewGenClosure tc(gen);
+void G1CollectedHeap::rebase_alloc_gen(int gen) {
+  assert_at_safepoint(true /* should_be_vm_thread */);
+  // TODO - check that I do not need a lock on Threads_lock
+  ThreadNewGenClosure tc(gen);
+  Threads::threads_do(&tc);
+
+  GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
+  assert(rebase_gen != NULL, "Gen alloc region should't be null.");
+  rebase_gen->release();
+}
+
+jint G1CollectedHeap::new_alloc_gen() {
+  // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
+  int gen = _gen_alloc_regions->length();
+  GenAllocRegion*  new_gen = new GenAllocRegion(gen);
+  new_gen->init();
+  new_gen->set_gen(gen);
+  _gen_alloc_regions->push(new_gen);
+
+  ThreadNewGenClosure tc(gen);
+  {
+    MutexLockerEx ml(Threads_lock);
     Threads::threads_do(&tc);
-
-    GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
-    assert(rebase_gen != NULL, "Gen alloc region should't be null.");
-    rebase_gen->release();
   }
 
-  virtual jint new_alloc_gen() {
-    // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
-    int gen = _gen_alloc_regions->length();
-    GenAllocRegion*  new_gen = new GenAllocRegion(gen);
-    new_gen->init();
-    new_gen->set_gen(gen);
-    _gen_alloc_regions->push(new_gen);
+  return gen;
+}
 
-    ThreadNewGenClosure tc(gen);
-    {
-      MutexLockerEx ml(Threads_lock);
-      Threads::threads_do(&tc);
-    }
+void G1CollectedHeap::collect_alloc_gen(jint gen) {
 
-    return gen;
+  if (gen >= _gen_alloc_regions->length() || gen < 0) {
+    return;
   }
 
-  virtual void collect_alloc_gen(jint gen) {
-
-    if (gen >= _gen_alloc_regions->length() || gen < 0) {
-      return;
-    }
-
-    int unused_threshold = 75;
-    bool force = used_unlocked() > (max_capacity() * (unused_threshold/100));
+  int unused_threshold = 75;
+  bool force = used_unlocked() > (max_capacity() * (unused_threshold/100));
 
 #if DEBUG_COLLECT_GEN
-    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force",
-      used_unlocked(), max_capacity(), force ? "true" : "false");
+  gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force",
+    used_unlocked(), max_capacity(), force ? "true" : "false");
 #endif
 
-    GenAllocRegion* collect_gen = _gen_alloc_regions->at(gen);
-    assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
+  GenAllocRegion* collect_gen = _gen_alloc_regions->at(gen);
+  assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
 
-    collect_gen->new_epoch();
-    collect_gen->set_should_collect(true);
-    if (force) {
+  collect_gen->new_epoch();
+  collect_gen->set_should_collect(true);
+  if (force) {
 #if DEBUG_COLLECT_GEN
-      gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
+    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif
-      collect(GCCause::_collect_gen);
-      // TODO - set gcs are not young and check if it actually goes mixed.
-        // TODO - minor GC should:
-          // rebase gen
-          // search gens that should be collected. (policy)
-    } else {
+    collect(GCCause::_collect_gen);
+    // TODO - set gcs are not young and check if it actually goes mixed.
+      // TODO - minor GC should:
+        // rebase gen
+        // search gens that should be collected. (policy)
+  } else {
 #if DEBUG_COLLECT_GEN
-      gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen");
+    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen");
 #endif
-      // This is going to rebase this gen within a safepoint.
-      VM_Rebase_Gen op(gen);
-      VMThread::execute(&op);
-    }
+    // This is going to rebase this gen within a safepoint.
+    VM_Rebase_Gen op(gen);
+    VMThread::execute(&op);
   }
-  // </underscore>
+}
+// </underscore>
