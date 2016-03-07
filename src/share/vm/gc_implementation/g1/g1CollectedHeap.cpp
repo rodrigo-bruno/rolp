@@ -7126,6 +7126,7 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
   GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
   assert(rebase_gen != NULL, "Gen alloc region should't be null.");
   rebase_gen->release();
+  rebase_gen->init();
 }
 
 jint G1CollectedHeap::new_alloc_gen() {
@@ -7156,7 +7157,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 
   // TODO - extract unused treshold.
   //bool force = used_unlocked() > max_capacity();
-  bool force = false;
+  bool force = true;
 
 #if DEBUG_COLLECT_GEN
   gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
