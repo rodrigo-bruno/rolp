@@ -4037,6 +4037,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
           rebase_alloc_gen(_rebase_gar);
       }
 
+      // <underscore> TODO - try to force mixed GC.
       // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
@@ -7181,6 +7182,10 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
     // This is going to rebase this gen within a safepoint.
     VM_Rebase_Gen op(gen);
     VMThread::execute(&op);
+#if DEBUG_COLLECT_GEN
+    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: VM_Rebase_Gen prologue_succeeded=%s",
+      op.prologue_succeeded() ? "true" : "false");
+#endif
   }
 }
 // </underscore>
