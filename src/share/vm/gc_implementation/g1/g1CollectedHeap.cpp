@@ -7114,11 +7114,14 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 jint G1CollectedHeap::new_alloc_gen() {
   // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
   int gen = _gen_alloc_regions->length();
+#if DEBUG_NEW_GEN
+    gclog_or_tty->print_cr("<underscore> new_alloc_gen: creating new gen (%d)", gen);
+#endif
   GenAllocRegion*  new_gen = new GenAllocRegion(gen);
   new_gen->init();
   new_gen->set_gen(gen);
   _gen_alloc_regions->push(new_gen);
-
+  assert(new_gen == _gen_alloc_regions->at(gen), "Last gen alloc should be the new one.");
   ThreadNewGenClosure tc(gen);
   {
     MutexLockerEx ml(Threads_lock);
