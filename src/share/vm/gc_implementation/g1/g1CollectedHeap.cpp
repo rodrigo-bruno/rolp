@@ -2630,6 +2630,8 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       if (cause == GCCause::_gc_locker 
           /* <underscore> support for migration w/ no conc_mark. */
           || cause == GCCause::_prepare_migration
+          /* <underscore> support for collect gen. */
+          || cause == GCCause::_collect_gen
           DEBUG_ONLY(|| cause == GCCause::_scavenge_alot)) {
 
         // Schedule a standard evacuation pause. We're setting word_size
@@ -3762,6 +3764,8 @@ void G1CollectedHeap::gc_epilogue(bool full /* Ignored */) {
   Universe::update_heap_info_at_gc();
 }
 
+// <underscore> Normal way of scheduling a minor GC (this is called from allocate
+// slow).
 HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
                                                unsigned int gc_count_before,
                                                bool* succeeded,
@@ -7070,8 +7074,8 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
       virtual void do_thread(Thread* thread) {
         ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
         thread->gen_tlabs()->push(gen_tlab);
+        assert(thread->gen_tlabs()->length() == _gen, "Thread with incorrect number of TLABs");
         // TODO - confirm that this can be called outside a safepoint
-        // TODO - assert that the _gen is in fact the index of the new tlab.
         gen_tlab->initialize();
       }
 };
@@ -7121,7 +7125,7 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
 
   virtual void collect_alloc_gen(jint gen) {
 
-    if (gen >= _gen_alloc_regions->length()) {
+    if (gen >= _gen_alloc_regions->length() || gen < 0) {
       return;
     }
 
@@ -7142,10 +7146,9 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
 #if DEBUG_COLLECT_GEN
       gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif
-        // collect(GCCause::_prepare_migration);
+      collect(GCCause::_collect_gen);
         // TODO - minor GC should:
-          // fill tlabs for this gen, (begin)
-          // releaase alloc genc for this gen (begin)
+          // rebase gen
           // search gens that should be collected. (policy)
     } else {
 #if DEBUG_COLLECT_GEN
