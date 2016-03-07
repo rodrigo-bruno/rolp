@@ -4027,6 +4027,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     { // Call to jvmpi::post_class_unload_events must occur outside of active GC
       IsGCActiveMark x;
 
+      // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
       increment_gc_time_stamp();
@@ -4053,6 +4054,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // Forget the current alloc region (we might even choose it to be part
         // of the collection set!).
         release_mutator_alloc_region();
+        // <underscore> TODO - release the correct gen alloc region!
 
         // We should call this after we retire the mutator alloc
         // region(s) so that all the ALLOC / RETIRE events are generated
@@ -4112,6 +4114,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
                                                    evacuation_info);
         }
         else {
+          // <underscore> Chech how to put only gen regions in the CSet.
           g1_policy()->finalize_cset(target_pause_time_ms, evacuation_info);
         }
         // </underscore>
@@ -4253,6 +4256,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 #endif // YOUNG_LIST_VERBOSE
 
         init_mutator_alloc_region();
+        // <underscore> TODO - init gen alloc region?
 
         {
           size_t expand_bytes = g1_policy()->expansion_amount();
@@ -4828,6 +4832,7 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   markOop m = old->mark();
   int age = m->has_displaced_mark_helper() ? m->displaced_mark_helper()->age()
                                            : m->age();
+  // <underscore> AHAHHH! This is where it decides where the object is copied.
   GCAllocPurpose alloc_purpose = g1p->evacuation_destination(from_region, age,
                                                              word_sz);
   HeapWord* obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz);
@@ -7147,6 +7152,7 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
       gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif
       collect(GCCause::_collect_gen);
+      // TODO - set gcs are not young and check if it actually goes mixed.
         // TODO - minor GC should:
           // rebase gen
           // search gens that should be collected. (policy)
