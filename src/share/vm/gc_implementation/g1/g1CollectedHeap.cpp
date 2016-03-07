@@ -6772,7 +6772,10 @@ public:
   bool doHeapRegion(HeapRegion* hr) {
     _region_count += 1;
 
-    hr->print_on(gclog_or_tty); // <underscore> DEBUG
+    // <underscore> debug only
+#if DEBUG_PRINT_REGIONS
+    hr->print_on(gclog_or_tty);
+#endif
 
     if (hr->continuesHumongous()) {
       return false;
@@ -7087,7 +7090,7 @@ public:
   virtual void do_thread(Thread* thread) {
     ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
     thread->gen_tlabs()->push(gen_tlab);
-    assert(thread->gen_tlabs()->length() == _gen, "Thread with incorrect number of TLABs");
+    assert(thread->gen_tlabs()->at(_gen) == gen_tlab, "Last gen tlab should be the new one.");
     // TODO - confirm that this can be called outside a safepoint
     gen_tlab->initialize();
   }
@@ -7150,11 +7153,12 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
     return;
   }
 
-  int unused_threshold = 75;
-  bool force = used_unlocked() > (max_capacity() * (unused_threshold/100));
+  // TODO - extract unused treshold.
+  //bool force = used_unlocked() > max_capacity();
+  bool force = false;
 
 #if DEBUG_COLLECT_GEN
-  gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force",
+  gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
     used_unlocked(), max_capacity(), force ? "true" : "false");
 #endif
 
