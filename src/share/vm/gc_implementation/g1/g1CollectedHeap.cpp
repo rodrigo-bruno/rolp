@@ -7120,7 +7120,7 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 #endif
 
   // TODO - check that I do not need a lock on Threads_lock
-  ThreadNewGenClosure tc(gen);
+  ThreadCollectGenClosure tc(gen);
   Threads::threads_do(&tc);
 
   GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
