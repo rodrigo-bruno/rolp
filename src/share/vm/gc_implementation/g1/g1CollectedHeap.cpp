@@ -6630,8 +6630,8 @@ HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size,
   assert(FreeList_lock->owned_by_self(), "pre-condition");
 
   if (count < g1_policy()->max_regions(ap)) {
-    HeapRegion* new_alloc_region = new_region(word_size,
-                                              true /* do_expand */);
+    // <underscore> Changed new_region call to not expand.
+    HeapRegion* new_alloc_region = new_region(word_size, false /* do_expand */);
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
       // should never scan survivors. But it doesn't hurt to do it
