@@ -3736,7 +3736,7 @@ void G1CollectedHeap::gc_prologue(bool full /* Ignored */) {
   // always_do_update_barrier = false;
   assert(InlineCacheBuffer::is_empty(), "should have cleaned up ICBuffer");
   // Fill TLAB's and such
-  ensure_parsability(true);
+  ensure_parsability(true, full); // <underscore> Added 'full' paramater.
 
   if (G1SummarizeRSetStats && (G1SummarizeRSetStatsPeriod > 0) &&
       (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
