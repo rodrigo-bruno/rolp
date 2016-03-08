@@ -151,6 +151,20 @@ void VM_G1IncCollectionPause::doit() {
     }
   }
 
+  // <underscore> If there are gen alloc regions that need to be collected,
+  // force a mixed GC.
+  if (_gc_cause == GCCause::_collect_gen) {
+    g1h->g1_policy()->set_gcs_are_young(false);
+  } else {
+    for (int i = 0; i < g1h->_gen_alloc_regions->length(); i++) {
+      if (g1h->_gen_alloc_regions->at(i)->should_collect()) {
+        g1h->g1_policy()->set_gcs_are_young(false);
+        break;
+      }
+    }
+  }
+  // </underscore>
+
   _pause_succeeded =
     g1h->do_collection_pause_at_safepoint(_target_pause_time_ms);
   if (_pause_succeeded && _word_size > 0) {

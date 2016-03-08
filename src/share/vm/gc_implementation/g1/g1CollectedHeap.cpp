@@ -595,7 +595,6 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
     // do_expand to true. So, we should only reach here during a
     // safepoint. If this assumption changes we might have to
     // reconsider the use of _expand_heap_after_alloc_failure.
-    // <underscore> TODO - this has failed once!!
     assert(SafepointSynchronize::is_at_safepoint(), "invariant");
 
     ergo_verbose1(ErgoHeapSizing,
@@ -3965,6 +3964,11 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
   HRSPhaseSetter x(HRSPhaseEvacuation);
   verify_region_sets_optional();
   verify_dirty_young_regions();
+
+#if DEBUG_MINOR_CC
+  gclog_or_tty->print_cr("<underscore> minor gc: type= %s",
+    g1_policy->gcs_are_young() ? "young" : "mixed");
+#endif
 
   // This call will decide whether this pause is an initial-mark
   // pause. If it is, during_initial_mark_pause() will return true

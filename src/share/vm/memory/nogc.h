@@ -14,5 +14,6 @@
 #define DEBUG_ASM_ALLOC 1
 #define DEBUG_NEW_GEN 1
 #define DEBUG_COLLECT_GEN 1
+#define DEBUG_MINOR_CC 1
 #endif	/* NOGC_H */
 
