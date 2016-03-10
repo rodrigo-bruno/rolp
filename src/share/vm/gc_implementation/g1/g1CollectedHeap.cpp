@@ -6635,8 +6635,7 @@ HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size,
   assert(FreeList_lock->owned_by_self(), "pre-condition");
 
   if (count < g1_policy()->max_regions(ap)) {
-    // <underscore> Changed new_region call to not expand.
-    HeapRegion* new_alloc_region = new_region(word_size, false /* do_expand */);
+    HeapRegion* new_alloc_region = new_region(word_size, true /* do_expand */);
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
       // should never scan survivors. But it doesn't hurt to do it
@@ -6681,7 +6680,9 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
   // <underscore> using 'GCAllocForTenured' forces unlimited max regions
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
     // <underscore> Changed the next line to avoid expansion out of a safepoint.
+    // <underscore> TODO - expanding the heap might be necessary!
     HeapRegion* new_alloc_region = new_region(word_size, false /* do_expand */);
+    assert(new_alloc_region != NULL, "New gen alloc regions should always succeed.");
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
       // should never scan survivors. But it doesn't hurt to do it
@@ -6741,6 +6742,7 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   // TODO - commented to work! Understand if this has any impact on correctness!
   // assert(!force, "not supported for Gen alloc regions");
   HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
+  assert(region != NULL, "New gen alloc regions shouldn't return NULL.");
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
   region->set_epoch(this->_epoch);
@@ -7162,7 +7164,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 
   // TODO - extract unused treshold.
   //bool force = used_unlocked() > max_capacity();
-  bool force = true;
+  bool force = false;
 
 #if DEBUG_COLLECT_GEN
   gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
