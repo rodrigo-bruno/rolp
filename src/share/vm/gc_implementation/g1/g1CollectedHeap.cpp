@@ -4135,6 +4135,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         }
         // </underscore>
 
+        print_extended_on(gclog_or_tty);
         /* <underscore>  THIS CODE IS BUGGY!
         {
           HeapRegion* r = g1_policy()->collection_set();
