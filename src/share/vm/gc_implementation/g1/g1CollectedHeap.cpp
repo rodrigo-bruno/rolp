@@ -4043,6 +4043,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
       IsGCActiveMark x;
  
       // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
+      // <underscore> TODO - iterate the collection set to check if any gen alloc region is being collected by mistake!
       // <underscore> TODO - set should collect to false when we collect a gen.
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
