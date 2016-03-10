@@ -2454,6 +2454,7 @@ bool G1CollectedHeap::should_do_concurrent_full_gc(GCCause::Cause cause) {
     case GCCause::_java_lang_system_gc:     return ExplicitGCInvokesConcurrent;
     case GCCause::_g1_humongous_allocation: return true;
     case GCCause::_prepare_migration:       return false;
+    case GCCause::_collect_gen:             return true; // <underscore> force concurrent mark.
     default:                                return false;
   }
 }
@@ -2587,6 +2588,8 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
   unsigned int gc_count_before;
   unsigned int old_marking_count_before;
   bool retry_gc;
+  // <underscore>
+  bool need_gen_gc = false;
 
   do {
     retry_gc = false;
@@ -2599,7 +2602,16 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       old_marking_count_before = _old_marking_cycles_started;
     }
 
-    if (should_do_concurrent_full_gc(cause)) {
+    // <underscore> iterates through gens to check if any gen needs to be collected.
+    for (int i = 0; i < g1h->_gen_alloc_regions->length(); i++) {
+      if (g1h->_gen_alloc_regions->at(i)->should_collect()) {
+        need_gen_gc = true;
+        break;
+      }
+    }
+
+    // <underscore> Added need_gen_gc
+    if (should_do_concurrent_full_gc(cause) || need_gen_gc) {
       // <underscore> I believe this is the most common path.
       // Schedule an initial-mark evacuation pause that will start a
       // concurrent cycle. We're setting word_size to 0 which means that
@@ -2630,8 +2642,6 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       if (cause == GCCause::_gc_locker 
           /* <underscore> support for migration w/ no conc_mark. */
           || cause == GCCause::_prepare_migration
-          /* <underscore> support for collect gen. */
-          || cause == GCCause::_collect_gen
           DEBUG_ONLY(|| cause == GCCause::_scavenge_alot)) {
 
         // Schedule a standard evacuation pause. We're setting word_size
@@ -4041,7 +4051,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
           rebase_alloc_gen(_rebase_gar);
       }
 
-      // <underscore> TODO - try to force mixed GC.
+      // <underscore> TODO - try to force mixed GC?
       // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
