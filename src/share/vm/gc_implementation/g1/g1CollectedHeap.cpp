@@ -2603,8 +2603,8 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
     }
 
     // <underscore> iterates through gens to check if any gen needs to be collected.
-    for (int i = 0; i < g1h->_gen_alloc_regions->length(); i++) {
-      if (g1h->_gen_alloc_regions->at(i)->should_collect()) {
+    for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+      if (_gen_alloc_regions->at(i)->should_collect()) {
         need_gen_gc = true;
         break;
       }
@@ -3977,7 +3977,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
 #if DEBUG_MINOR_CC
   gclog_or_tty->print_cr("<underscore> minor gc: type= %s",
-    g1_policy->gcs_are_young() ? "young" : "mixed");
+    g1_policy()->gcs_are_young() ? "young" : "mixed");
 #endif
 
   // This call will decide whether this pause is an initial-mark
@@ -4041,18 +4041,9 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
     { // Call to jvmpi::post_class_unload_events must occur outside of active GC
       IsGCActiveMark x;
-
-      // <underscore> Introduced if to rebase gen.
-      if (gc_cause() == GCCause::_collect_gen) {
-          assert(_rebase_gar >= 0 && _rebase_gar < _gen_alloc_regions->length() ,
-            "Invalid rebase gen alloc.");
-          assert(_gen_alloc_regions->at(_rebase_gar)->should_collect(),
-            "Rebase gen alloc region should collect.");
-          rebase_alloc_gen(_rebase_gar);
-      }
-
-      // <underscore> TODO - try to force mixed GC?
+ 
       // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
+      // <underscore> TODO - set should collect to false when we collect a gen.
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
       increment_gc_time_stamp();
@@ -6689,8 +6680,8 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
 
   // <underscore> using 'GCAllocForTenured' forces unlimited max regions
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
-    HeapRegion* new_alloc_region = new_region(word_size,
-                                              true /* do_expand */);
+    // <underscore> Changed the next line to avoid expansion out of a safepoint.
+    HeapRegion* new_alloc_region = new_region(word_size, false /* do_expand */);
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
       // should never scan survivors. But it doesn't hurt to do it
@@ -7190,9 +7181,6 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
     // _rebase_gar tells GC to rebase the gen indexed by it.
     _rebase_gar = gen;
     collect(GCCause::_collect_gen);
-    // TODO - set gcs are not young and check if it actually goes mixed.
-      // TODO - minor GC should:
-        // search gens that should be collected. (policy)
   } else {
     // This is going to rebase this gen within a safepoint.
     VM_Rebase_Gen op(gen);

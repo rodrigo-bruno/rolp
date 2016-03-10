@@ -94,6 +94,7 @@ void VM_G1IncCollectionPause::doit() {
   assert(!_should_initiate_conc_mark ||
   ((_gc_cause == GCCause::_gc_locker && GCLockerInvokesConcurrent) ||
    (_gc_cause == GCCause::_java_lang_system_gc && ExplicitGCInvokesConcurrent) ||
+    _gc_cause == GCCause::_collect_gen || // <underscore>
     _gc_cause == GCCause::_g1_humongous_allocation),
          "only a GC locker, a System.gc() or a hum allocation induced GC should start a cycle");
 
@@ -107,6 +108,15 @@ void VM_G1IncCollectionPause::doit() {
       _pause_succeeded = true;
       return;
     }
+  }
+
+  // <underscore> Introduced if to rebase gen.
+  if (_gc_cause == GCCause::_collect_gen) {
+    assert(g1h->_rebase_gar >= 0 && g1h->_rebase_gar < g1h->_gen_alloc_regions->length() ,
+      "Invalid rebase gen alloc.");
+    assert(g1h->_gen_alloc_regions->at(g1h->_rebase_gar)->should_collect(),
+      "Rebase gen alloc region should collect.");
+    g1h->rebase_alloc_gen(g1h->_rebase_gar);
   }
 
   GCCauseSetter x(g1h, _gc_cause);
