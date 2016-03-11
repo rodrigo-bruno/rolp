@@ -275,8 +275,6 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab! - done
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
-  // TODO - N - when a thread is created, we must know how many gens there are (to init all tlabs) -> get this from heap
-
   // TODO - N - add gen into print of each region.
   // TODO - N - merge _tlab into array as well.
   // TODO - N - change set_alloc_gen to is_alloc_gen in handles and instanceKlass
