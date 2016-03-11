@@ -469,29 +469,7 @@ class Thread: public ThreadShadow {
   void set_gen_tlabs(GrowableArray<ThreadLocalAllocBuffer*>* tlabGenArray) { _tlabGenArray = tlabGenArray; }
 
   int alloc_gen() { return _alloc_gen; }
-  void set_alloc_gen(int gen) {
-    _alloc_gen = gen;
-    if (gen_tlabs()->at(gen) == NULL) {
-      // We need to create a new tlab for this thread.
-      // <underscore> TODO - use a lock for accessing the gen array length!
-      G1CollectedHeap* g1h = (G1CollectedHeap*) Universe::heap();
-      if (g1h->gen_alloc_regions()->length() > gen) {
-          _genTlab = new ThreadLocalAllocBuffer(this);
-          _tlabGenArray->at_put(gen, _genTlab);
-#if DEBUG_OBJ_ALLOC
-          gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s  (created new tlab)", gen, gen ? "tlabOld" : "tlabEden");
-#endif
-      } else {
-          // Illegal tlab (it was not creeated yet!)
-      }
-    } else {
-      assert(gen_tlabs()->at(gen)->myThread() == this, "invariant");
-      _genTlab = gen_tlabs()->at(_alloc_gen);
-    }
-#if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
-#endif
-  }
+  void set_alloc_gen(int gen);
 
   // TODO - change name to gen_tlab
   ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
@@ -519,12 +497,8 @@ class Thread: public ThreadShadow {
   void initialize_gen_tlabs() {
     if (UseTLAB) {
       for (int i = 0; i < _tlabGenArray->length(); i++) {
-          _tlabGenArray->at(i)->initialize();
+        _tlabGenArray->at(i)->initialize();
       }
-      // TODO - fix?
-      //if (Universe::heap() != NULL) {
-         // _tlabGenArray->push(new ThreadLocalAllocBuffer()); // Just for testing.
-      //}
     }
   }
   // <underscore>
