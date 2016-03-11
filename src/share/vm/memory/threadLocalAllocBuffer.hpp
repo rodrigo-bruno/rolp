@@ -89,8 +89,6 @@ private:
 
   void print_stats(const char* tag);
 
-  Thread* myThread();
-
   // statistics
 
   int number_of_refills() const { return _number_of_refills; }
@@ -126,6 +124,9 @@ public:
 
   // Allocate size HeapWords. The memory is NOT initialized to zero.
   inline HeapWord* allocate(size_t size);
+
+  // <underscore> Changed scope to public (from private)
+  Thread* myThread();
 
   // Reserve space at the end of TLAB
   static size_t end_reserve() {

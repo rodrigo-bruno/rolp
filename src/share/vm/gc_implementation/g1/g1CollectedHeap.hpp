@@ -1354,6 +1354,10 @@ public:
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
 
+  // <underscore> Getter for gen alloc regions array
+  GrowableArray<GenAllocRegion*>* gen_alloc_regions() {
+    return _gen_alloc_regions;
+  }
   // <underscore> Creates a new epoch in a specific generation.
   virtual void rebase_alloc_gen(int gen);
   // <underscore> Creates a new generation.
