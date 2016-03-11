@@ -491,10 +491,12 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   virtual void send_free_regions(jint sockfd) { }
 
   // <underscore>
-  // Ask the heap to prepare a new allocation generation.
-  virtual jint new_alloc_gen() {}
-  // Ask the heap to collect an allocation generation.
-  virtual void collect_alloc_gen(jint gen) {}
+  // Ask the heap to prepare a new allocation generation. Only implemented for G1.
+  virtual jint new_alloc_gen() { return -1; }
+  // Ask the heap to collect an allocation generation. Only implemented for G1.
+  virtual void collect_alloc_gen(jint gen) { }
+  // Get array of alloc regions. Only implemented for G1.
+  virtual GrowableArray<GenAllocRegion*>* gen_alloc_regions() { return NULL; }
   // </underscore>
 
   // Returns the barrier set for this heap
