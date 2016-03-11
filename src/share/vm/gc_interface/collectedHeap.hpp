@@ -495,8 +495,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   virtual jint new_alloc_gen() { return -1; }
   // Ask the heap to collect an allocation generation. Only implemented for G1.
   virtual void collect_alloc_gen(jint gen) { }
-  // Get array of alloc regions. Only implemented for G1.
-  virtual GrowableArray<GenAllocRegion*>* gen_alloc_regions() { return NULL; }
+  // Get number of gens. Only implemented for G1.
+  virtual jint gens_length() { return 0; }
   // </underscore>
 
   // Returns the barrier set for this heap

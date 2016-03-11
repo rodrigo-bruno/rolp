@@ -1355,15 +1355,15 @@ public:
   virtual void collect(GCCause::Cause cause);
 
   // <underscore> Getter for gen alloc regions array
-  GrowableArray<GenAllocRegion*>* gen_alloc_regions() {
-    return _gen_alloc_regions;
-  }
+  GrowableArray<GenAllocRegion*>* gen_alloc_regions() { return _gen_alloc_regions; }
   // <underscore> Creates a new epoch in a specific generation.
   virtual void rebase_alloc_gen(int gen);
   // <underscore> Creates a new generation.
   virtual jint new_alloc_gen();
   // <underscore> Collects a specific generation.
   virtual void collect_alloc_gen(jint gen);
+  // <underscore> Returns the number of active gens.
+  virtual jint gens_length() { return _gen_alloc_regions->length(); }
 
     // <underscore> used to print used heap regions
     class PrintHeapRegion: public HeapRegionClosure {

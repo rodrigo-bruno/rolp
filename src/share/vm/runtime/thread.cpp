@@ -106,6 +106,7 @@
 #ifdef COMPILER2
 #include "opto/c2compiler.hpp"
 #include "opto/idealGraphPrinter.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.hpp"
 #endif
 
 #ifdef DTRACE_ENABLED
@@ -4690,7 +4691,7 @@ void Thread::set_alloc_gen(int gen) {
     // We need to create a new tlab for this thread.
     // <underscore> TODO - use a lock for accessing the gen array length!
     G1CollectedHeap* g1h = (G1CollectedHeap*) Universe::heap();
-    if (g1h->gen_alloc_regions()->length() > gen) {
+    if (g1h->gens_length() > gen) {
       _genTlab = new ThreadLocalAllocBuffer(this);
       _tlabGenArray->at_put_grow(gen, _genTlab);
 #if DEBUG_OBJ_ALLOC
