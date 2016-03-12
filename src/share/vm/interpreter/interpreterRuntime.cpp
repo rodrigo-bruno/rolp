@@ -196,7 +196,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
 // <underscore> TODO - I don't need method and bcp args (see new array)
-IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, Method* method, address bcp))
+IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, Method* amethod, address abcp))
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
 
@@ -207,11 +207,11 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   klass->initialize(CHECK);
 
 // <undescore>
-  int alloc_gen = get_alloc_gen(pool, method(), bci());
+  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread));
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new(thread=%p, method=%p, bcp=%u, bci=%d)",
-          thread, method(), bcp(), bci());
-  klass->print_on(gclog_or_tty);
+          thread, method(thread), bcp(thread), bci(thread));
+  //klass->print_on(gclog_or_tty);
 #endif
 // </undescore>
 
@@ -235,22 +235,22 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 // <undescore>
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> return InterpreterRuntime::_new(thread=%p)", thread);
-  klass->print_on(gclog_or_tty);
+  //klass->print_on(gclog_or_tty);
 #endif
 // </undescore>
 
 IRT_END
 
   // <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread, Method* method, address bcp))
+IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread, Method* amethod, address abcp))
   // get_alloc_gen will look into the annotaions and select the correct allocation gen
   // 0 means young (eden); >0 means old.
-  int alloc_gen = get_alloc_gen(method()->constants(), method(), bci());
+  int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread));
   // set_cur_tlab will update the Thread's internal pointer to the current allocation tlab
   thread->set_cur_tlab(alloc_gen != 0);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InterpreterRuntime::_get_gen_tlab (pool=%p, method=%p, alloc_gen=%d, tlabGen->top %p )!",
-    method()->constants(), method(), alloc_gen, thread->curr_tlab().top());
+    method(thread)->constants(), method(thread), alloc_gen, thread->curr_tlab().top());
 #endif
 
 
@@ -268,10 +268,10 @@ IRT_END
 // </undescore>
 
 // <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* method, address bcp, jint gen))
+IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* amethod, address abcp, jint gen))
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d, method->alloc_anno=%p)!",
-    method(), bcp(), bci(), gen, method()->alloc_anno());
-  method->print_name(gclog_or_tty);
+    method(thread), bcp(thread), bci(thread), gen, method(thread)->alloc_anno());
+  method(thread)->print_name(gclog_or_tty);
   gclog_or_tty->print_cr("");
 IRT_END
 // </undescore>
