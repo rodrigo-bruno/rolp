@@ -1073,6 +1073,7 @@ objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
   int size = objArrayOopDesc::object_size(length);
   Klass* ak = array_klass(n, CHECK_NULL);
   KlassHandle h_ak (THREAD, ak);
+  // <underscore> TODO - set alloc gen
   objArrayOop o =
     (objArrayOop)CollectedHeap::array_allocate(h_ak, size, length, CHECK_NULL);
   return o;

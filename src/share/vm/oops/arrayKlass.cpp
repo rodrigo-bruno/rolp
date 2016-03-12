@@ -136,6 +136,7 @@ objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, TRAPS) {
   int size = objArrayOopDesc::object_size(length);
   Klass* k = array_klass(n+dimension(), CHECK_0);
   ArrayKlass* ak = ArrayKlass::cast(k);
+  // TODO - set ak.set_alloc_gen
   objArrayOop o =
     (objArrayOop)CollectedHeap::array_allocate(ak, size, length, CHECK_0);
   // initialization to NULL not necessary, area already cleared

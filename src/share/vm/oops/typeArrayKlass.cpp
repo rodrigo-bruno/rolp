@@ -100,6 +100,7 @@ typeArrayOop TypeArrayKlass::allocate_common(int length, bool do_zero, TRAPS) {
     if (length <= max_length()) {
       size_t size = typeArrayOopDesc::object_size(layout_helper(), length);
       KlassHandle h_k(THREAD, this);
+      // <underscore> TODO - set alloc_gen
       typeArrayOop t;
       CollectedHeap* ch = Universe::heap();
       if (do_zero) {

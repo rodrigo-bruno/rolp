@@ -182,11 +182,13 @@ int ObjArrayKlass::oop_size(oop obj) const {
   return objArrayOop(obj)->object_size();
 }
 
+// <underscore> Add default parameter gen_alloc = false
 objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
       KlassHandle h_k(THREAD, this);
+      // <underscore> TODO - set alloc gen
       return (objArrayOop)CollectedHeap::array_allocate(h_k, size, length, CHECK_NULL);
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
@@ -200,6 +202,7 @@ objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
 
 static int multi_alloc_counter = 0;
 
+// <underscore> Add default parameter gen_alloc = false
 oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
   int length = *sizes;
   // Call to lower_dimension uses this pointer, so most be called before a
