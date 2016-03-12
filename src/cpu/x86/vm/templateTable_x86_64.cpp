@@ -3262,10 +3262,7 @@ void TemplateTable::_new() {
     __ push(rsi);
     __ push(rdx);
     __ push(rax);
-  __ push(c_rarg1);
-  __ get_method(c_rarg1);
-  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new3), c_rarg1, r13);
-  __ pop(c_rarg1);
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new3), r13);
     __ pop(rax);
     __ pop(rdx);
     __ pop(rsi);
@@ -3376,7 +3373,7 @@ void TemplateTable::_new() {
     __ push(rdx); // save instance size
     __ push(rsi); // save klass
     // This call will update the tlabGen in current thread. rax -> method; r13 -> bcp
-    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab), rax, r13);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::_get_gen_tlab));
     __ pop(rsi);
     __ pop(rdx);
 
@@ -3536,9 +3533,7 @@ void TemplateTable::_new() {
 
   __ get_constant_pool(c_rarg1);
   __ get_unsigned_2_byte_index_at_bcp(c_rarg2, 1);
-  __ get_method(c_rarg3);
-   // <underscore> added c_rarg3 (current method) and r13 (byte code pointer).
-  call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new), c_rarg1, c_rarg2, c_rarg3, r13);
+  call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::_new), c_rarg1, c_rarg2);
   __ verify_oop(rax);
 
   // continue

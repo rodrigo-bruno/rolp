@@ -179,7 +179,8 @@ class KlassHandle : public StackObj {
   Klass* _value;
 
   // <underscore> Integer that indicates in which generation the next instance
-  // should be allocated.
+  // should be allocated. For now, > 0 means that the object should be allocated
+  // in a special generation (not eden).
   int _alloc_gen;
 
  protected:

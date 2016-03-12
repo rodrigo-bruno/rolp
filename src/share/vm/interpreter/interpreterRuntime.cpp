@@ -196,7 +196,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
 // <underscore> TODO - I don't need method and bcp args (see new array)
-IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index, Method* amethod, address abcp))
+IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index))
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
 
@@ -242,7 +242,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
 IRT_END
 
   // <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread, Method* amethod, address abcp))
+IRT_ENTRY(void, InterpreterRuntime::_get_gen_tlab(JavaThread* thread))
   // get_alloc_gen will look into the annotaions and select the correct allocation gen
   // 0 means young (eden); >0 means old.
   int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread));
@@ -268,7 +268,7 @@ IRT_END
 // </undescore>
 
 // <underscore>
-IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, Method* amethod, address abcp, jint gen))
+IRT_ENTRY(void, InterpreterRuntime::_new3(JavaThread* thread, jint gen))
   gclog_or_tty->print("<underscore> InterpreterRuntime::_new3 (method=%p, bcp=%u, bci=%d, gen=%d, method->alloc_anno=%p)!",
     method(thread), bcp(thread), bci(thread), gen, method(thread)->alloc_anno());
   method(thread)->print_name(gclog_or_tty);
