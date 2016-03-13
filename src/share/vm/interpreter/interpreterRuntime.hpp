@@ -83,7 +83,7 @@ class InterpreterRuntime: AllStatic {
   static void    _new3         (JavaThread* thread, jint gen);                                                      // <underscore>
   static void    newarray      (JavaThread* thread, ConstantPool* pool, BasicType type, jint size);                 // <underscore>
   static void    anewarray     (JavaThread* thread, ConstantPool* pool, int index, jint size);
-  static void    multianewarray(JavaThread* thread, jint* first_size_address);
+  static void    multianewarray(JavaThread* thread, ConstantPool* pool, jint* first_size_address);                  // <underscore>
   static void    register_finalizer(JavaThread* thread, oopDesc* obj);
 
   // Quicken instance-of and check-cast bytecodes

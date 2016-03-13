@@ -309,7 +309,7 @@ IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* 
 IRT_END
 
 
-IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* first_size_address))
+IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, ConstantPool* pool, jint* first_size_address))
   // We may want to pass in more arguments - could make this slightly faster
   ConstantPool* constants = method(thread)->constants();
   int          i = get_index_u2(thread, Bytecodes::_multianewarray);
