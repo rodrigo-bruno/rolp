@@ -1063,7 +1063,7 @@ bool InstanceKlass::is_same_or_direct_interface(Klass *k) const {
   return false;
 }
 
-objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
+objArrayOop InstanceKlass::allocate_objArray(int n, int length, int gen, TRAPS) {
   if (length < 0) THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
   if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
     report_java_out_of_memory("Requested array size exceeds VM limit");
@@ -1073,7 +1073,8 @@ objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
   int size = objArrayOopDesc::object_size(length);
   Klass* ak = array_klass(n, CHECK_NULL);
   KlassHandle h_ak (THREAD, ak);
-  // <underscore> TODO - set alloc gen
+  // <underscore> setting allocation gen.
+  h_ak.set_alloc_gen(gen);
   objArrayOop o =
     (objArrayOop)CollectedHeap::array_allocate(h_ak, size, length, CHECK_NULL);
   return o;

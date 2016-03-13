@@ -276,8 +276,16 @@ IRT_END
 // </undescore>
 
   
-IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
-  oop obj = oopFactory::new_typeArray(type, size, CHECK);
+IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, ConstantPool* pool, BasicType type, jint size))
+
+  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread));
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d)",
+    thread, method(thread), bcp(thread), bci(thread));
+#endif
+// </undescore>
+
+  oop obj = oopFactory::new_typeArray(type, size, alloc_gen, CHECK);
   thread->set_vm_result(obj);
 IRT_END
 
@@ -287,7 +295,16 @@ IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* 
   //       anymore after new_objArray() and no GC can happen before.
   //       (This may have to change if this code changes!)
   Klass*    klass = pool->klass_at(index, CHECK);
-  objArrayOop obj = oopFactory::new_objArray(klass, size, CHECK);
+
+// <underscore>
+  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread));
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print("<underscore> InterpreterRuntime::anewarray(thread=%p, method=%p, bcp=%u, bci=%d)",
+    thread, method(thread), bcp(thread), bci(thread));
+#endif
+// </undescore>
+
+  objArrayOop obj = oopFactory::new_objArray(klass, size, alloc_gen, CHECK);
   thread->set_vm_result(obj);
 IRT_END
 
@@ -300,6 +317,14 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* fir
   int   nof_dims = number_of_dimensions(thread);
   assert(klass->is_klass(), "not a class");
   assert(nof_dims >= 1, "multianewarray rank must be nonzero");
+
+  // <underscore>
+  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread));
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print("<underscore> InterpreterRuntime::multianewarray(thread=%p, method=%p, bcp=%u, bci=%d)",
+    thread, method(thread), bcp(thread), bci(thread));
+#endif
+// </undescore>
 
   // We must create an array of jints to pass to multi_allocate.
   ResourceMark rm(thread);
@@ -314,7 +339,7 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* fir
     int n = Interpreter::local_offset_in_bytes(index)/jintSize;
     dims[index] = first_size_address[n];
   }
-  oop obj = ArrayKlass::cast(klass)->multi_allocate(nof_dims, dims, CHECK);
+  oop obj = ArrayKlass::cast(klass)->multi_allocate(nof_dims, dims, alloc_gen, CHECK);
   thread->set_vm_result(obj);
 IRT_END
 

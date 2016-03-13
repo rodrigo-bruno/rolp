@@ -81,7 +81,7 @@ class InterpreterRuntime: AllStatic {
   static void    _get_gen_tlab (JavaThread* thread);                                                                // <underscore>
   static void    _new2         (JavaThread* thread, ConstantPool* pool, int index, jint gen);                       // <underscore>
   static void    _new3         (JavaThread* thread, jint gen);                                                      // <underscore>
-  static void    newarray      (JavaThread* thread, BasicType type, jint size);
+  static void    newarray      (JavaThread* thread, ConstantPool* pool, BasicType type, jint size);                 // <underscore>
   static void    anewarray     (JavaThread* thread, ConstantPool* pool, int index, jint size);
   static void    multianewarray(JavaThread* thread, jint* first_size_address);
   static void    register_finalizer(JavaThread* thread, oopDesc* obj);

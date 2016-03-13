@@ -3557,10 +3557,11 @@ void TemplateTable::_new() {
 
 void TemplateTable::newarray() {
   transition(itos, atos);
-  __ load_unsigned_byte(c_rarg1, at_bcp(1));
-  __ movl(c_rarg2, rax);
+  __ get_constant_pool(c_rarg1);
+  __ load_unsigned_byte(c_rarg2, at_bcp(1));
+  __ movl(c_rarg3, rax);
   call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::newarray),
-          c_rarg1, c_rarg2);
+          c_rarg1, c_rarg2, c_arg3);
 }
 
 void TemplateTable::anewarray() {

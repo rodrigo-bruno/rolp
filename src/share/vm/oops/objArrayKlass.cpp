@@ -182,7 +182,6 @@ int ObjArrayKlass::oop_size(oop obj) const {
   return objArrayOop(obj)->object_size();
 }
 
-// <underscore> Add default parameter gen_alloc = false
 objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
@@ -200,9 +199,27 @@ objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
   }
 }
 
+// <underscore> Alternative declaration (with gen argument).
+objArrayOop ObjArrayKlass::allocate(int length, int gen, TRAPS) {
+  if (length >= 0) {
+    if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
+      int size = objArrayOopDesc::object_size(length);
+      KlassHandle h_k(THREAD, this);
+      // <underscore> setting allocation gen.
+      h_k.set_alloc_gen(gen);
+      return (objArrayOop)CollectedHeap::array_allocate(h_k, size, length, CHECK_NULL);
+    } else {
+      report_java_out_of_memory("Requested array size exceeds VM limit");
+      JvmtiExport::post_array_size_exhausted();
+      THROW_OOP_0(Universe::out_of_memory_error_array_size());
+    }
+  } else {
+    THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
+  }
+}
+
 static int multi_alloc_counter = 0;
 
-// <underscore> Add default parameter gen_alloc = false
 oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
   int length = *sizes;
   // Call to lower_dimension uses this pointer, so most be called before a
@@ -216,6 +233,37 @@ oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
       for (int index = 0; index < length; index++) {
         ArrayKlass* ak = ArrayKlass::cast(h_lower_dimension());
         oop sub_array = ak->multi_allocate(rank-1, &sizes[1], CHECK_NULL);
+        h_array->obj_at_put(index, sub_array);
+      }
+    } else {
+      // Since this array dimension has zero length, nothing will be
+      // allocated, however the lower dimension values must be checked
+      // for illegal values.
+      for (int i = 0; i < rank - 1; ++i) {
+        sizes += 1;
+        if (*sizes < 0) {
+          THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
+        }
+      }
+    }
+  }
+  return h_array();
+}
+
+// <underscore> Alternative declaration (with gen argument).
+oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, int gen, TRAPS) {
+  int length = *sizes;
+  // Call to lower_dimension uses this pointer, so most be called before a
+  // possible GC
+  KlassHandle h_lower_dimension(THREAD, lower_dimension());
+  // If length < 0 allocate will throw an exception.
+  objArrayOop array = allocate(length, gen, CHECK_NULL);
+  objArrayHandle h_array (THREAD, array);
+  if (rank > 1) {
+    if (length != 0) {
+      for (int index = 0; index < length; index++) {
+        ArrayKlass* ak = ArrayKlass::cast(h_lower_dimension());
+        oop sub_array = ak->multi_allocate(rank-1, &sizes[1], gen, CHECK_NULL);
         h_array->obj_at_put(index, sub_array);
       }
     } else {
