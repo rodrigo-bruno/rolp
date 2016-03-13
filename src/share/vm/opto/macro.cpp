@@ -1234,6 +1234,7 @@ void PhaseMacroExpand::expand_allocate_common(
   Method* m = alloc->jvms()->method()->get_Method(); // <underscore>
   ConstantPool* cp = m->constants(); // <underscore>
   int alloc_gen = get_alloc_gen_2(cp, m, bci);
+  // <underscore> TODO - put debug tags!
   gclog_or_tty->print("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
     alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen); // <underscore> DEBUG
   alloc->jvms()->method()->print(gclog_or_tty); // <underscore> DEBUG
@@ -1273,7 +1274,7 @@ void PhaseMacroExpand::expand_allocate_common(
     initial_slow_test = NULL;
   }
 
-  // <underscore> I am forcing the slow path
+  // <underscore> TODO - I am forcing the slow path
   always_slow = true;
   initial_slow_test = NULL;
   // </underscore>

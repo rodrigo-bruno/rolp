@@ -195,7 +195,6 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
 
 //------------------------------------------------------------------------------------------------------------------------
 // Allocation
-// <underscore> TODO - I don't need method and bcp args (see new array)
 IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool, int index))
   Klass* k_oop = pool->klass_at(index, CHECK);
   instanceKlassHandle klass (THREAD, k_oop);
