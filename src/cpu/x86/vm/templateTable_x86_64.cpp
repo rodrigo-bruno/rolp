@@ -3557,11 +3557,10 @@ void TemplateTable::_new() {
 
 void TemplateTable::newarray() {
   transition(itos, atos);
-  __ get_constant_pool(c_rarg1);
-  __ load_unsigned_byte(c_rarg2, at_bcp(1));
-  __ movl(c_rarg3, rax);
+  __ load_unsigned_byte(c_rarg1, at_bcp(1));
+  __ movl(c_rarg2, rax);
   call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::newarray),
-          c_rarg1, c_rarg2, c_arg3);
+          c_rarg1, c_rarg2);
 }
 
 void TemplateTable::anewarray() {
@@ -3903,14 +3902,13 @@ void TemplateTable::wide() {
 // Multi arrays
 void TemplateTable::multianewarray() {
   transition(vtos, atos);
-  __ get_constant_pool(c_rarg1);
   __ load_unsigned_byte(rax, at_bcp(3)); // get number of dimensions
   // last dim is on top of stack; we want address of first one:
   // first_addr = last_addr + (ndims - 1) * wordSize
-  __ lea(c_rarg2, Address(rsp, rax, Address::times_8, -wordSize));
+  __ lea(c_rarg1, Address(rsp, rax, Address::times_8, -wordSize));
   call_VM(rax,
           CAST_FROM_FN_PTR(address, InterpreterRuntime::multianewarray),
-          c_rarg1, c_rarg2);
+          c_rarg1);
   __ load_unsigned_byte(rbx, at_bcp(3));
   __ lea(rsp, Address(rsp, rbx, Address::times_8));
 }

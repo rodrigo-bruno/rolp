@@ -276,9 +276,9 @@ IRT_END
 // </undescore>
 
   
-IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, ConstantPool* pool, BasicType type, jint size))
+IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
 
-  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread));
+  int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread));
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d)",
     thread, method(thread), bcp(thread), bci(thread));
@@ -309,7 +309,7 @@ IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* 
 IRT_END
 
 
-IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, ConstantPool* pool, jint* first_size_address))
+IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* first_size_address))
   // We may want to pass in more arguments - could make this slightly faster
   ConstantPool* constants = method(thread)->constants();
   int          i = get_index_u2(thread, Bytecodes::_multianewarray);
@@ -319,7 +319,7 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, ConstantP
   assert(nof_dims >= 1, "multianewarray rank must be nonzero");
 
   // <underscore>
-  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread));
+  int alloc_gen = get_alloc_gen(constants, method(thread), bci(thread));
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print("<underscore> InterpreterRuntime::multianewarray(thread=%p, method=%p, bcp=%u, bci=%d)",
     thread, method(thread), bcp(thread), bci(thread));
