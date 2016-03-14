@@ -1168,60 +1168,30 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 // slow-path call.
 //
 
-// <underscore> This is an exact copy of the method already in
+// <underscore> Please consider reading the following file:
 // interpreterRuntime.ccp
 // <underscore> Please consider reading the following file:
 // mercurial/jdk8/langtools/src/share/classes/com/sun/tools/classfile/ClassWritter.java
+// <underscore> Node: I assume that all bci are already cached because all code
+// is interpreted before it is compiled.
 int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
-  int alloc_gen = 0;
-  AnnotationArray* aa = method->type_annotations();
-  if(aa != NULL && method->alloc_anno() != NULL) {
-#if DEBUG_ANNO_ALLOC
-    gclog_or_tty->print_cr("<underscore> type annotations array length = %d: ", aa->length());
-    for (int i = 0; i < aa->length(); i++) {
-      gclog_or_tty->print(" %d ", aa->at(i));
-    }
-    gclog_or_tty->print_cr("");
-#endif
-    u1* data = aa->data();
+  Array<u2>* aac = method->alloc_anno_cache();
 
-    // Get short (# of annotations)
-    u2 n_anno =Bytes::get_Java_u2(data);
+  // First, look into cache.
+  if (aac != NULL) {
+    for (int i = 0; i < aac->length(); i++) {
+      if (bci == aac->at(i)) {
 #if DEBUG_ANNO_ALLOC
-    gclog_or_tty->print_cr("<underscore> number of type annotations = %hu", n_anno);
+        gclog_or_tty->print_cr("<underscore> got annotation from cache!");
 #endif
-    data += 2;
-    for (u2 i = 0; i < n_anno; i++) {
-      // byte target type (should be 68 == 0x44 == NEW)
-      u1 anno_target = *data;
-      // Get short (location, should be bci)
-      u2 anno_bci = Bytes::get_Java_u2(data + 1);
-      // byte loc data size (should be zero)
-      u1 dsize = *(data + 3);
-      // Note: after the previous byte comes 'dsize'*2 bytes of location data.
-      // Get short (type index in constant pool, should be Old)
-      u2 anno_type_index = Bytes::get_Java_u2(data + 4 + dsize*2);
-      // Get char* (type name, should be LOld;)
-      Symbol* type_name = pool->symbol_at(anno_type_index);
-
-#if DEBUG_ANNO_ALLOC
-      gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
-      gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
-      gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
-#endif
-      if (anno_target == 68 && anno_bci == bci && type_name->equals("LOld;", 5)) {
-        alloc_gen = 1;
-#if DEBUG_ANNO_ALLOC
-        gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
-#endif
-        break;
+        return 1;
       }
-      // <underscore> 8 is the number of bytes used a alloc annotation.
-      // <underscore> Note: I'm assuming the annotation has no elements!
-      data += 8 + dsize*2;
+      if (i == 0) {
+        // No cache entry at 'next_centry'
+        return 0;
+      }
     }
   }
-  return alloc_gen;
 }
 
 // </underscore>
