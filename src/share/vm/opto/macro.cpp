@@ -1949,11 +1949,14 @@ void PhaseMacroExpand::expand_allocate_array(AllocateArrayNode *alloc) {
       k->is_type_array_klass()) {
     // Don't zero type array during slow allocation in VM since
     // it will be initialized later by arraycopy in compiled code.
+    // <underscore> TODO - fix code to include gen
     slow_call_address = OptoRuntime::new_array_nozero_Java();
   } else {
+    // <underscore> TODO - fix code to include gen
     slow_call_address = OptoRuntime::new_array_Java();
   }
   expand_allocate_common(alloc, length,
+                         // <underscore> TODO - fix call type (to include gen)
                          OptoRuntime::new_array_Type(),
                          slow_call_address);
 }
