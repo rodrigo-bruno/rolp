@@ -277,8 +277,14 @@ JRT_END
 
 
 // array allocation
-JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int len, JavaThread *thread))
+// <underscore> added alloc gen
+JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int alloc_gen, int len, JavaThread *thread))
   JRT_BLOCK;
+
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print("OptoRuntime::new_array_C alloc_gen=%d klass=", alloc_gen);
+#endif
+
 #ifndef PRODUCT
   SharedRuntime::_new_array_ctr++;            // new array requires GC
 #endif
@@ -315,8 +321,13 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int len, JavaT
 JRT_END
 
 // array allocation without zeroing
-JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int len, JavaThread *thread))
+JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int alloc_gen, JavaThread *thread))
   JRT_BLOCK;
+
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print("OptoRuntime::new_array_nozero_C alloc_gen=%d klass=", alloc_gen);
+#endif
+
 #ifndef PRODUCT
   SharedRuntime::_new_array_ctr++;            // new array requires GC
 #endif

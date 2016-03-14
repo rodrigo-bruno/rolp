@@ -1564,10 +1564,12 @@ void PhaseMacroExpand::expand_allocate_common(
   call->init_req(TypeFunc::Parms+0, klass_node);
 
   if (length != NULL) {
-    call->init_req(TypeFunc::Parms+1, length);
+    // <underscore> Added exta parameter (alloc_gen)
+    call->init_req(TypeFunc::Parms+1, intcon(alloc_gen));
+    call->init_req(TypeFunc::Parms+2, length);
   }
-  // <underscore> Send alloc gen. TODO - in future this also applies to arrays.
   else {
+    // <underscore> Added exta parameter (alloc_gen)
     call->init_req(TypeFunc::Parms+1, intcon(alloc_gen));
   }
   // </underscore>
