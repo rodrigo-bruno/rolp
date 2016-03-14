@@ -116,7 +116,10 @@ class Method : public Metadata {
                     _hidden           : 1,
                     _dont_inline      : 1,
                                       : 3;
-  AnnotationArray* _alloc_anno; // <underscore> NULL if there is no alloc anno.
+  // <underscore> NULL if there is no alloc anno.
+  AnnotationArray* _alloc_anno;
+  // <underscore> NULL if there is no alloc anno. Cache of final bcis where we alloc in gens.
+  Array<u2>* _alloc_anno_cache;
 
 #ifndef PRODUCT
   int               _compiled_invocation_count;  // Number of nmethod invocations so far (for perf. debugging)
@@ -186,8 +189,10 @@ class Method : public Metadata {
   int generic_signature_index() const            { return constMethod()->generic_signature_index(); }
   void set_generic_signature_index(int index)    { constMethod()->set_generic_signature_index(index); }
 
-  AnnotationArray* alloc_anno()                  { return _alloc_anno; }  // <underscore>
-  void set_alloc_anno(AnnotationArray* ptr)      { _alloc_anno = ptr; }   // <underscore>
+  AnnotationArray* alloc_anno()                  { return _alloc_anno; }       // <underscore>
+  void set_alloc_anno(AnnotationArray* ptr)      { _alloc_anno = ptr; }        // <underscore>
+  Array<u2>* alloc_anno_cache()                  { return _alloc_anno_cache; } // <underscore>
+  void setalloc_anno_cache(Array<u2>* prt)       { _alloc_anno_cache = ptr; }  // <underscore>
 
   // annotations support
   AnnotationArray* annotations() const           {

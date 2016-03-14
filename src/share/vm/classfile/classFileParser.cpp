@@ -2530,6 +2530,15 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
 
   m->set_alloc_anno(m->constMethod()->type_annotations()); // <underscore>
 
+  // <underscore> Preparing alloc anno cache.
+  if (runtime_alloc_type_annotations_length > 0) {
+    Array<u2>* alloc_anno_cache = NULL;
+    alloc_anno_cache = MetadataFactory::new_writeable_array<u2>(
+         _loader_data, runtime_alloc_type_annotations_length, 0, CHECK_(alloc_anno_cache));
+    m->set_alloc_anno_cache(alloc_anno_cache);
+  }
+  // </underscore>
+
   if (name == vmSymbols::finalize_method_name() &&
       signature == vmSymbols::void_method_signature()) {
     if (m->is_empty_method()) {
