@@ -321,7 +321,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int alloc_gen,
 JRT_END
 
 // array allocation without zeroing
-JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int alloc_gen, JavaThread *thread))
+JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int alloc_gen, int len, JavaThread *thread))
   JRT_BLOCK;
 
 #if DEBUG_OBJ_ALLOC
@@ -495,10 +495,13 @@ const TypeFunc *OptoRuntime::athrow_Type() {
 
 const TypeFunc *OptoRuntime::new_array_Type() {
   // create input type (domain)
-  const Type **fields = TypeTuple::fields(2);
+  // <underscore> changed number of fields to 3
+  const Type **fields = TypeTuple::fields(3);
   fields[TypeFunc::Parms+0] = TypeInstPtr::NOTNULL;   // element klass
-  fields[TypeFunc::Parms+1] = TypeInt::INT;       // array size
-  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+2, fields);
+  fields[TypeFunc::Parms+1] = TypeInt::INT;       // <underscore> alloc gen
+  fields[TypeFunc::Parms+2] = TypeInt::INT;       // array size
+  // <underscore> changed number of fields to 3
+  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+3, fields);
 
   // create result type (range)
   fields = TypeTuple::fields(1);

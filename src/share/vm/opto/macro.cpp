@@ -1170,6 +1170,8 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 
 // <underscore> This is an exact copy of the method already in
 // interpreterRuntime.ccp
+// <underscore> Please consider reading the following file:
+// mercurial/jdk8/langtools/src/share/classes/com/sun/tools/classfile/ClassWritter.java
 int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
   int alloc_gen = 0;
   AnnotationArray* aa = method->type_annotations();
@@ -1196,18 +1198,18 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
       u2 anno_bci = Bytes::get_Java_u2(data + 1);
       // byte loc data size (should be zero)
       u1 dsize = *(data + 3);
+      // Note: after the previous byte comes 'dsize'*2 bytes of location data.
       // Get short (type index in constant pool, should be Old)
-      u2 anno_type_index = Bytes::get_Java_u2(data + 4);
+      u2 anno_type_index = Bytes::get_Java_u2(data + 4 + dsize*2);
       // Get char* (type name, should be LOld;)
       Symbol* type_name = pool->symbol_at(anno_type_index);
 
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
-      gclog_or_tty->print_cr("<underscore> %s byte loc data size = %u",dsize == 0 ? "": "WARNING", dsize);
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == bci && dsize == 0 && type_name->equals("LOld;", 5)) {
+      if (anno_target == 68 && anno_bci == bci && type_name->equals("LOld;", 5)) {
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
@@ -1215,12 +1217,13 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
         break;
       }
       // <underscore> 8 is the number of bytes used a alloc annotation.
-      data += 8;
+      // <underscore> Note: I'm assuming the annotation has no elements!
+      data += 8 + dsize*2;
     }
   }
   return alloc_gen;
-
 }
+
 // </underscore>
 
 void PhaseMacroExpand::expand_allocate_common(

@@ -144,8 +144,10 @@ class OptoRuntime : public AllStatic {
   static void new_instance_C(Klass* instance_klass, int alloc_gen, JavaThread *thread);
 
   // Allocate storage for a objArray or typeArray
-  static void new_array_C(Klass* array_klass, int len, JavaThread *thread);
-  static void new_array_nozero_C(Klass* array_klass, int len, JavaThread *thread);
+  // <underscore> added alloc gen.
+  static void new_array_C(Klass* array_klass, int alloc_gen, int len, JavaThread *thread);
+  // <underscore> added alloc gen.
+  static void new_array_nozero_C(Klass* array_klass, int alloc_gen, int len, JavaThread *thread);
 
   // Post-slow-path-allocation, pre-initializing-stores step for
   // implementing ReduceInitialCardMarks
