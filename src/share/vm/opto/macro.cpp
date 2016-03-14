@@ -1230,14 +1230,17 @@ void PhaseMacroExpand::expand_allocate_common(
             address slow_call_address  // Address of slow call
     )
 {
-  int bci = alloc->jvms()->bci(); // <underscore>
-  Method* m = alloc->jvms()->method()->get_Method(); // <underscore>
-  ConstantPool* cp = m->constants(); // <underscore>
+// <underscore>
+   int bci = alloc->jvms()->bci();
+  Method* m = alloc->jvms()->method()->get_Method();
+  ConstantPool* cp = m->constants();
   int alloc_gen = get_alloc_gen_2(cp, m, bci);
-  // <underscore> TODO - put debug tags!
-  gclog_or_tty->print("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
-    alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen); // <underscore> DEBUG
-  alloc->jvms()->method()->print(gclog_or_tty); // <underscore> DEBUG
+#if DEBUG_C2_ALLOC
+  gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
+    alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
+  alloc->jvms()->method()->print_cr(gclog_or_tty);
+#endif
+// </underscore>
 
   Node* ctrl = alloc->in(TypeFunc::Control);
   Node* mem  = alloc->in(TypeFunc::Memory);
