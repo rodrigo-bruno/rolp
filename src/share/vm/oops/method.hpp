@@ -192,7 +192,7 @@ class Method : public Metadata {
   AnnotationArray* alloc_anno()                  { return _alloc_anno; }       // <underscore>
   void set_alloc_anno(AnnotationArray* ptr)      { _alloc_anno = ptr; }        // <underscore>
   Array<u2>* alloc_anno_cache()                  { return _alloc_anno_cache; } // <underscore>
-  void setalloc_anno_cache(Array<u2>* prt)       { _alloc_anno_cache = ptr; }  // <underscore>
+  void set_alloc_anno_cache(Array<u2>* ptr)       { _alloc_anno_cache = ptr; }  // <underscore>
 
   // annotations support
   AnnotationArray* annotations() const           {
