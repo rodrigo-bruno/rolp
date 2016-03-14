@@ -141,13 +141,9 @@ objArrayOop ArrayKlass::allocate_arrayArray(int n, int length, int gen, TRAPS) {
   }
   int size = objArrayOopDesc::object_size(length);
   Klass* k = array_klass(n+dimension(), CHECK_0);
-  ArrayKlass* ak = ArrayKlass::cast(k); // <underscore> TODO - necessary?
-  // <underscore> TODO - check if this works...
-  KlassHandle h_k(THREAD, this);
-  // <underscore> setting allocation gen.
-  h_k.set_alloc_gen(gen);
+  ArrayKlass* ak = ArrayKlass::cast(k);
   objArrayOop o =
-    (objArrayOop)CollectedHeap::array_allocate(h_k, size, length, CHECK_0);
+    (objArrayOop)CollectedHeap::array_allocate(ak, gen, size, length, CHECK_0);
   // initialization to NULL not necessary, area already cleared
   return o;
 }

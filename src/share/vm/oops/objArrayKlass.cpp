@@ -187,8 +187,7 @@ objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
       KlassHandle h_k(THREAD, this);
-      // <underscore> TODO - set alloc gen
-      return (objArrayOop)CollectedHeap::array_allocate(h_k, size, length, CHECK_NULL);
+      return (objArrayOop)CollectedHeap::array_allocate(h_k, 0, size, length, CHECK_NULL);
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
       JvmtiExport::post_array_size_exhausted();
@@ -205,9 +204,7 @@ objArrayOop ObjArrayKlass::allocate(int length, int gen, TRAPS) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
       KlassHandle h_k(THREAD, this);
-      // <underscore> setting allocation gen.
-      h_k.set_alloc_gen(gen);
-      return (objArrayOop)CollectedHeap::array_allocate(h_k, size, length, CHECK_NULL);
+      return (objArrayOop)CollectedHeap::array_allocate(h_k, gen, size, length, CHECK_NULL);
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
       JvmtiExport::post_array_size_exhausted();

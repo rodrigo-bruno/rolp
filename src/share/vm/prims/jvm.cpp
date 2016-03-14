@@ -589,9 +589,11 @@ JVM_ENTRY(jobject, JVM_Clone(JNIEnv* env, jobject handle))
   oop new_obj = NULL;
   if (obj->is_array()) {
     const int length = ((arrayOop)obj())->length();
-    new_obj = CollectedHeap::array_allocate(klass, size, length, CHECK_NULL);
+    // <underscore> Added default gen (zero means no gens).
+    new_obj = CollectedHeap::array_allocate(klass, 0, size, length, CHECK_NULL);
   } else {
-    new_obj = CollectedHeap::obj_allocate(klass, size, CHECK_NULL);
+    // <underscore> Added default gen (zero means no gens).
+    new_obj = CollectedHeap::obj_allocate(klass, 0, size, CHECK_NULL);
   }
   // 4839641 (4840070): We must do an oop-atomic copy, because if another thread
   // is modifying a reference field in the clonee, a non-oop-atomic copy might

@@ -209,11 +209,18 @@ void CollectedHeap::init_obj(HeapWord* obj, size_t size) {
   Copy::fill_to_aligned_words(obj + hs, size - hs);
 }
 
-// <underscore> - alloc, post alloc setup
-oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
+// <underscore> Added gen parameter.
+oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
+
+// <underscore>
+#if DEBUG_OBJ_ALLOC
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" gen=%d) ", size, gen);
+#endif
+  klass.set_alloc_gen(gen);
+// </undescore>
 
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
   post_allocation_setup_obj(klass, obj);
@@ -222,36 +229,46 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   return (oop)obj;
 }
 
+// <underscore> Added gen parameter.
 oop CollectedHeap::array_allocate(KlassHandle klass,
+                                  int gen,
                                   int size,
                                   int length,
                                   TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
-  // <underscore>
+
+// <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" length=%d) ", size, length);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" gen=%d length=%d) ", size, gen, length);
 #endif
+  klass.set_alloc_gen(gen);
 // </undescore>
+
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
   post_allocation_setup_array(klass, obj, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
   return (oop)obj;
 }
 
+// <underscore> Added gen parameter.
 oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
+                                         int gen,
                                          int size,
                                          int length,
                                          TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
-  // <underscore>
+
+// <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" length=%d) ", size, length);
+  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" gen=%d length=%d) ", size, gen, length);
 #endif
+  klass.set_alloc_gen(gen);
 // </undescore>
+
   HeapWord* obj = common_mem_allocate_noinit(klass, size, CHECK_NULL);
   ((oop)obj)->set_klass_gap(0);
   post_allocation_setup_array(klass, obj, length);

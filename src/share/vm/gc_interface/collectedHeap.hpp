@@ -319,9 +319,9 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   // <underscore> this is probably how the runtime calls the arrive at the heap for allocation!
   // General obj/array allocation facilities.
-  inline static oop obj_allocate(KlassHandle klass, int size, TRAPS);
-  inline static oop array_allocate(KlassHandle klass, int size, int length, TRAPS);
-  inline static oop array_allocate_nozero(KlassHandle klass, int size, int length, TRAPS);
+  inline static oop obj_allocate(KlassHandle klass, int gen, int size, TRAPS);
+  inline static oop array_allocate(KlassHandle klass, int gen, int size, int length, TRAPS);
+  inline static oop array_allocate_nozero(KlassHandle klass, int gen, int size, int length, TRAPS);
 
   inline static void post_allocation_install_obj_klass(KlassHandle klass,
                                                        oop obj);
