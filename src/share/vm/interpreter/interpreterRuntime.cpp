@@ -145,7 +145,26 @@ IRT_END
 // mercurial/jdk8/langtools/src/share/classes/com/sun/tools/classfile/ClassWritter.java
 int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
   int alloc_gen = 0;
+  int next_centry = 0;
   AnnotationArray* aa = method->type_annotations();
+  Array<u2>* aac = method->alloc_anno_cache();
+
+  // First, look into cache.
+  if (aac != NULL) {
+    for (; next_centry < aac->length(); next_centry++) {
+      if (bci == aac->at(next_centry)) {
+#if DEBUG_ANNO_ALLOC
+        gclog_or_tty->print_cr("<underscore> got annotation from cache!");
+#endif
+        return 1;
+      }
+      if (next_centry == 0) {
+        // No cache entry at 'next_centry'
+        break;
+      }
+    }
+  }
+
   if(aa != NULL && method->alloc_anno() != NULL) {
 #if DEBUG_ANNO_ALLOC
     gclog_or_tty->print_cr("<underscore> type annotations array length = %d: ", aa->length());
@@ -181,6 +200,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
       if (anno_target == 68 && anno_bci == bci && type_name->equals("LOld;", 5)) {
+        aac->at_put(next_centry, bci); // Storing in cache.
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
         gclog_or_tty->print_cr("<underscore> object should be allocated in old gen!");
