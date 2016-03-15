@@ -1181,7 +1181,7 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
   if (aac != NULL) {
     for (int i = 0; i < aac->length(); i++) {
 #if DEBUG_ANNO_ALLOC
-        gclog_or_tty->print_cr("<underscore> get_alloc_gen_2 aac[%d]=%d", i, aac->at(1));
+        gclog_or_tty->print_cr("<underscore> get_alloc_gen_2 aac[%d]=%d", i, aac->at(i));
 #endif
 
       if (bci == aac->at(i)) {
