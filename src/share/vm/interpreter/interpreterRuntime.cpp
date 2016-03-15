@@ -143,7 +143,10 @@ IRT_END
 
 // <underscore> Please consider reading the following file:
 // mercurial/jdk8/langtools/src/share/classes/com/sun/tools/classfile/ClassWritter.java
-int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
+// Note: bci is the value given by the runtime (new, newarray, etc).
+// bci-extra_bci is the value given by the annotations (points to the first 
+// instruction that loads dimensions on the stack).
+int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0) {
   int alloc_gen = 0;
   int next_centry = 0;
   AnnotationArray* aa = method->type_annotations();
@@ -152,9 +155,12 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
   // First, look into cache.
   if (aac != NULL) {
     for (; next_centry < aac->length(); next_centry++) {
+#if DEBUG_ANNO_ALLOC
+        gclog_or_tty->print_cr("<underscore> get_alloc_gen aac[%d] = %d", next_centry,  aac->at(next_centry));
+#endif
       if (bci == aac->at(next_centry)) {
 #if DEBUG_ANNO_ALLOC
-        gclog_or_tty->print_cr("<underscore> got annotation from cache!");
+        gclog_or_tty->print_cr("<underscore> get_alloc_gen got annotation from cache!");
 #endif
         return 1;
       }
@@ -199,7 +205,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci) {
       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == bci && type_name->equals("LOld;", 5)) {
+      if (anno_target == 68 && anno_bci == (bci - extra_bci) && type_name->equals("LOld;", 5)) {
         aac->at_put(next_centry, bci); // Storing in cache.
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
@@ -302,7 +308,7 @@ IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type,
 
 // <undescore>
   int extra_bci = size > 127 ? 3 : size > 5 ? 2 : 1;
-  int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread) - extra_bci);
+  int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread), extra_bci);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d, extra_bci=%d)",
     thread, method(thread), bcp(thread), bci(thread), extra_bci);
@@ -322,7 +328,7 @@ IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* 
 
 // <underscore>
   int extra_bci = size > 127 ? 3 : size > 5 ? 2 : 1;
-  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread) - extra_bci);
+  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread), extra_bci);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InterpreterRuntime::anewarray(thread=%p, method=%p, bcp=%u, bci=%d, extra_bci=%d)",
     thread, method(thread), bcp(thread), bci(thread), extra_bci);
@@ -362,7 +368,7 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* fir
   for (int index = 0; index < nof_dims; index++) {
     extra_bci += dims[index] > 127 ? 3 : dims[index] > 5 ? 2 : 1;
   }
-  int alloc_gen = get_alloc_gen(constants, method(thread), bci(thread) - extra_bci);
+  int alloc_gen = get_alloc_gen(constants, method(thread), bci(thread), extra_bci);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InterpreterRuntime::multianewarray(thread=%p, method=%p, bcp=%u, bci=%d, extra_bci)",
     thread, method(thread), bcp(thread), bci(thread), extra_bci);
