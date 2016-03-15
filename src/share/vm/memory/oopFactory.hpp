@@ -64,6 +64,8 @@ class oopFactory: AllStatic {
   // <underscore> Alternative declaration (with gen argument).
   static typeArrayOop    new_typeArray(BasicType type, int length, int gen, TRAPS);
   static typeArrayOop    new_typeArray_nozero(BasicType type, int length, TRAPS);
+  // <underscore> Alternative declaration (with gen argument).
+  static typeArrayOop    new_typeArray_nozero(BasicType type, int length, int gen, TRAPS);
   static typeArrayOop    new_metaDataArray(int length, TRAPS);
 
   // Regular object arrays
