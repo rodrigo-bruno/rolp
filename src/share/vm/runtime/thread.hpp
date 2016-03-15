@@ -471,13 +471,15 @@ class Thread: public ThreadShadow {
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);
 
-  // TODO - change name to gen_tlab
+  // <underscore> TODO - used?
   ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
-
+  // <underscore> TODO - used?
   void set_cur_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
+  // <underscore> TODO - used?
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
+      // <underscore> TODO - not all TLABs might be initialized.
       for (int i = 0; i < _tlabGenArray->length(); i++) {
           _tlabGenArray->at(i)->make_parsable(retire_tlabs);
       }

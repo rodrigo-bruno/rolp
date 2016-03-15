@@ -7133,6 +7133,8 @@ jint G1CollectedHeap::new_alloc_gen() {
   new_gen->set_gen(gen);
   _gen_alloc_regions->push(new_gen);
   assert(new_gen == _gen_alloc_regions->at(gen), "Last gen alloc should be the new one.");
+  // <underscore> TODO - Do I need this closure? If each thread creates a tlab when I
+  // set a gen...
   ThreadNewGenClosure tc(gen);
   {
     MutexLockerEx ml(Threads_lock);
