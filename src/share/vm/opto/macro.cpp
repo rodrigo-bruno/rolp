@@ -1190,8 +1190,9 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
 #endif
         return 1;
       }
-      if (i == 0) {
-        // No cache entry at 'next_centry'
+      // Note: I prefill the array with max_jushort.
+      if (i == max_jushort) {
+        // No cache entry at 'i'
         return 0;
       }
     }

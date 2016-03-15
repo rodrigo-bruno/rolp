@@ -2536,7 +2536,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
     alloc_anno_cache = MetadataFactory::new_writeable_array<u2>(
          // <underscore> TODO - check if this alloc_anno_cache -> CHECK_NULL substitution is problematic.
          //_loader_data, runtime_alloc_type_annotations_length, 0, CHECK_(alloc_anno_cache));
-         _loader_data, runtime_alloc_type_annotations_length, 0, CHECK_NULL);
+         _loader_data, runtime_alloc_type_annotations_length, max_jushort, CHECK_NULL);
     m->set_alloc_anno_cache(alloc_anno_cache);
   }
   // </underscore>
