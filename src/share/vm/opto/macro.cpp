@@ -1191,7 +1191,7 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
         return 1;
       }
       // Note: I prefill the array with max_jushort.
-      if (i == max_jushort) {
+      if (aac->at(i) == max_jushort) {
         // No cache entry at 'i'
         return 0;
       }
