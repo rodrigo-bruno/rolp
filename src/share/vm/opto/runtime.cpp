@@ -282,7 +282,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int alloc_gen,
   JRT_BLOCK;
 
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("OptoRuntime::new_array_C alloc_gen=%d klass=", alloc_gen);
+  gclog_or_tty->print_cr("OptoRuntime::new_array_C alloc_gen=%d klass=", alloc_gen);
 #endif
 
 #ifndef PRODUCT
@@ -297,13 +297,13 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int alloc_gen,
     // The oopFactory likes to work with the element type.
     // (We could bypass the oopFactory, since it doesn't add much value.)
     BasicType elem_type = TypeArrayKlass::cast(array_type)->element_type();
-    result = oopFactory::new_typeArray(elem_type, len, THREAD);
+    result = oopFactory::new_typeArray(elem_type, len, alloc_gen, THREAD);
   } else {
     // Although the oopFactory likes to work with the elem_type,
     // the compiler prefers the array_type, since it must already have
     // that latter value in hand for the fast path.
     Klass* elem_type = ObjArrayKlass::cast(array_type)->element_klass();
-    result = oopFactory::new_objArray(elem_type, len, THREAD);
+    result = oopFactory::new_objArray(elem_type, len, alloc_gen, THREAD);
   }
 
   // Pass oops back through thread local storage.  Our apparent type to Java
@@ -325,7 +325,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int all
   JRT_BLOCK;
 
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("OptoRuntime::new_array_nozero_C alloc_gen=%d klass=", alloc_gen);
+  gclog_or_tty->print_cr("OptoRuntime::new_array_nozero_C alloc_gen=%d klass=", alloc_gen);
 #endif
 
 #ifndef PRODUCT
@@ -339,7 +339,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int all
   assert(array_type->oop_is_typeArray(), "should be called only for type array");
   // The oopFactory likes to work with the element type.
   BasicType elem_type = TypeArrayKlass::cast(array_type)->element_type();
-  result = oopFactory::new_typeArray_nozero(elem_type, len, THREAD);
+  result = oopFactory::new_typeArray_nozero(elem_type, len, alloc_gen, THREAD);
 
   // Pass oops back through thread local storage.  Our apparent type to Java
   // is that we return an oop, but we can block on exit from this routine and
