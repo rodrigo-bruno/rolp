@@ -1255,10 +1255,10 @@ void PhaseMacroExpand::expand_allocate_common(
     initial_slow_test = NULL;
   }
 
-  // <underscore> TODO - I am forcing the slow path
+#if DEBUG_SLOWPATH_C2
   always_slow = true;
   initial_slow_test = NULL;
-  // </underscore>
+#endif
 
   enum { too_big_or_final_path = 1, need_gc_path = 2 };
   Node *slow_region = NULL;
