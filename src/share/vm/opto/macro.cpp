@@ -1066,7 +1066,7 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
 // <underscore> Added alloc_gen to arguments and differentiated from the
 // alloc_gen == 0
 //---------------------------set_eden_pointers-------------------------
-void PhaseMacroExpand::set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, &eden_top_adr, Node* &eden_end_adr, int alloc_gen) {
+void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen) {
   if (UseTLAB) {                // Private allocation: load from TLS
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;

@@ -60,7 +60,7 @@ private:
     _igvn.register_new_node_with_optimizer(n);
     return n;
   }
-  void set_eden_pointers(int alloc_gen, Node* &eden_top_adr, Node* &eden_end_adr);
+  void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen);
   Node* make_load( Node* ctl, Node* mem, Node* base, int offset,
                    const Type* value_type, BasicType bt);
   Node* make_store(Node* ctl, Node* mem, Node* base, int offset,
@@ -112,7 +112,7 @@ private:
                           Node* klass_node, Node* length,
                           Node* size_in_bytes);
 
-  Node* prefetch_allocation(int alloc_gen,
+  Node* prefetch_allocation(Node* &gen_tlab_adr,
                             Node* i_o,
                             Node*& needgc_false, Node*& contended_phi_rawmem,
                             Node* old_eden_top, Node* new_eden_top,
