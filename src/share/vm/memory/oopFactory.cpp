@@ -88,6 +88,15 @@ typeArrayOop oopFactory::new_typeArray_nozero(BasicType type, int length, TRAPS)
   return result;
 }
 
+// <underscore> Alternative declaration (with gen argument).
+typeArrayOop oopFactory::new_typeArray_nozero(BasicType type, int length, int gen, TRAPS) {
+  Klass* type_asKlassOop = Universe::typeArrayKlassObj(type);
+  TypeArrayKlass* type_asArrayKlass = TypeArrayKlass::cast(type_asKlassOop);
+  // <underscore> Added default gen value, zero.
+  typeArrayOop result = type_asArrayKlass->allocate_common(length, false, gen, THREAD);
+  return result;
+}
+
 
 objArrayOop oopFactory::new_objArray(Klass* klass, int length, TRAPS) {
   assert(klass->is_klass(), "must be instance class");
