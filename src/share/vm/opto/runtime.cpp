@@ -231,7 +231,7 @@ void OptoRuntime::new_store_pre_barrier(JavaThread* thread) {
 JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, int alloc_gen, JavaThread* thread))
   JRT_BLOCK;
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print("OptoRuntime::new_instance_C alloc_gen=%d klass=", alloc_gen);
+  gclog_or_tty->print_cr("OptoRuntime::new_instance_C alloc_gen=%d klass=", alloc_gen);
 #endif
 
 #ifndef PRODUCT

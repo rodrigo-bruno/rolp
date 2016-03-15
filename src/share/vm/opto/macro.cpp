@@ -1180,9 +1180,13 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
   // First, look into cache.
   if (aac != NULL) {
     for (int i = 0; i < aac->length(); i++) {
+#if DEBUG_ANNO_ALLOC
+        gclog_or_tty->print_cr("<underscore> get_alloc_gen_2 aac[%d]=%d", i, aac->at(1));
+#endif
+
       if (bci == aac->at(i)) {
 #if DEBUG_ANNO_ALLOC
-        gclog_or_tty->print_cr("<underscore> got annotation from cache!");
+        gclog_or_tty->print_cr("<underscore> get_alloc_gen_2 got annotation from cache!");
 #endif
         return 1;
       }
