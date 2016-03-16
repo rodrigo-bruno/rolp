@@ -361,11 +361,11 @@ class HeapRegion: public G1OffsetTableContigSpace {
   static size_t CardsPerRegion;
 
   // <underscore>
-  int gen()             { return _gen; }
+  int gen() const       { return _gen; }
   void set_gen(int gen) { _gen = gen; }
   bool is_gen_alloc_region()                    { return _is_gen_alloc_region; }
   void set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
-  int epoch() { return _epoch; }
+  int epoch() const         { return _epoch; }
   void set_epoch(int epoch) { _epoch = epoch; }
   // </underscore>
 
