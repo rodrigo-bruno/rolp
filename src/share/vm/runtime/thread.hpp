@@ -275,10 +275,8 @@ class Thread: public ThreadShadow {
   //  - allocate_from tlab() - allocates some object from the current tlab! - done
   //  - allocate_from_tlab_slow() - slow allocation path. Also important! - done
 
-  // TODO - N - add gen into print of each region.
   // TODO - N - merge _tlab into array as well.
   // TODO - N - change set_alloc_gen to is_alloc_gen in handles and instanceKlass
-  // TODO - N - protect set_alloc_gen to handle weird cases: collect and then set as alloc gen.
 
   // Array of gen TLABs.
   GrowableArray<ThreadLocalAllocBuffer*>* _tlabGenArray;

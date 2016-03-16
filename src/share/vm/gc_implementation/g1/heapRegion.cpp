@@ -758,9 +758,14 @@ void HeapRegion::print_on(outputStream* st) const {
   else
     st->print("   ");
   if (is_young())
-    st->print(is_survivor() ? " SU" : " Y ");
+    st->print(is_survivor() ? "   SU" : "  Y  ");
+  // <underscore>
+  else if (gen() != -1) {
+      st->print("%02d %02d", gen(), epoch());
+  }
+  // </underscore>
   else
-    st->print("   ");
+    st->print("     ");
   if (is_empty())
     st->print(" F");
   else
