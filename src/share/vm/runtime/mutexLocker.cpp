@@ -133,8 +133,7 @@ Mutex*   JfrStream_lock               = NULL;
 Mutex*   JfrThreadGroups_lock         = NULL;
 #endif
 
-Mutex*   NewAllocGen_lock;                // <underscore>
-Mutex*   CollectAllocGen_lock;            // <underscore>
+Mutex*   HeapGen_lock;                // <underscore>
 
 #define MAX_NUM_MUTEX 128
 static Monitor * _mutex_array[MAX_NUM_MUTEX];

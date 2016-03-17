@@ -4685,10 +4685,11 @@ void Thread::muxRelease (volatile intptr_t * Lock)  {
 
 // <underscore> Implementation of set_alloc_gen.
 void Thread::set_alloc_gen(int gen) {
+
   _alloc_gen = gen;
   if (gen_tlabs()->at(gen) == NULL) {
     // We need to create a new tlab for this thread.
-    // <underscore> TODO - use a lock for accessing the gen array length!
+    MutexLockerEx ml(HeapGen_lock);
     CollectedHeap* g1h = (CollectedHeap*) Universe::heap();
     if (g1h->gens_length() > gen) {
       _genTlab = new ThreadLocalAllocBuffer(this);

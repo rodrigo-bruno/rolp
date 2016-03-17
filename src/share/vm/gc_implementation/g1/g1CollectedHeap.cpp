@@ -7074,22 +7074,6 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
   CodeCache::blobs_do(&blob_cl);
 }
 
-// <underscore> Thread closure to add tlab when a new generation is created.
-class ThreadNewGenClosure: public ThreadClosure {
-private:
-  int _gen;
-public:
-  ThreadNewGenClosure(int gen) : _gen(gen) { }
-
-  virtual void do_thread(Thread* thread) {
-    ThreadLocalAllocBuffer* gen_tlab = new ThreadLocalAllocBuffer(thread);
-    thread->gen_tlabs()->push(gen_tlab);
-    assert(thread->gen_tlabs()->at(_gen) == gen_tlab, "Last gen tlab should be the new one.");
-    // TODO - confirm that this can be called outside a safepoint
-    gen_tlab->initialize();
-  }
-};
-
 // <underscore> Thread closure to release threads TLAB.
 // <underscore> NOTE: This must be called inside a safepoint.
 class ThreadCollectGenClosure: public ThreadClosure {
@@ -7107,12 +7091,13 @@ public:
 
 void G1CollectedHeap::rebase_alloc_gen(int gen) {
   assert_at_safepoint(true /* should_be_vm_thread */);
+  assert(HeapGen_lock->owned_by_self(), "rebase_alloc_gen should have HeapGen_locked");
 
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen %d", gen);
 #endif
 
-  // TODO - check that I do not need a lock on Threads_lock
+  // Note: inside a safepoint, the threads' lock is already taking by us.
   ThreadCollectGenClosure tc(gen);
   Threads::threads_do(&tc);
 
@@ -7123,7 +7108,8 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 }
 
 jint G1CollectedHeap::new_alloc_gen() {
-  // TODO - check synchronization. MutexLockerEx ml(HeapGen_lock);
+  MutexLockerEx ml(HeapGen_lock);
+
   int gen = _gen_alloc_regions->length();
 #if DEBUG_NEW_GEN
     gclog_or_tty->print_cr("<underscore> new_alloc_gen: creating new gen (%d)", gen);
@@ -7133,18 +7119,11 @@ jint G1CollectedHeap::new_alloc_gen() {
   new_gen->set_gen(gen);
   _gen_alloc_regions->push(new_gen);
   assert(new_gen == _gen_alloc_regions->at(gen), "Last gen alloc should be the new one.");
-  // <underscore> TODO - Do I need this closure? If each thread creates a tlab when I
-  // set a gen...
-  ThreadNewGenClosure tc(gen);
-  {
-    MutexLockerEx ml(Threads_lock);
-    Threads::threads_do(&tc);
-  }
-
   return gen;
 }
 
 void G1CollectedHeap::collect_alloc_gen(jint gen) {
+  MutexLockerEx ml(HeapGen_lock);
 
   if (gen >= _gen_alloc_regions->length() || gen < 0) {
     return;
