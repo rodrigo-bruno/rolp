@@ -191,7 +191,7 @@ public:
 class GenAllocRegion : public G1AllocRegion {
     int _gen;
     int _epoch;
-    bool _should_collect;
+    bool _should_rebase;
 protected:
 
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
@@ -201,13 +201,13 @@ public:
   GenAllocRegion(int gen = 0)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen), 
-    _should_collect(false),
+    _should_rebase(false),
     _epoch(0) { }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }
-  bool should_collect() { return _should_collect; }
-  void set_should_collect(bool should_collect) { _should_collect = should_collect; }
+  bool should_rebase() { return _should_rebase; }
+  void set_should_rebase(bool should_rebase) { _should_rebase = should_rebase; }
   int epoch() { return _epoch; }
   void new_epoch() { _epoch++; }
 };
@@ -321,8 +321,8 @@ private:
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
-  // <underscore> Index of a gen alloc region needing rebase. -1 means no need.
-  int _rebase_gar;
+  // <underscore> Used for triggering a marking cycle.
+  bool _should_mark_gens;
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;

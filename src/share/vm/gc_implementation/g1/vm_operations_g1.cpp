@@ -110,13 +110,15 @@ void VM_G1IncCollectionPause::doit() {
     }
   }
 
-  // <underscore> Introduced if to rebase gen.
-  if (_gc_cause == GCCause::_collect_gen) {
-    assert(g1h->_rebase_gar >= 0 && g1h->_rebase_gar < g1h->_gen_alloc_regions->length() ,
-      "Invalid rebase gen alloc.");
-    assert(g1h->_gen_alloc_regions->at(g1h->_rebase_gar)->should_collect(),
-      "Rebase gen alloc region should collect.");
-    g1h->rebase_alloc_gen(g1h->_rebase_gar);
+  // <underscore> iterates through gens to check if any gen needs to be collected.
+  if (g1h->_should_mark_gens) {
+    GrowableArray<GenAllocRegion*>* gen_alloc_regions = g1h->gen_alloc_regions();
+    for (int i = 0; i < gen_alloc_regions->length(); i++) {
+      if (gen_alloc_regions->at(i)->should_rebase()) {
+        g1h->rebase_alloc_gen(i);
+        gen_alloc_regions->at(i)->set_should_rebase(false);
+      }
+    }
   }
 
   GCCauseSetter x(g1h, _gc_cause);
@@ -159,6 +161,8 @@ void VM_G1IncCollectionPause::doit() {
       }
       return;
     }
+    // <underscore> Marking seems to be starting. Set flag to false.
+    g1h->should_mark_gens = false;
   }
 
   _pause_succeeded =

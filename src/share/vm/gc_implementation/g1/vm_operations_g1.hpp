@@ -31,10 +31,10 @@
 // VM_operations for the G1 collector.
 // VM_GC_Operation:
 //   - VM_CGC_Operation
-//   - VM_G1CollectFull
+//   - VM_G1CollectFull <underscore> goes directly to full gc.
 //   - VM_G1OperationWithAllocRequest
-//     - VM_G1CollectForAllocation
-//     - VM_G1IncCollectionPause
+//     - VM_G1CollectForAllocation <underscore> tries to expand, might trigger full gc.
+//     - VM_G1IncCollectionPause   <underscore> invokes minor gc.
 
 class VM_G1OperationWithAllocRequest: public VM_GC_Operation {
 protected:

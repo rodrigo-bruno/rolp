@@ -2023,7 +2023,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   
   /* <underscore> */
   _gen_alloc_regions->push(&_gen_alloc_region);
-  //_gen_alloc_regions->push(new GenAllocRegion()); // TODO - seems to work!
+  _should_mark_gens = false;
   gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
   /* </underscore> */
 }
@@ -2588,8 +2588,6 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
   unsigned int gc_count_before;
   unsigned int old_marking_count_before;
   bool retry_gc;
-  // <underscore>
-  bool need_gen_gc = false;
 
   do {
     retry_gc = false;
@@ -2602,16 +2600,8 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       old_marking_count_before = _old_marking_cycles_started;
     }
 
-    // <underscore> iterates through gens to check if any gen needs to be collected.
-    for (int i = 0; i < _gen_alloc_regions->length(); i++) {
-      if (_gen_alloc_regions->at(i)->should_collect()) {
-        need_gen_gc = true;
-        break;
-      }
-    }
-
-    // <underscore> Added need_gen_gc
-    if (should_do_concurrent_full_gc(cause) || need_gen_gc) {
+    // <underscore> Added _should_collect_gens
+    if (should_do_concurrent_full_gc(cause) || _should_mark_gens) {
       // <underscore> I believe this is the most common path.
       // Schedule an initial-mark evacuation pause that will start a
       // concurrent cycle. We're setting word_size to 0 which means that
@@ -3784,7 +3774,8 @@ HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
   g1_policy()->record_stop_world_start();
   VM_G1IncCollectionPause op(gc_count_before,
                              word_size,
-                             false, /* should_initiate_conc_mark */
+                             // <underscore> This was previously false.
+                             _should_mark_gens, /* should_initiate_conc_mark */
                              g1_policy()->max_pause_time_ms(),
                              gc_cause);
   VMThread::execute(&op);
@@ -7148,13 +7139,12 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
   }
 
   collect_gen->new_epoch();
-  collect_gen->set_should_collect(true);
+  _should_mark_gens = true;
   if (force) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif
-    // _rebase_gar tells GC to rebase the gen indexed by it.
-    _rebase_gar = gen;
+    collect_gen->set_should_rebase(true);
     collect(GCCause::_collect_gen);
   } else {
     // This is going to rebase this gen within a safepoint.
