@@ -4687,12 +4687,13 @@ void Thread::muxRelease (volatile intptr_t * Lock)  {
 void Thread::set_alloc_gen(int gen) {
 
   _alloc_gen = gen;
-  if (gen_tlabs()->at(gen) == NULL) {
+  if (gen_tlabs()->length() <= gen || gen_tlabs()->at(gen) == NULL) {
     // We need to create a new tlab for this thread.
     MutexLockerEx ml(HeapGen_lock);
     CollectedHeap* g1h = (CollectedHeap*) Universe::heap();
     if (g1h->gens_length() > gen) {
       _genTlab = new ThreadLocalAllocBuffer(this);
+      _genTlab->initialize();
       _tlabGenArray->at_put_grow(gen, _genTlab);
 #if DEBUG_OBJ_ALLOC
       gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s  (created new tlab)", gen, gen ? "tlabOld" : "tlabEden");

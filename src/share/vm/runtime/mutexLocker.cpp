@@ -198,8 +198,7 @@ void mutex_init() {
     def(MMUTracker_lock            , Mutex  , leaf     ,   true );
     def(HotCardCache_lock          , Mutex  , special  ,   true );
     def(EvacFailureStack_lock      , Mutex  , nonleaf  ,   true );
-    def(NewAllocGen_lock           , Mutex  , nonleaf  ,   true );  // <underscore>
-    def(CollectAllocGen_lock        , Mutex  , nonleaf  ,   true ); // <underscore>
+    def(HeapGen_lock           , Mutex      , nonleaf+2  ,   true );  // <underscore>
   }
   def(ParGCRareEvent_lock          , Mutex  , leaf     ,   true );
   def(DerivedPointerTableGC_lock   , Mutex,   leaf,        true );

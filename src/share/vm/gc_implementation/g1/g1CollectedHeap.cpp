@@ -7083,15 +7083,17 @@ public:
   ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
   virtual void do_thread(Thread* thread) {
-    ThreadLocalAllocBuffer* gen_tlab  = thread->gen_tlabs()->at(_gen);
-    assert(gen_tlab != NULL, "Gen TLAB should't be null.");
-    gen_tlab->make_parsable(true);
+    GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs = thread->gen_tlabs();
+    if (gen_tlabs->length() > _gen && gen_tlabs->at(_gen) != NULL) {
+      gen_tlabs->at(_gen)->make_parsable(true);
+    }
   }
 };
 
+// <underscore> This is only called through collect_alloc_gen. Therefore, we will
+// never have a race here (because collect_alloc_gen is synchronized).
 void G1CollectedHeap::rebase_alloc_gen(int gen) {
   assert_at_safepoint(true /* should_be_vm_thread */);
-  assert(HeapGen_lock->owned_by_self(), "rebase_alloc_gen should have HeapGen_locked");
 
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen %d", gen);
@@ -7123,23 +7125,27 @@ jint G1CollectedHeap::new_alloc_gen() {
 }
 
 void G1CollectedHeap::collect_alloc_gen(jint gen) {
-  MutexLockerEx ml(HeapGen_lock);
-
-  if (gen >= _gen_alloc_regions->length() || gen < 0) {
-    return;
-  }
-
-  // TODO - extract unused treshold.
-  //bool force = used_unlocked() > max_capacity();
   bool force = false;
+  GenAllocRegion* collect_gen = NULL;
+
+  {
+    MutexLockerEx ml(HeapGen_lock);
+
+    if (gen >= _gen_alloc_regions->length() || gen < 0) {
+      return;
+    }
+
+    // TODO - extract unused treshold.
+    //bool force = used_unlocked() > max_capacity();
 
 #if DEBUG_COLLECT_GEN
-  gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
-    used_unlocked(), max_capacity(), force ? "true" : "false");
+    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
+      used_unlocked(), max_capacity(), force ? "true" : "false");
 #endif
 
-  GenAllocRegion* collect_gen = _gen_alloc_regions->at(gen);
-  assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
+    collect_gen = _gen_alloc_regions->at(gen);
+    assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
+  }
 
   collect_gen->new_epoch();
   collect_gen->set_should_collect(true);
