@@ -1196,6 +1196,7 @@ int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
       }
     }
   }
+  return 0;
 }
 // </underscore>
 
