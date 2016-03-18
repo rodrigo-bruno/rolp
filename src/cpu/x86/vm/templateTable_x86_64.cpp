@@ -3366,6 +3366,10 @@ void TemplateTable::_new() {
 
   if (UseTLAB) {
     // <underscore>
+#if DEBUG_SLOWPATH_INTR
+    __ jmp(slow_case);
+#endif
+
     __ get_method(rax);
     __ cmpptr(Address(rax, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, young_gen);
@@ -3425,7 +3429,6 @@ void TemplateTable::_new() {
     }
   }
 
-  // <underscore> TODO - check if this case is important!
   // Allocation in the shared Eden, if allowed.
   //
   // rdx: instance size in bytes

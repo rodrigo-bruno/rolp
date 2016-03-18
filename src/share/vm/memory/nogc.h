@@ -18,5 +18,6 @@
 #define DEBUG_MINOR_CC 1
 #define DEBUG_PRINT_REGIONS 1
 #define DEBUG_SLOWPATH_C2 0
+#define DEBUG_SLOWPATH_INTR 0
 #endif	/* NOGC_H */
 
