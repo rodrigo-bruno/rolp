@@ -1969,8 +1969,9 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   // <underscore> added initialization.
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
+  _should_mark_gens(false),
+  // <underscore> added initialization.
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
-  _rebase_gar(-1),
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
@@ -2023,7 +2024,6 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   
   /* <underscore> */
   _gen_alloc_regions->push(&_gen_alloc_region);
-  _should_mark_gens = false;
   gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
   /* </underscore> */
 }

@@ -162,7 +162,7 @@ void VM_G1IncCollectionPause::doit() {
       return;
     }
     // <underscore> Marking seems to be starting. Set flag to false.
-    g1h->should_mark_gens = false;
+    g1h->_should_mark_gens = false;
   }
 
   _pause_succeeded =
