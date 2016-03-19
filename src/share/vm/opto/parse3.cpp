@@ -478,7 +478,7 @@ void Parse::do_multianewarray() {
   // <underscore>
   Array<u2>* aac = iter().method()->get_Method()->alloc_anno_cache();
   int bci = iter().cur_bci();
-  int gen = PhaseMacroExpand::get_alloc_gen_2(aac, bci)
+  int gen = PhaseMacroExpand::get_alloc_gen_2(aac, bci);
 #if DEBUG_C2_ALLOC
     gclog_or_tty->print_cr("<underscore> Parse::do_multianewarray dims=%d bci=%d gen=%d", ndimensions, bci, gen);
 #endif
@@ -499,6 +499,7 @@ void Parse::do_multianewarray() {
                           OptoRuntime::multianewarray_Type(ndimensions),
                           fun, NULL, TypeRawPtr::BOTTOM,
                           makecon(TypeKlassPtr::make(array_klass)),
+                          intcon(gen), // <underscore>
                           length[0], length[1], length[2],
                           (ndimensions > 2) ? length[3] : NULL,
                           (ndimensions > 3) ? length[4] : NULL);
@@ -521,6 +522,7 @@ void Parse::do_multianewarray() {
                           OptoRuntime::multianewarrayN_Type(),
                           OptoRuntime::multianewarrayN_Java(), NULL, TypeRawPtr::BOTTOM,
                           makecon(TypeKlassPtr::make(array_klass)),
+                          intcon(gen), // <underscore>
                           dims);
   }
   make_slow_call_ex(c, env()->Throwable_klass(), false);

@@ -155,11 +155,12 @@ class OptoRuntime : public AllStatic {
 
   // Allocate storage for a multi-dimensional arrays
   // Note: needs to be fixed for arbitrary number of dimensions
-  static void multianewarray2_C(Klass* klass, int len1, int len2, JavaThread *thread);
-  static void multianewarray3_C(Klass* klass, int len1, int len2, int len3, JavaThread *thread);
-  static void multianewarray4_C(Klass* klass, int len1, int len2, int len3, int len4, JavaThread *thread);
-  static void multianewarray5_C(Klass* klass, int len1, int len2, int len3, int len4, int len5, JavaThread *thread);
-  static void multianewarrayN_C(Klass* klass, arrayOopDesc* dims, JavaThread *thread);
+  // <underscore> added alloc gen for all multiarray functions.
+  static void multianewarray2_C(Klass* klass, int alloc_gen, int len1, int len2, JavaThread *thread);
+  static void multianewarray3_C(Klass* klass, int alloc_gen, int len1, int len2, int len3, JavaThread *thread);
+  static void multianewarray4_C(Klass* klass, int alloc_gen, int len1, int len2, int len3, int len4, JavaThread *thread);
+  static void multianewarray5_C(Klass* klass, int alloc_gen, int len1, int len2, int len3, int len4, int len5, JavaThread *thread);
+  static void multianewarrayN_C(Klass* klass, int alloc_gen, arrayOopDesc* dims, JavaThread *thread);
   static void g1_wb_pre_C(oopDesc* orig, JavaThread* thread);
   static void g1_wb_post_C(void* card_addr, JavaThread* thread);
 
