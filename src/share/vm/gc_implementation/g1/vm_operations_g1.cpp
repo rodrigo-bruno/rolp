@@ -98,6 +98,11 @@ void VM_G1IncCollectionPause::doit() {
     _gc_cause == GCCause::_g1_humongous_allocation),
          "only a GC locker, a System.gc() or a hum allocation induced GC should start a cycle");
 
+  // <underscore> Assert to ensure that if we force a gc, then we need to mark gens.
+  if (_gc_cause == GCCause::_collect_gen) {
+      assert(g1h->_should_mark_gens, "if gccause if collect_gen then g1h should mark gens.");
+  }
+
   if (_word_size > 0) {
     // An allocation has been requested. So, try to do that first.
     _result = g1h->attempt_allocation_at_safepoint(_word_size,

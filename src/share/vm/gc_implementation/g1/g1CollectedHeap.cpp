@@ -2601,6 +2601,12 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       old_marking_count_before = _old_marking_cycles_started;
     }
 
+    // <underscore> If we are about to start a full GC, we don't need to mark
+    // gens anymore.
+    if (cause == GCCause::_java_lang_system_gc) {
+        _should_mark_gens = false;
+    }
+
     // <underscore> Added _should_collect_gens
     if (should_do_concurrent_full_gc(cause) || _should_mark_gens) {
       // <underscore> I believe this is the most common path.
