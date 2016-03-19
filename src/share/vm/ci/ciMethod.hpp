@@ -53,6 +53,7 @@ class ciMethod : public ciMetadata {
   friend class ciMethodHandle;
   friend class ciReplay;
   friend class PhaseMacroExpand; // <underscore> Needed to access method from macros.
+  friend class Parse;            // <underscore> Needed to access method from parse (multiarray).
 
  private:
   // General method information.

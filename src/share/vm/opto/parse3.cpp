@@ -474,6 +474,14 @@ void Parse::do_multianewarray() {
     return;
   }
 
+  // <underscore>
+  Array<u2>* aac = iter().method()->get_Method()->alloc_anno_cache();
+  int bci = iter().cur_bci();
+#if DEBUG_C2_ALLOC
+    gclog_or_tty->print_cr("<underscore> Parse::do_multianewarray dims=%d bci=%d", ndimensions, bci);
+#endif
+  // </underscore>
+
   address fun = NULL;
   switch (ndimensions) {
   case 1: ShouldNotReachHere(); break;
