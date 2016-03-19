@@ -1174,8 +1174,6 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 // <underscore> Node: I assume that all bci are already cached because all code
 // is interpreted before it is compiled.
 int PhaseMacroExpand::get_alloc_gen_2(Array<u2>* aac, int bci) {
-  aac = method->alloc_anno_cache();
-
   // First, look into cache.
   if (aac != NULL) {
     for (int i = 0; i < aac->length(); i++) {

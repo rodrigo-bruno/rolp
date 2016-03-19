@@ -573,8 +573,8 @@ const TypeFunc *OptoRuntime::multianewarrayN_Type() {
   // <underscore> Added one for gen (3 instead of 2).
   const Type **fields = TypeTuple::fields(3);
   fields[TypeFunc::Parms+0] = TypeInstPtr::NOTNULL;   // element klass
-  fields[TypeFunc::Parms+0] = TypeInt::INT;   // <underscore> gen
-  fields[TypeFunc::Parms+1] = TypeInstPtr::NOTNULL;   // array of dim sizes
+  fields[TypeFunc::Parms+1] = TypeInt::INT;   // <underscore> gen
+  fields[TypeFunc::Parms+2] = TypeInstPtr::NOTNULL;   // array of dim sizes
   // <underscore> Added one for gen (3 instead of 2).
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+3, fields);
 

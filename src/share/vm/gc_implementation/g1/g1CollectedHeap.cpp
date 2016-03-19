@@ -7099,7 +7099,7 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
   // Note: inside a safepoint, the threads' lock is already taking by us.
   ThreadCollectGenClosure tc(gen);
   for (JavaThread *thread = Threads::first(); thread; thread = thread->next()) {
-    tc->do_thread(thread);
+    tc.do_thread(thread);
   }
 
   GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
