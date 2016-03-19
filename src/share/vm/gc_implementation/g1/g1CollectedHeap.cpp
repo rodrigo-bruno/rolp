@@ -6659,6 +6659,7 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
     HeapRegion* new_alloc_region = new_region(word_size, true /* do_expand */);
     assert(new_alloc_region != NULL, "New gen alloc regions should always succeed.");
+    // <underscore> TODO - if we fail to expand. We might want to try a GC?
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
       // should never scan survivors. But it doesn't hurt to do it
@@ -7091,7 +7092,9 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 
   // Note: inside a safepoint, the threads' lock is already taking by us.
   ThreadCollectGenClosure tc(gen);
-  Threads::threads_do(&tc);
+  ALL_JAVA_THREADS(p) {
+    tc->do_thread(p);
+  }
 
   GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
   assert(rebase_gen != NULL, "Gen alloc region should't be null.");
