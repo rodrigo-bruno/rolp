@@ -94,7 +94,7 @@ void VM_G1IncCollectionPause::doit() {
   assert(!_should_initiate_conc_mark ||
   ((_gc_cause == GCCause::_gc_locker && GCLockerInvokesConcurrent) ||
    (_gc_cause == GCCause::_java_lang_system_gc && ExplicitGCInvokesConcurrent) ||
-    _gc_cause == GCCause::_collect_gen || // <underscore>
+    g1h->_should_mark_gens || // <underscore>
     _gc_cause == GCCause::_g1_humongous_allocation),
          "only a GC locker, a System.gc() or a hum allocation induced GC should start a cycle");
 
