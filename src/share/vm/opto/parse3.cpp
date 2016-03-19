@@ -35,6 +35,7 @@
 #include "opto/subnode.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/handles.inline.hpp"
+#include "opto/macro.hpp" // <underscore> for get_alloc_gen_2
 
 //=============================================================================
 // Helper methods for _get* and _put* bytecodes
@@ -477,8 +478,9 @@ void Parse::do_multianewarray() {
   // <underscore>
   Array<u2>* aac = iter().method()->get_Method()->alloc_anno_cache();
   int bci = iter().cur_bci();
+  int gen = PhaseMacroExpand::get_alloc_gen_2(aac, bci)
 #if DEBUG_C2_ALLOC
-    gclog_or_tty->print_cr("<underscore> Parse::do_multianewarray dims=%d bci=%d", ndimensions, bci);
+    gclog_or_tty->print_cr("<underscore> Parse::do_multianewarray dims=%d bci=%d gen=%d", ndimensions, bci, gen);
 #endif
   // </underscore>
 

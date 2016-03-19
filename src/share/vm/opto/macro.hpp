@@ -60,6 +60,9 @@ private:
     _igvn.register_new_node_with_optimizer(n);
     return n;
   }
+  // <underscore> Used to check for cached gen annotations.
+  static int get_alloc_gen_2(Array<u2>* aac, int bci);
+
   void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen);
   Node* make_load( Node* ctl, Node* mem, Node* base, int offset,
                    const Type* value_type, BasicType bt);

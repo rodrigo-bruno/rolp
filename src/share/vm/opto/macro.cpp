@@ -1173,8 +1173,8 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 // mercurial/jdk8/langtools/src/share/classes/com/sun/tools/classfile/ClassWritter.java
 // <underscore> Node: I assume that all bci are already cached because all code
 // is interpreted before it is compiled.
-int get_alloc_gen_2(ConstantPool* pool, Method* method, int bci) {
-  Array<u2>* aac = method->alloc_anno_cache();
+int PhaseMacroExpand::get_alloc_gen_2(Array<u2>* aac, int bci) {
+  aac = method->alloc_anno_cache();
 
   // First, look into cache.
   if (aac != NULL) {
@@ -1208,10 +1208,9 @@ void PhaseMacroExpand::expand_allocate_common(
     )
 {
 // <underscore>
-   int bci = alloc->jvms()->bci();
+  int bci = alloc->jvms()->bci();
   Method* m = alloc->jvms()->method()->get_Method();
-  ConstantPool* cp = m->constants();
-  int alloc_gen = get_alloc_gen_2(cp, m, bci);
+  int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
 #if DEBUG_C2_ALLOC
   gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
     alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
