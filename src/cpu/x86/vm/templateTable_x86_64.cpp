@@ -3292,6 +3292,11 @@ void TemplateTable::_new() {
           JVM_CONSTANT_Class);
   __ jcc(Assembler::notEqual, slow_case);
 
+// <underscore> DEBUG condition
+#if DEBUG_SLOWPATH_INTR
+    __ jmp(slow_case);
+#endif
+
 // <underscore> DEBUG block
 #if DEBUG_ASM_ALLOC
     __ push(rsi);
@@ -3366,10 +3371,6 @@ void TemplateTable::_new() {
 
   if (UseTLAB) {
     // <underscore>
-#if DEBUG_SLOWPATH_INTR
-    __ jmp(slow_case);
-#endif
-
     __ get_method(rax);
     __ cmpptr(Address(rax, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, young_gen);
