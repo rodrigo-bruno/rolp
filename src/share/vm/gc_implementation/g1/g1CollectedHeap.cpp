@@ -597,7 +597,7 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
     // reconsider the use of _expand_heap_after_alloc_failure.
     // <underscore> Replaced on assert by other. We can expand from gen allocation.
     //assert(SafepointSynchronize::is_at_safepoint(), "invariant");
-    assert_heap_locked_or_at_safepoint(true /* should_be_vm_thread */);
+    assert_heap_locked_or_at_safepoint();
 
     ergo_verbose1(ErgoHeapSizing,
                   "attempt heap expansion",
