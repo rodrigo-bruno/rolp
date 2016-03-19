@@ -215,6 +215,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
+  assert(gen >= 0 && gen <= 1, "for now, gen should be 0 or 1."); // <underscore>
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
@@ -239,6 +240,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
+  assert(gen >= 0 && gen <= 1, "for now, gen should be 0 or 1."); // <underscore>
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
@@ -262,6 +264,7 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
+  assert(gen >= 0 && gen <= 1, "for now, gen should be 0 or 1."); // <underscore>
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
