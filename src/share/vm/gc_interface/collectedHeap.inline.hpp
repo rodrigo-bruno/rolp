@@ -219,7 +219,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" gen=%d) ", size, gen);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" cgen=%d) ", size, gen);
 #endif
   klass.set_alloc_gen(gen);
 // </undescore>
@@ -244,7 +244,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" gen=%d length=%d) ", size, gen, length);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" gcen=%d length=%d) ", size, gen, length);
 #endif
   klass.set_alloc_gen(gen);
 // </undescore>
@@ -268,7 +268,7 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
 
 // <underscore>
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" gen=%d length=%d) ", size, gen, length);
+  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" cgen=%d length=%d) ", size, gen, length);
 #endif
   klass.set_alloc_gen(gen);
 // </undescore>
