@@ -595,7 +595,9 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
     // do_expand to true. So, we should only reach here during a
     // safepoint. If this assumption changes we might have to
     // reconsider the use of _expand_heap_after_alloc_failure.
-    assert(SafepointSynchronize::is_at_safepoint(), "invariant");
+    // <underscore> Replaced on assert by other. We can expand from gen allocation.
+    //assert(SafepointSynchronize::is_at_safepoint(), "invariant");
+    assert_heap_locked_or_at_safepoint(true /* should_be_vm_thread */);
 
     ergo_verbose1(ErgoHeapSizing,
                   "attempt heap expansion",
@@ -6656,9 +6658,7 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
 
   // <underscore> using 'GCAllocForTenured' forces unlimited max regions
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
-    // <underscore> Changed the next line to avoid expansion out of a safepoint.
-    // <underscore> TODO - expanding the heap might be necessary!
-    HeapRegion* new_alloc_region = new_region(word_size, false /* do_expand */);
+    HeapRegion* new_alloc_region = new_region(word_size, true /* do_expand */);
     assert(new_alloc_region != NULL, "New gen alloc regions should always succeed.");
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
