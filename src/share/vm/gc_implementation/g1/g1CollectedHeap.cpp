@@ -4042,7 +4042,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
  
       // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
       // <underscore> TODO - iterate the collection set to check if any gen alloc region is being collected by mistake!
-      // <underscore> TODO - set should collect to false when we collect a gen.
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
       increment_gc_time_stamp();
@@ -6444,6 +6443,11 @@ public:
     }
     // </underscore>
     else {
+      // <underscore> Reset the gens and epochs.
+      if (r->epoch() != -1 || r->gen() != -1) {
+        r->set_epoch(-1);
+        r->set_gen(-1);
+      }
       // The rest should be old
       _old_set->remove(r);
     }

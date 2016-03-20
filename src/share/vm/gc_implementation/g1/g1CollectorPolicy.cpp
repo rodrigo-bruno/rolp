@@ -1676,6 +1676,11 @@ void G1CollectorPolicy::add_old_region_to_cset(HeapRegion* hr) {
   size_t rs_length = hr->rem_set()->occupied();
   _recorded_rs_lengths += rs_length;
   _old_cset_region_length += 1;
+  // <underscore> Reset the gens and epochs.
+  if (hr->epoch() != -1 || hr->gen() != -1) {
+    hr->set_epoch(-1);
+    hr->set_gen(-1);
+  }
 }
 
 // Initialize the per-collection-set information
