@@ -197,7 +197,7 @@ protected:
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
   virtual void retire_region(HeapRegion* alloc_region, size_t allocated_bytes);
 public:
-  // TODO - decide where BOT updates should be on or off
+  // <underscore> TODO - decide where BOT updates should be on or off
   GenAllocRegion(int gen = 0)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen), 

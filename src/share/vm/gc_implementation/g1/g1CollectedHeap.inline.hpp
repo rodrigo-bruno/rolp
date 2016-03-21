@@ -122,10 +122,8 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
   MutexLocker ml(Heap_lock);
   HeapWord* result = _gen_alloc_regions->at(gen)->attempt_allocation(word_size, true /* bot_updates */);
   if (result == NULL) {
-    // TODO - check if there is no possible race because we do not lock free lists
-    // (I assume that heap lock already locks free lists?)
+    // Note: since Heap_lock is taken by us, I think there is no need to lock free lists.
     result = _gen_alloc_regions->at(gen)->attempt_allocation_locked(word_size, true /* bot_updates */);
-   // _old_set.add(_gen_alloc_region.get()); // TODO - I am trying to keep alloc regions out.
   }
   return result;
 }

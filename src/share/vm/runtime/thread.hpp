@@ -469,17 +469,15 @@ class Thread: public ThreadShadow {
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);
 
-  // <underscore> TODO - used?
   ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
-  // <underscore> TODO - used?
   void set_cur_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
-  // <underscore> TODO - used?
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
-      // <underscore> TODO - not all TLABs might be initialized.
       for (int i = 0; i < _tlabGenArray->length(); i++) {
+        if (_tlabGenArray->at(i) != NULL) {
           _tlabGenArray->at(i)->make_parsable(retire_tlabs);
+        }
       }
   }
 // </underscore>
@@ -497,7 +495,9 @@ class Thread: public ThreadShadow {
   void initialize_gen_tlabs() {
     if (UseTLAB) {
       for (int i = 0; i < _tlabGenArray->length(); i++) {
-        _tlabGenArray->at(i)->initialize();
+        if (_tlabGenArray->at(i) != NULL) {
+          _tlabGenArray->at(i)->initialize();
+        }
       }
     }
   }
@@ -683,7 +683,7 @@ public:
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
   static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
 
-  // <underscore> - TODO - check if these also need to be done for the old tlab.
+  // <underscore> TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
   static ByteSize tlab_##name##_offset()         { return byte_offset_of(Thread, _tlab) + ThreadLocalAllocBuffer::name##_offset(); }
 

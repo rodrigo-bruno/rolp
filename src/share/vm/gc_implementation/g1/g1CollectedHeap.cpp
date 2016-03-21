@@ -6726,7 +6726,7 @@ void OldGCAllocRegion::retire_region(HeapRegion* alloc_region,
 // <underscore>
 HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
                                                   bool force) {
-  // TODO - commented to work! Understand if this has any impact on correctness!
+  // <underscore> TODO - commented to work! Understand if this has any impact on correctness!
   // assert(!force, "not supported for Gen alloc regions");
   HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
   assert(region != NULL, "New gen alloc regions shouldn't return NULL.");
@@ -6747,7 +6747,7 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
 
 class VerifyRegionListsClosure : public HeapRegionClosure {
 private:
-// <underscore> Added this field and filled it in the contructor.
+// <underscore> Added this field and filled it in the constructor.
   G1CollectedHeap*    _g1h;
   FreeRegionList*     _free_list;
   OldRegionSet*       _old_set;
@@ -7138,7 +7138,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
       return;
     }
 
-    // TODO - extract unused treshold.
+    // <underscore> TODO - extract unused treshold.
     //bool force = used_unlocked() > max_capacity();
 
 #if DEBUG_COLLECT_GEN
