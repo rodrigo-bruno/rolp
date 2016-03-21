@@ -2267,7 +2267,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
           runtime_alloc_type_annotations_length = code_attribute_length;
           runtime_alloc_type_annotations = cfs->get_u1_buffer();
           assert(runtime_alloc_type_annotations != NULL, "null alloc type annotations");
-          // TODO - parse annotations?
+          // <underscore> TODO - parse annotations?
           cfs->skip_u1(runtime_alloc_type_annotations_length, CHECK_(nullHandle));
         }
         // </underscore>

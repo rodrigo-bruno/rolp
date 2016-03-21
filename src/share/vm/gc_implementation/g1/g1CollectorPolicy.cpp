@@ -2165,7 +2165,7 @@ void G1CollectorPolicy::finalize_cset(double target_pause_time_ms, EvacuationInf
 /* <underscore> Function introduced to select regions for migration. */
 void G1CollectorPolicy::finalize_cset_for_migration(jlong min_migration_bandwidth, EvacuationInfo& evacuation_info) {
   printf("INSIDE finalize_cset_for_migration!\n");
-  // TODO - remote target_pause_time_ms
+  // <underscore> OLD-TODO - remote target_pause_time_ms
   double target_pause_time_ms = 1000;
   double young_start_time_sec = os::elapsedTime();
 

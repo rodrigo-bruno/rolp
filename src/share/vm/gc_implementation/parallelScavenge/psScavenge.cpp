@@ -359,7 +359,7 @@ bool PSScavenge::invoke_no_policy() {
 
     // Verify no unmarked old->young roots
     if (VerifyRememberedSets) {
-      // <underscore> TODO - read, seems interesting.
+      // <underscore> OLD-TODO - read, seems interesting.
       CardTableExtension::verify_all_young_refs_imprecise();
     }
 
@@ -414,7 +414,7 @@ bool PSScavenge::invoke_no_policy() {
       ParallelScavengeHeap::ParStrongRootsScope psrs;
 
       // <underscore> the collector is adding tasks for each type of roots.
-      // <underscore> TODO - read tasks' code.
+      // <underscore> OLD-TODO - read tasks' code.
       GCTaskQueue* q = GCTaskQueue::create();
 
       if (!old_gen->object_space()->is_empty()) {
@@ -479,7 +479,7 @@ bool PSScavenge::invoke_no_policy() {
       if (reference_processor()->processing_is_mt()) {
         PSRefProcTaskExecutor task_executor;
         // <underscore> I'm not shore about what this is doing.
-        // <underscore> TODO - check later!
+        // <underscore> OLD-TODO - check later!
         reference_processor()->enqueue_discovered_references(&task_executor);
       } else {
         reference_processor()->enqueue_discovered_references(NULL);
@@ -492,7 +492,7 @@ bool PSScavenge::invoke_no_policy() {
     StringTable::unlink_or_oops_do(&_is_alive_closure, &root_closure);
 
     // Finally, flush the promotion_manager's labs, and deallocate its stacks.
-    // <underscore> TODO - check this later, seams important.
+    // <underscore> OLD-TODO - check this later, seams important.
     promotion_failure_occurred = PSPromotionManager::post_scavenge(_gc_tracer);
     if (promotion_failure_occurred) {
       clean_up_failed_promotion();
@@ -666,7 +666,7 @@ bool PSScavenge::invoke_no_policy() {
       // use imprecise verification.
       // CardTableExtension::verify_all_young_refs_precise();
       // <underscore> verify old->young cards.
-      // <underscore> TODO - read!
+      // <underscore> OLD-TODO - read!
       CardTableExtension::verify_all_young_refs_imprecise();
     }
 
