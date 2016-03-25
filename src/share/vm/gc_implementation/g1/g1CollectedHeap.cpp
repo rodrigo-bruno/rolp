@@ -1970,8 +1970,6 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   // <underscore> added initialization.
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
-  _should_mark_gens(false),
-  // <underscore> added initialization.
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
@@ -2601,14 +2599,7 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       old_marking_count_before = _old_marking_cycles_started;
     }
 
-    // <underscore> If we are about to start a full GC, we don't need to mark
-    // gens anymore.
-    if (cause == GCCause::_java_lang_system_gc) {
-        _should_mark_gens = false;
-    }
-
-    // <underscore> Added _should_collect_gens
-    if (should_do_concurrent_full_gc(cause) || _should_mark_gens) {
+    if (should_do_concurrent_full_gc(cause)) {
       // <underscore> I believe this is the most common path.
       // Schedule an initial-mark evacuation pause that will start a
       // concurrent cycle. We're setting word_size to 0 which means that
@@ -3781,8 +3772,7 @@ HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
   g1_policy()->record_stop_world_start();
   VM_G1IncCollectionPause op(gc_count_before,
                              word_size,
-                             // <underscore> This was previously false.
-                             _should_mark_gens, /* should_initiate_conc_mark */
+                             false, /* should_initiate_conc_mark */
                              g1_policy()->max_pause_time_ms(),
                              gc_cause);
   VMThread::execute(&op);
@@ -7138,7 +7128,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
       return;
     }
 
-    // <underscore> TODO - extract unused treshold.
+    // <underscore> TODO - force if used > 75% and gen size > 10% of heap
     //bool force = used_unlocked() > max_capacity();
 
 #if DEBUG_COLLECT_GEN
@@ -7151,7 +7141,6 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
   }
 
   collect_gen->new_epoch();
-  _should_mark_gens = true;
   if (force) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");

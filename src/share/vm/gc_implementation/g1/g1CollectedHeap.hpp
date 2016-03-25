@@ -321,8 +321,6 @@ private:
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
-  // <underscore> Used for triggering a marking cycle.
-  bool _should_mark_gens;
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;

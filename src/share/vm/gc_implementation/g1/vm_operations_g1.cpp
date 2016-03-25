@@ -94,14 +94,9 @@ void VM_G1IncCollectionPause::doit() {
   assert(!_should_initiate_conc_mark ||
   ((_gc_cause == GCCause::_gc_locker && GCLockerInvokesConcurrent) ||
    (_gc_cause == GCCause::_java_lang_system_gc && ExplicitGCInvokesConcurrent) ||
-    g1h->_should_mark_gens || // <underscore>
+    _gc_cause == GCCause::_collect_gen || // <underscore>
     _gc_cause == GCCause::_g1_humongous_allocation),
          "only a GC locker, a System.gc() or a hum allocation induced GC should start a cycle");
-
-  // <underscore> Assert to ensure that if we force a gc, then we need to mark gens.
-  if (_gc_cause == GCCause::_collect_gen) {
-      assert(g1h->_should_mark_gens, "if gccause if collect_gen then g1h should mark gens.");
-  }
 
   if (_word_size > 0) {
     // An allocation has been requested. So, try to do that first.
@@ -116,7 +111,7 @@ void VM_G1IncCollectionPause::doit() {
   }
 
   // <underscore> iterates through gens to check if any gen needs to be collected.
-  if (g1h->_should_mark_gens) {
+  if (_gc_cause == GCCause::_collect_gen) {
     GrowableArray<GenAllocRegion*>* gen_alloc_regions = g1h->gen_alloc_regions();
     for (int i = 0; i < gen_alloc_regions->length(); i++) {
       if (gen_alloc_regions->at(i)->should_rebase()) {
@@ -166,8 +161,6 @@ void VM_G1IncCollectionPause::doit() {
       }
       return;
     }
-    // <underscore> Marking seems to be starting. Set flag to false.
-    g1h->_should_mark_gens = false;
   }
 
   _pause_succeeded =
