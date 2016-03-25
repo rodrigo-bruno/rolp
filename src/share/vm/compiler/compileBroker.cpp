@@ -789,7 +789,6 @@ void CompileBroker::compilation_init() {
   // Set the interface to the current compiler(s).
   int c1_count = CompilationPolicy::policy()->compiler_count(CompLevel_simple);
   int c2_count = CompilationPolicy::policy()->compiler_count(CompLevel_full_optimization);
-  gclog_or_tty->print_cr("c1_count=%d, c2_count=%d", c1_count, c2_count); // <underscore> DEBUG
 #ifdef COMPILER1
   if (c1_count > 0) {
     _compilers[0] = new Compiler();
