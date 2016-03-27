@@ -198,7 +198,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0
       // Note: after the previous byte comes 'dsize'*2 bytes of location data.
       // Get short (type index in constant pool, should be Old)
       u2 anno_type_index = Bytes::get_Java_u2(data + 4 + dsize*2);
-      // Get char* (type name, should be LOld;)
+      // Get char* (type name, should be Ljava/lang/Gen;)
       Symbol* type_name = pool->symbol_at(anno_type_index);
 
 #if DEBUG_ANNO_ALLOC
@@ -206,7 +206,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0
       gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == (bci - extra_bci) && type_name->equals("LOld;", 5)) {
+      if (anno_target == 68 && anno_bci == (bci - extra_bci) && type_name->equals("Ljava/lang/Gen;", 15)) {
         aac->at_put(next_centry, bci); // Storing in cache.
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
