@@ -144,9 +144,8 @@ IRT_END
 // <underscore> Please consider reading the following file:
 // mercurial/jdk8/langtools/src/share/classes/com/sun/tools/classfile/ClassWritter.java
 // Note: bci is the value given by the runtime (new, newarray, etc).
-// bci-extra_bci is the value given by the annotations (points to the first 
-// instruction that loads dimensions on the stack).
-int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0) {
+// n_dims is used to fix the mismatchs between the bci and the anno_bci.
+int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int n_dims = 0) {
   int alloc_gen = 0;
   int next_centry = 0;
   AnnotationArray* aa = method->type_annotations();
@@ -204,9 +203,10 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0
       // Note: If anno_bco == bci, then they both point to the same bc. In this
       // situation there is no need to fix the bci. Only if they differ, we
       // should look into the size of make sure that both bcis are a match.
-      int anno_bc_len = anno_bci == bci ?
-        0 :
-        Bytecodes::length_for(Bytecodes::code_at(method, anno_bci));
+      int anno_bc_len = 0;
+      for (int i = 0; i < n_dims; i++) {
+          anno_bc_len += Bytecodes::length_for(Bytecodes::code_at(method, anno_bci + anno_bc_len));
+      }
 
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
@@ -315,12 +315,10 @@ IRT_END
 IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
 
 // <undescore>
-// <underscore> TODO - load code at annotation and check its size. if current - size == annotation then OKEY
-  int extra_bci = size > 127 ? 3 : size > 5 ? 2 : 1;
-  int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread), extra_bci);
+  int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread), 1);
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d, extra_bci=%d)",
-    thread, method(thread), bcp(thread), bci(thread), extra_bci);
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d)",
+    thread, method(thread), bcp(thread), bci(thread));
 #endif
 // </undescore>
 
@@ -336,11 +334,10 @@ IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* 
   Klass*    klass = pool->klass_at(index, CHECK);
 
 // <underscore>
-  int extra_bci = size > 127 ? 3 : size > 5 ? 2 : 1;
-  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread), extra_bci);
+  int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread), 1);
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::anewarray(thread=%p, method=%p, bcp=%u, bci=%d, extra_bci=%d)",
-    thread, method(thread), bcp(thread), bci(thread), extra_bci);
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::anewarray(thread=%p, method=%p, bcp=%u, bci=%d)",
+    thread, method(thread), bcp(thread), bci(thread));
 #endif
 // </undescore>
 
@@ -373,14 +370,10 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* fir
   }
 
   // <underscore>
-  int extra_bci = 0;
-  for (int index = 0; index < nof_dims; index++) {
-    extra_bci += dims[index] > 127 ? 3 : dims[index] > 5 ? 2 : 1;
-  }
-  int alloc_gen = get_alloc_gen(constants, method(thread), bci(thread), extra_bci);
+  int alloc_gen = get_alloc_gen(constants, method(thread), bci(thread), nof_dims);
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::multianewarray(thread=%p, method=%p, bcp=%u, bci=%d, extra_bci)",
-    thread, method(thread), bcp(thread), bci(thread), extra_bci);
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::multianewarray(thread=%p, method=%p, bcp=%u, bci=%d, n_dims)",
+    thread, method(thread), bcp(thread), bci(thread), nof_dmis);
 #endif
 // </undescore>
 
