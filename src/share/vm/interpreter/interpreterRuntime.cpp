@@ -203,7 +203,7 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0
 
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
-      gclog_or_tty->print_cr("<underscore> allocation bc index = %hu", anno_bci);
+      gclog_or_tty->print_cr("<underscore> annotion bc index = %hu bc=%d length=%d", anno_bci, code_at(method, anno_bci), length_for(code_at(method, anno_bci)));
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
       if (anno_target == 68 && anno_bci == (bci - extra_bci) && type_name->equals("Ljava/lang/Gen;", 15)) {
@@ -308,6 +308,7 @@ IRT_END
 IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type, jint size))
 
 // <undescore>
+// <underscore> TODO - load code at annotation and check its size. if current - size == annotation then OKEY
   int extra_bci = size > 127 ? 3 : size > 5 ? 2 : 1;
   int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread), extra_bci);
 #if DEBUG_OBJ_ALLOC
