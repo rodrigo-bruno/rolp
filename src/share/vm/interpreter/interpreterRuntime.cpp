@@ -201,12 +201,19 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int extra_bci = 0
       // Get char* (type name, should be Ljava/lang/Gen;)
       Symbol* type_name = pool->symbol_at(anno_type_index);
 
+      // Note: If anno_bco == bci, then they both point to the same bc. In this
+      // situation there is no need to fix the bci. Only if they differ, we
+      // should look into the size of make sure that both bcis are a match.
+      int anno_bc_len = anno_bci == bci ?
+        0 :
+        Bytecodes::length_for(Bytecodes::code_at(method, anno_bci));
+
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
-      gclog_or_tty->print_cr("<underscore> annotion bc index = %hu bc=%d length=%d", anno_bci, code_at(method, anno_bci), length_for(code_at(method, anno_bci)));
+      gclog_or_tty->print_cr("<underscore> bci = %d annotion bc index = %hu length=%d", bci, anno_bci, anno_bc_len);
       gclog_or_tty->print_cr("<underscore> index in constant pool for type = %hu, %p", anno_type_index, type_name);
 #endif
-      if (anno_target == 68 && anno_bci == (bci - extra_bci) && type_name->equals("Ljava/lang/Gen;", 15)) {
+      if (anno_target == 68 && (anno_bci + anno_bc_len) == bci && type_name->equals("Ljava/lang/Gen;", 15)) {
         aac->at_put(next_centry, bci); // Storing in cache.
         alloc_gen = 1;
 #if DEBUG_ANNO_ALLOC
