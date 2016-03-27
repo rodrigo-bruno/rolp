@@ -131,6 +131,12 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
     }
   }
   bool gc_overhead_limit_was_exceeded = false;
+
+  // <underscore>
+#if DEBUG_OBJ_ALLOC
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_noinit (going to mem allocate) thread=%p, size="SIZE_FORMAT") ", thread, size);
+#endif
+  // </underscore>
   // <underscore> TODO - investigate this path. It calls mutator alloc!
   result = Universe::heap()->mem_allocate(size,
                                           &gc_overhead_limit_was_exceeded);
