@@ -373,7 +373,7 @@ IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* fir
   int alloc_gen = get_alloc_gen(constants, method(thread), bci(thread), nof_dims);
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> InterpreterRuntime::multianewarray(thread=%p, method=%p, bcp=%u, bci=%d, n_dims)",
-    thread, method(thread), bcp(thread), bci(thread), nof_dmis);
+    thread, method(thread), bcp(thread), bci(thread), nof_dims);
 #endif
 // </undescore>
 

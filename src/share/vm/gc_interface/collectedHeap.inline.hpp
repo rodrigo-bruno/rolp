@@ -140,7 +140,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
   // <underscore> Added gen and is_gen_alloc arguments.
   result = Universe::heap()->mem_allocate(size,
                                           &gc_overhead_limit_was_exceeded,
-                                          klass.alloc_gen() ? : true : false,
+                                          klass.alloc_gen() ? true : false,
                                           THREAD->alloc_gen());
   if (result != NULL) {
     NOT_PRODUCT(Universe::heap()->

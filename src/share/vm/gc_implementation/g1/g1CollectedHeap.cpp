@@ -897,7 +897,7 @@ G1CollectedHeap::mem_allocate(size_t word_size,
     if (!isHumongous(word_size)) {
       // <underscore>
 #if DEBUG_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going directly to alloc region) is_alloc_gen=%d, size="SIZE_FORMAT") ", is_alloc_gen, size);
+      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going directly to alloc region) is_alloc_gen=%d, word_size="SIZE_FORMAT") ", is_alloc_gen, word_size);
 #endif
       // </underscore>
       // <underscore> Added the gen test.
@@ -907,7 +907,7 @@ G1CollectedHeap::mem_allocate(size_t word_size,
     } else {
       // <underscore>
 #if DEBUG_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going to humongous) is_alloc_gen=%d, size="SIZE_FORMAT") ", is_alloc_gen, size);
+      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going to humongous) is_alloc_gen=%d, size="SIZE_FORMAT") ", is_alloc_gen, word_size);
 #endif
       // </underscore>
       result = attempt_allocation_humongous(word_size, &gc_count_before, &gclocker_retry_count);
