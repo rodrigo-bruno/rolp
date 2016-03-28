@@ -330,8 +330,11 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // The obj and array allocate methods are covers for these methods.
   // mem_allocate() should never be
   // called to allocate TLABs, only individual objects.
+  // <underscore> Added gen and is_alloc_gen arguments.
   virtual HeapWord* mem_allocate(size_t size,
-                                 bool* gc_overhead_limit_was_exceeded) = 0;
+                                 bool* gc_overhead_limit_was_exceeded,
+                                 bool is_alloc_gen,
+                                 int gen) = 0;
 
   // Utilities for turning raw memory into filler objects.
   //

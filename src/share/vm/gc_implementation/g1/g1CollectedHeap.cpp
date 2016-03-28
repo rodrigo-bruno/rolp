@@ -881,9 +881,12 @@ HeapWord* G1CollectedHeap::allocate_new_gen_tlab(int gen, size_t word_size) {
 }
 // </undescore>
 
+// <underscore> Added gen and is_alloc_gen arguments.
 HeapWord*
 G1CollectedHeap::mem_allocate(size_t word_size,
-                              bool*  gc_overhead_limit_was_exceeded) {
+                              bool*  gc_overhead_limit_was_exceeded,
+                              bool is_alloc_gen,
+                              int gen) {
   assert_heap_not_locked_and_not_at_safepoint();
 
   // Loop until the allocation is satisfied, or unsatisfied after GC.
@@ -892,13 +895,29 @@ G1CollectedHeap::mem_allocate(size_t word_size,
 
     HeapWord* result = NULL;
     if (!isHumongous(word_size)) {
-      result = attempt_allocation(word_size, &gc_count_before, &gclocker_retry_count);
+      // <underscore>
+#if DEBUG_OBJ_ALLOC
+      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going directly to alloc region) is_alloc_gen=%d, size="SIZE_FORMAT") ", is_alloc_gen, size);
+#endif
+      // </underscore>
+      // <underscore> Added the gen test.
+      result = is_alloc_gen ?
+          gen_attempt_allocation(gen, word_size) :
+          attempt_allocation(word_size, &gc_count_before, &gclocker_retry_count);
     } else {
+      // <underscore>
+#if DEBUG_OBJ_ALLOC
+      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going to humongous) is_alloc_gen=%d, size="SIZE_FORMAT") ", is_alloc_gen, size);
+#endif
+      // </underscore>
       result = attempt_allocation_humongous(word_size, &gc_count_before, &gclocker_retry_count);
     }
     if (result != NULL) {
       return result;
     }
+
+    // <underscore> Assert to indicate if we need to consider this scenario.
+    assert(!is_alloc_gen, "Gen allocations should not need to start a GC!");
 
     // Create the garbage collection operation...
     VM_G1CollectForAllocation op(gc_count_before, word_size);

@@ -601,8 +601,11 @@ protected:
   // <underscore> allocates new tlabs in specific generation
   virtual HeapWord* allocate_new_gen_tlab(int gen, size_t word_size);
 
+  // <underscore> Added gen and is_gen_alloc arguments.
   virtual HeapWord* mem_allocate(size_t word_size,
-                                 bool*  gc_overhead_limit_was_exceeded);
+                                 bool*  gc_overhead_limit_was_exceeded,
+                                 bool is_alloc_gen,
+                                 int gen);
 
   // The following three methods take a gc_count_before_ret
   // parameter which is used to return the GC count if the method

@@ -134,12 +134,14 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
 
   // <underscore>
 #if DEBUG_OBJ_ALLOC
-    gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_noinit (going to mem allocate) thread=%p, size="SIZE_FORMAT") ", thread, size);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_noinit (going to mem allocate) thread=%p, size="SIZE_FORMAT") ", THREAD, size);
 #endif
   // </underscore>
-  // <underscore> TODO - investigate this path. It calls mutator alloc!
+  // <underscore> Added gen and is_gen_alloc arguments.
   result = Universe::heap()->mem_allocate(size,
-                                          &gc_overhead_limit_was_exceeded);
+                                          &gc_overhead_limit_was_exceeded,
+                                          klass.alloc_gen() ? : true : false,
+                                          THREAD->alloc_gen());
   if (result != NULL) {
     NOT_PRODUCT(Universe::heap()->
       check_for_non_bad_heap_word_value(result, size));
