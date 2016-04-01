@@ -6742,6 +6742,9 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
   region->set_epoch(this->_epoch);
+#if DEBUG_REM_SET
+  gclog_or_tty->print_cr("<underscore> new gen alloc region bottom=["INTPTR_FORMAT"]", region->bottom());
+#endif
   return region;
 }
 
@@ -6749,6 +6752,9 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
+#if DEBUG_REM_SET
+  gclog_or_tty->print_cr("<underscore> retired gen alloc region bottom=["INTPTR_FORMAT"]", region->bottom());
+#endif
 }
 // </underscore>
 

@@ -191,13 +191,14 @@ public:
 class GenAllocRegion : public G1AllocRegion {
     int _gen;
     int _epoch;
-    bool _should_rebase;
+    bool _should_rebase; // <underscore> TODO - is this used?
 protected:
 
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
   virtual void retire_region(HeapRegion* alloc_region, size_t allocated_bytes);
 public:
-  // <underscore> TODO - decide where BOT updates should be on or off
+  // <underscore> We must force BOT updates because GenAllocRegions are not
+  // (although but it can happen) scanned by the GC when a collection takes place.
   GenAllocRegion(int gen = 0)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen), 
