@@ -4492,6 +4492,7 @@ void G1CollectedHeap::init_gen_alloc_regions() {
 
 void G1CollectedHeap::release_gen_alloc_regions() {
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+    // <underscore> TODO - should we replace this by a retire?
     _gen_alloc_regions->at(i)->release();
     assert(_gen_alloc_regions->at(i)->get() == NULL, "post-condition");
   }
@@ -7123,8 +7124,7 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 
   GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
   assert(rebase_gen != NULL, "Gen alloc region should't be null.");
-  rebase_gen->release();
-  rebase_gen->init();
+  rebase_gen->retire(true);
 }
 
 jint G1CollectedHeap::new_alloc_gen() {
