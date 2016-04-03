@@ -4491,6 +4491,10 @@ void G1CollectedHeap::init_gen_alloc_regions() {
 }
 
 void G1CollectedHeap::release_gen_alloc_regions() {
+#if DEBUG_COLLECT_GEN
+  gclog_or_tty->print_cr("<underscore> G1CollectedHeap::release_gen_alloc_regions releasing gen alloc regions");
+#endif
+
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
     // <underscore> TODO - should we replace this by a retire?
     _gen_alloc_regions->at(i)->release();
@@ -6743,7 +6747,7 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
   region->set_epoch(this->_epoch);
-#if DEBUG_REM_SET
+#if DEBUG_NEW_GEN
   gclog_or_tty->print_cr("<underscore> new gen alloc region bottom=["INTPTR_FORMAT"]", region->bottom());
 #endif
   return region;
@@ -6753,8 +6757,8 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
-#if DEBUG_REM_SET
-  gclog_or_tty->print_cr("<underscore> retired gen alloc region bottom=["INTPTR_FORMAT"]", region->bottom());
+#if DEBUG_COLLECT_GEN
+  gclog_or_tty->print_cr("<underscore> retired gen alloc region bottom=["INTPTR_FORMAT"]", alloc_region->bottom());
 #endif
 }
 // </underscore>

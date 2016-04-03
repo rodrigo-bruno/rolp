@@ -795,7 +795,7 @@ bool PSScavenge::should_attempt_scavenge() {
       if (UsePerfData) {
         counters->update_scavenge_skipped(to_space_not_empty);
       }
-      gclog_or_tty->print_cr("young (to_space) empty ? F <underscore>");
+      // gclog_or_tty->print_cr("young (to_space) empty ? F <underscore>");
       return false;
     }
   }
@@ -808,8 +808,8 @@ bool PSScavenge::should_attempt_scavenge() {
   size_t avg_promoted = (size_t) policy->padded_average_promoted_in_bytes();
   size_t promotion_estimate = MIN2(avg_promoted, young_gen->used_in_bytes());
   bool result = promotion_estimate < old_gen->free_in_bytes();
-  gclog_or_tty->print_cr("promotion_estimate < old_gen->free_bytes ? %s <underscore>", 
-        result ? "T" : "F");
+  //gclog_or_tty->print_cr("promotion_estimate < old_gen->free_bytes ? %s <underscore>", 
+  //      result ? "T" : "F");
 
   if (PrintGCDetails && Verbose) {
     gclog_or_tty->print(result ? "  do scavenge: " : "  skip scavenge: ");
