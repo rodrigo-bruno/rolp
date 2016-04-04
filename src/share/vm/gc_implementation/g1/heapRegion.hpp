@@ -305,6 +305,9 @@ class HeapRegion: public G1OffsetTableContigSpace {
   int _epoch;
   // <underscore> Boolean indicating if this region is a gen alloc region.
   bool _is_gen_alloc_region;
+  // <underscore> Indicates how many gcs were started before the allocation
+  // region got retied. This is used to check if a gc happened after it got retired.
+  unsigned int _retired_gc_count;
 
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
@@ -365,6 +368,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
   int epoch() const         { return _epoch; }
   void set_epoch(int epoch) { _epoch = epoch; }
+  unsigned int retired_gc_count() { return _retired_gc_count; }
+  void set_retired_gc_count(unsigned int gc_count) { _retired_gc_count = gc_count; }
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {

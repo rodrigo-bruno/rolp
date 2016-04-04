@@ -4496,8 +4496,7 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 #endif
 
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
-    // <underscore> TODO - should we replace this by a retire?
-    _gen_alloc_regions->at(i)->release();
+    _gen_alloc_regions->at(i)->retire(true);
     assert(_gen_alloc_regions->at(i)->get() == NULL, "post-condition");
   }
 }
@@ -6764,8 +6763,10 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
+  alloc_region->set_retired_gc_count(total_collections());
 #if DEBUG_COLLECT_GEN
-  gclog_or_tty->print_cr("<underscore> retired gen alloc region bottom=["INTPTR_FORMAT"]", alloc_region->bottom());
+  gclog_or_tty->print_cr("<underscore> retired gen alloc region ttgc=%d bottom=["INTPTR_FORMAT"]",
+  alloc_region->retired_gc_count(), alloc_region->bottom());
 #endif
 }
 // </underscore>
