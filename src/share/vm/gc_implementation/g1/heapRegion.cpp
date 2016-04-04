@@ -500,7 +500,17 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   } else {
     mr = mr.intersection(used_region());
   }
-  if (mr.is_empty()) return NULL;
+
+// <underscore>
+#if DEBUG_REM_SET
+  gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d gcs=%d/%d is_gc_active=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], start=["INTPTR_FORMAT", end=["INTPTR_FORMAT"]]",
+    gen(), is_gen_alloc_region(), retired_gc_count(), g1h->total_collections(), g1h->is_gc_active(), card_ptr, bottom(), top(), end(), mr.start(), mr.end());
+#endif
+// </underscore>
+
+  // <underscore> Added condition to avoid scanning gen regions which are not
+  // parsable.
+  if (mr.is_empty() || (retired_gc_count() >= g1h->total_collections())) return NULL;
   // Otherwise, find the obj that extends onto mr.start().
 
   // The intersection of the incoming mr (for the card) and the
@@ -512,6 +522,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   if (is_young() && filter_young) {
     return NULL;
   }
+
 
   assert(!is_young(), "check value of filter_young");
 
@@ -530,7 +541,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
 
   // We used to use "block_start_careful" here.  But we're actually happy
   // to update the BOT while we do this...
-  HeapWord* cur = block_start(start);
+  HeapWord* cur = block_start(start); // <underscore> TODO - breaks here!
   assert(cur <= start, "Postcondition");
 
   oop obj;
@@ -538,6 +549,12 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   HeapWord* next = cur;
   while (next <= start) {
     cur = next;
+// <underscore>
+#if DEBUG_REM_SET
+    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful cur=["INTPTR_FORMAT"]", cur);
+#endif
+// </underscore>
+
     obj = oop(cur);
     if (obj->klass_or_null() == NULL) {
       // Ran into an unparseable point.
@@ -585,6 +602,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     }
     cur = next;
   }
+
   return NULL;
 }
 
@@ -927,7 +945,24 @@ void HeapRegion::verify(VerifyOption vo,
   bool is_humongous = isHumongous();
   bool do_bot_verify = !is_young();
   size_t object_num = 0;
+
+// <underscore>
+#if DEBUG_REM_SET
+  if(gen() != -1) {
+    gclog_or_tty->print_cr("<underscore> HeapRegion::verify gen=%d bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"]", gen(), bottom(), top(), end());
+  }
+#endif
+// </underscore>
+
   while (p < top()) {
+// <underscore>
+#if DEBUG_REM_SET
+  if(gen() != -1) {
+    gclog_or_tty->print_cr("<underscore> HeapRegion::verify p=["INTPTR_FORMAT"] gen=%d bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"]", p, gen(), bottom(), top(), end());
+  }
+#endif
+// </underscore>
+
     oop obj = oop(p);
     size_t obj_size = obj->size();
     object_num += 1;
