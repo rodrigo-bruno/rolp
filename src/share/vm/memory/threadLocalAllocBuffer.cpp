@@ -40,6 +40,11 @@ GlobalTLABStats* ThreadLocalAllocBuffer::_global_stats   = NULL;
 void ThreadLocalAllocBuffer::clear_before_allocation() {
   _slow_refill_waste += (unsigned)remaining();
   make_parsable(true);   // also retire the TLAB
+  // <underscore
+#if DEBUG_TLAB_ALLOC
+  gclog_or_tty->print_cr("<underscore> ThreadLocalAllocBuffer::clear_before_allocation (start="INTPTR_FORMAT", top="INTPTR_FORMAT", end="INTPTR_FORMAT, start, top, end);
+#endif
+  // </undescore>
 }
 
 void ThreadLocalAllocBuffer::accumulate_statistics_before_gc() {
