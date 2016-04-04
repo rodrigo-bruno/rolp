@@ -4833,8 +4833,13 @@ void G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
 template <bool do_gen_barrier, G1Barrier barrier, bool do_mark_object>
 oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   ::copy_to_survivor_space(oop old) {
-  size_t word_sz = old->size();
   HeapRegion* from_region = _g1->heap_region_containing_raw(old);
+#if DEBUG_REM_SET
+  gclog_or_tty->print_cr("<underscore> G1ParCopyClosure::copy_to_survivor_space region bottom=["INTPTR_FORMAT"] top=["INTPTR_FORMAT"] end=["INTPTR_FORMAT"]",
+    from_region->bottom(), from_region->top(), from_region->end());
+#endif
+  size_t word_sz = old->size();
+
   // +1 to make the -1 indexes valid...
   int       young_index = from_region->young_index_in_cset()+1;
   assert( (from_region->is_young() && young_index >  0) ||
@@ -6690,6 +6695,7 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
       // for survivors too.
       new_alloc_region->set_saved_mark();
       _hr_printer.alloc(new_alloc_region, G1HRPrinter::Old);
+      // <underscore> TODO - the next two lines make little sense.
       bool during_im = g1_policy()->during_initial_mark_pause();
       new_alloc_region->note_start_of_copying(during_im);
       return new_alloc_region;
@@ -6704,6 +6710,7 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
 
 void G1CollectedHeap::retire_gen_alloc_region(HeapRegion* alloc_region,
                                              size_t allocated_bytes) {
+  // <underscore> TODO - the next three lines make little sense...
   bool during_im = g1_policy()->during_initial_mark_pause();
   alloc_region->note_end_of_copying(during_im);
   g1_policy()->record_bytes_copied_during_gc(allocated_bytes);
@@ -7107,6 +7114,7 @@ public:
     GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs = thread->gen_tlabs();
     if (gen_tlabs->length() > _gen && gen_tlabs->at(_gen) != NULL) {
       gen_tlabs->at(_gen)->make_parsable(true);
+      // <underscore> TODO - change make_parsable to clear_before_allocation
     }
   }
 };
