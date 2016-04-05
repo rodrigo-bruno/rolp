@@ -393,8 +393,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // The argument "retire_tlabs" controls whether existing TLABs
   // are merely filled or also retired, thus preventing further
   // allocation from them and necessitating allocation of new TLABs.
-  // <underscore> Added parameter 'retire_gen_tlabs'.
-  virtual void ensure_parsability(bool retire_tlabs, bool retire_gen_tlabs = false);
+  virtual void ensure_parsability(bool retire_tlabs);
 
   // Return an estimate of the maximum allocation that could be performed
   // without triggering any collection or expansion activity.  In a

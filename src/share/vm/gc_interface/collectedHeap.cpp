@@ -513,7 +513,7 @@ HeapWord* CollectedHeap::allocate_new_gen_tlab(int gen, size_t size) {
 }
 // </underscore>
 
-void CollectedHeap::ensure_parsability(bool retire_tlabs, bool retire_gen_tlabs = false) {
+void CollectedHeap::ensure_parsability(bool retire_tlabs) {
   // The second disjunct in the assertion below makes a concession
   // for the start-up verification done while the VM is being
   // created. Callers be careful that you know that mutators
@@ -536,8 +536,13 @@ void CollectedHeap::ensure_parsability(bool retire_tlabs, bool retire_gen_tlabs 
          " to threads list is doomed to failure!");
   for (JavaThread *thread = Threads::first(); thread; thread = thread->next()) {
      if (use_tlab) {
-         thread->tlab().make_parsable(retire_tlabs);
-         thread->make_gen_tlabs_parsable(retire_gen_tlabs); // <underscore>
+// <underscore>
+#if DEBUG_TLAB_ALLOC
+       gclog_or_tty->print_cr("<underscore> CollectedHeap::ensure_parsability : retire_tlabs=%s", retire_tlabs ? "true" : "false");
+#endif
+// </underscore>
+       thread->tlab().make_parsable(retire_tlabs);
+       thread->make_gen_tlabs_parsable(retire_tlabs); // <underscore>
      }
 #ifdef COMPILER2
      // The deferred store barriers must all have been flushed to the
