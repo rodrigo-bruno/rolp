@@ -118,11 +118,10 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
   assert(!isHumongous(word_size), "attempt_allocation() should not "
          "be called for humongous allocation requests");
 
-  // <underscore> lock neecessary to execute 'attempt_allocation'
-  MutexLocker ml(Heap_lock);
   HeapWord* result = _gen_alloc_regions->at(gen)->attempt_allocation(word_size, true /* bot_updates */);
   if (result == NULL) {
-    // Note: since Heap_lock is taken by us, I think there is no need to lock free lists.
+    // <underscore> I think this is the correct lock because it is used for young allocations.
+    MutexLocker ml(Heap_lock);
     result = _gen_alloc_regions->at(gen)->attempt_allocation_locked(word_size, true /* bot_updates */);
   }
   return result;
