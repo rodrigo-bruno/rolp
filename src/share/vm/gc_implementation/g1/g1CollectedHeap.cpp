@@ -2040,10 +2040,8 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
 
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
   
-  /* <underscore> */
+  // <underscore>
   _gen_alloc_regions->push(&_gen_alloc_region);
-  gclog_or_tty->print("<underscore> G1CollectedHeap at %p \n", heap());
-  /* </underscore> */
 }
 
 jint G1CollectedHeap::initialize() {
@@ -4049,7 +4047,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     { // Call to jvmpi::post_class_unload_events must occur outside of active GC
       IsGCActiveMark x;
  
-      // <underscore> TODO - restrict TLAB parsability to tlabs that should be collected!
       // <underscore> TODO - iterate the collection set to check if any gen alloc region is being collected by mistake!
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
@@ -4142,7 +4139,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // </underscore>
 
 // <underscore>
-#if DEBUG_MINOR_CC
+#if DEBUG_PRINT_REGIONS
         print_extended_on(gclog_or_tty);
 #endif
 // </underscore>
