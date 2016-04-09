@@ -3752,7 +3752,7 @@ void G1CollectedHeap::gc_prologue(bool full /* Ignored */) {
   // always_do_update_barrier = false;
   assert(InlineCacheBuffer::is_empty(), "should have cleaned up ICBuffer");
   // Fill TLAB's and such
-  ensure_parsability(true, full); // <underscore> Added 'full' paramater.
+  ensure_parsability(true);
 
   if (G1SummarizeRSetStats && (G1SummarizeRSetStatsPeriod > 0) &&
       (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
@@ -4496,7 +4496,10 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 #endif
 
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
-    _gen_alloc_regions->at(i)->retire(true);
+    // <underscore> TODO - check this. Using retier instead of release would
+    // lead to failed asserts. However, release does not force parseability.
+    //_gen_alloc_regions->at(i)->retire(true);
+    _gen_alloc_regions->at(i)->release();
     assert(_gen_alloc_regions->at(i)->get() == NULL, "post-condition");
   }
 }
@@ -6746,8 +6749,7 @@ void OldGCAllocRegion::retire_region(HeapRegion* alloc_region,
 // <underscore>
 HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
                                                   bool force) {
-  // <underscore> TODO - commented to work! Understand if this has any impact on correctness!
-  // assert(!force, "not supported for Gen alloc regions");
+  assert(!force, "not supported for Gen alloc regions");
   HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
   assert(region != NULL, "New gen alloc regions shouldn't return NULL.");
   region->set_gen(this->_gen);
@@ -6763,7 +6765,7 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
-  alloc_region->set_retired_gc_count(total_collections());
+  alloc_region->set_retired_gc_count(_g1h->total_collections());
 #if DEBUG_COLLECT_GEN
   gclog_or_tty->print_cr("<underscore> retired gen alloc region ttgc=%d bottom=["INTPTR_FORMAT"]",
   alloc_region->retired_gc_count(), alloc_region->bottom());
