@@ -4047,7 +4047,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     { // Call to jvmpi::post_class_unload_events must occur outside of active GC
       IsGCActiveMark x;
  
-      // <underscore> TODO - iterate the collection set to check if any gen alloc region is being collected by mistake!
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
       increment_gc_time_stamp();
@@ -4074,6 +4073,9 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // Forget the current alloc region (we might even choose it to be part
         // of the collection set!).
         release_mutator_alloc_region();
+        // <underscore> This is just conservative measure. In future, if we
+        // realize that this is not necessary, we can relax this.
+        release_gen_alloc_regions();
 
         // We should call this after we retire the mutator alloc
         // region(s) so that all the ALLOC / RETIRE events are generated
@@ -4260,6 +4262,9 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 #endif // YOUNG_LIST_VERBOSE
 
         init_mutator_alloc_region();
+
+        // <underscore> Now its time to initialize gen alloc regions.
+        init_gen_alloc_regions();
 
         {
           size_t expand_bytes = g1_policy()->expansion_amount();
@@ -4493,9 +4498,7 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 #endif
 
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
-    // <underscore> TODO - check this. Using retier instead of release would
-    // lead to failed asserts. However, release does not force parseability.
-    //_gen_alloc_regions->at(i)->retire(true);
+    // <underscore> release calls retire if region is gen alloc.
     _gen_alloc_regions->at(i)->release();
     assert(_gen_alloc_regions->at(i)->get() == NULL, "post-condition");
   }
@@ -6694,9 +6697,6 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
       // for survivors too.
       new_alloc_region->set_saved_mark();
       _hr_printer.alloc(new_alloc_region, G1HRPrinter::Old);
-      // <underscore> TODO - the next two lines make little sense.
-      bool during_im = g1_policy()->during_initial_mark_pause();
-      new_alloc_region->note_start_of_copying(during_im);
       return new_alloc_region;
     } else {
       // <underscore> Note: we will always be allowed more regions
@@ -6709,11 +6709,7 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
 
 void G1CollectedHeap::retire_gen_alloc_region(HeapRegion* alloc_region,
                                              size_t allocated_bytes) {
-  // <underscore> TODO - the next three lines make little sense...
-  bool during_im = g1_policy()->during_initial_mark_pause();
-  alloc_region->note_end_of_copying(during_im);
-  g1_policy()->record_bytes_copied_during_gc(allocated_bytes);
-  // <underscore> Note: we do not need to add because it is already there.
+  _summary_bytes_used += allocated_bytes;
   _old_set.add(alloc_region);
   _hr_printer.retire(alloc_region);
 }
@@ -6765,7 +6761,7 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
   alloc_region->set_retired_gc_count(_g1h->total_collections());
 #if DEBUG_COLLECT_GEN
   gclog_or_tty->print_cr("<underscore> retired gen alloc region ttgc=%d bottom=["INTPTR_FORMAT"]",
-  alloc_region->retired_gc_count(), alloc_region->bottom());
+    alloc_region->retired_gc_count(), alloc_region->bottom());
 #endif
 }
 // </underscore>
