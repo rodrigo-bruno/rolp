@@ -104,6 +104,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   uint _n_par_threads;
 
   unsigned int _total_collections;          // ... started
+  // <underscore> Number of times cms incremented _total_collections.
+  unsigned int _total_cms;
   unsigned int _total_full_collections;     // ... started
   NOT_PRODUCT(volatile size_t _promotion_failure_alot_count;)
   NOT_PRODUCT(volatile size_t _promotion_failure_alot_gc_number;)
@@ -511,6 +513,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   // Total number of GC collections (started)
   unsigned int total_collections() const { return _total_collections; }
+  unsigned int total_cms() const { return _total_cms; } // <underscore>
   unsigned int total_full_collections() const { return _total_full_collections;}
 
   // Increment total number of GC collections (started)
@@ -520,6 +523,11 @@ class CollectedHeap : public CHeapObj<mtInternal> {
     if (full) {
       increment_total_full_collections();
     }
+  }
+
+  // <underscore>
+  void increment_total_cms() {
+      _total_cms++;
   }
 
   void increment_total_full_collections() { _total_full_collections++; }

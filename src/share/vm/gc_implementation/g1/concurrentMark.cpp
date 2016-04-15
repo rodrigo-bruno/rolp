@@ -2124,6 +2124,7 @@ void ConcurrentMark::cleanup() {
   // We need to make this be a "collection" so any collection pause that
   // races with it goes around and waits for completeCleanup to finish.
   g1h->increment_total_collections();
+  g1h->increment_total_cms();
 
   // We reclaimed old regions so we should calculate the sizes to make
   // sure we update the old gen/space data.
