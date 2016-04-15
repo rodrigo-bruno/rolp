@@ -6709,7 +6709,10 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
 
 void G1CollectedHeap::retire_gen_alloc_region(HeapRegion* alloc_region,
                                              size_t allocated_bytes) {
-  _summary_bytes_used += allocated_bytes;
+  //_summary_bytes_used += allocated_bytes;
+  // <underscore> TODO - check if this is correct. Check if mutator alloc region
+  // retirement calls fill before.
+  _summary_bytes_used += alloc_region->used();
   _old_set.add(alloc_region);
   _hr_printer.retire(alloc_region);
 }
