@@ -7135,6 +7135,7 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 
   GenAllocRegion* rebase_gen = _gen_alloc_regions->at(gen);
   assert(rebase_gen != NULL, "Gen alloc region should't be null.");
+  // This must be a retire because calling release would force me to do call init.
   rebase_gen->retire(true);
 }
 
@@ -7154,7 +7155,6 @@ jint G1CollectedHeap::new_alloc_gen() {
 }
 
 void G1CollectedHeap::collect_alloc_gen(jint gen) {
-  bool force = false;
   GenAllocRegion* collect_gen = NULL;
 
   {
@@ -7164,9 +7164,6 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
       return;
     }
 
-    // <underscore> TODO - force if used > 75% and gen size > 10% of heap
-    //bool force = used_unlocked() > max_capacity();
-
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
       used_unlocked(), max_capacity(), force ? "true" : "false");
@@ -7174,14 +7171,14 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 
     collect_gen = _gen_alloc_regions->at(gen);
     assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
+    collect_gen->new_epoch();
   }
 
-  collect_gen->new_epoch();
-  if (force) {
+  if (g1_policy()->need_to_start_conc_mark("collect alloc gen", HeapRegion::GrainBytes)) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif
-    collect_gen->set_should_rebase(true);
+    // No need to call rebase because a GC will already do that for all generations.
     collect(GCCause::_collect_gen);
   } else {
     // This is going to rebase this gen within a safepoint.

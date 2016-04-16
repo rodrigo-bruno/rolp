@@ -110,17 +110,6 @@ void VM_G1IncCollectionPause::doit() {
     }
   }
 
-  // <underscore> iterates through gens to check if any gen needs to be collected.
-  if (_gc_cause == GCCause::_collect_gen) {
-    GrowableArray<GenAllocRegion*>* gen_alloc_regions = g1h->gen_alloc_regions();
-    for (int i = 0; i < gen_alloc_regions->length(); i++) {
-      if (gen_alloc_regions->at(i)->should_rebase()) {
-        g1h->rebase_alloc_gen(i);
-        gen_alloc_regions->at(i)->set_should_rebase(false);
-      }
-    }
-  }
-
   GCCauseSetter x(g1h, _gc_cause);
 // <underscore>
 //  printf("Initiate Conc Mark ? %s\n", _should_initiate_conc_mark ? "T" : "F");

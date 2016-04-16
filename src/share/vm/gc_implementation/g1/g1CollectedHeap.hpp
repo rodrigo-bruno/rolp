@@ -191,7 +191,6 @@ public:
 class GenAllocRegion : public G1AllocRegion {
     int _gen;
     int _epoch;
-    bool _should_rebase; // <underscore> TODO - is this used?
 protected:
 
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
@@ -201,14 +200,11 @@ public:
   // (although but it can happen) scanned by the GC when a collection takes place.
   GenAllocRegion(int gen = 0)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
-    _gen(gen), 
-    _should_rebase(false),
+    _gen(gen),
     _epoch(0) { }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }
-  bool should_rebase() { return _should_rebase; }
-  void set_should_rebase(bool should_rebase) { _should_rebase = should_rebase; }
   int epoch() { return _epoch; }
   void new_epoch() { _epoch++; }
 };
