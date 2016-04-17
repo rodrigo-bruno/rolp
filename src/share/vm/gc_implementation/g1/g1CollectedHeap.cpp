@@ -7164,17 +7164,17 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
       return;
     }
 
-#if DEBUG_COLLECT_GEN
-    gclog_or_tty->print_cr("<underscore> collect_alloc_gen: used=%zu, max=%zu, force=%s",
-      used_unlocked(), max_capacity(), force ? "true" : "false");
-#endif
-
     collect_gen = _gen_alloc_regions->at(gen);
     assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
     collect_gen->new_epoch();
   }
 
-  if (g1_policy()->need_to_start_conc_mark("collect alloc gen", HeapRegion::GrainBytes)) {
+  // This comes from g1_policy::need_to_start_conc_mark
+  // <underscore> TODO - find a way to merge this in that method.
+  size_t marking_initiating_used_threshold = (capacity() / 100) * InitiatingHeapOccupancyPercent;
+  size_t cur_used_bytes = non_young_capacity_bytes();
+  size_t alloc_byte_size = HeapRegion::GrainBytes * HeapWordSize;
+  if ((cur_used_bytes + alloc_byte_size) > marking_initiating_used_threshold) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: forcing minor GC");
 #endif

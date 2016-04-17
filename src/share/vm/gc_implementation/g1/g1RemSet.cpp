@@ -553,12 +553,6 @@ G1UpdateRSOrPushRefOopClosure(G1CollectedHeap* g1h,
 bool G1RemSet::refine_card(jbyte* card_ptr, int worker_i,
                            bool check_for_refs_into_cset) {
 
-// <underscore>
-#if DEBUG_REM_SET
-    gclog_or_tty("<underscore> G1RemSet::refine_card");
-#endif
-// </underscore>
-
   // If the card is no longer dirty, nothing to do.
   if (*card_ptr != CardTableModRefBS::dirty_card_val()) {
     // No need to return that this card contains refs that point
