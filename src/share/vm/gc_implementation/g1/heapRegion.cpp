@@ -220,6 +220,12 @@ void HeapRegion::hr_clear(bool par, bool clear_space) {
   set_young_type(NotYoung);
   reset_pre_dummy_top();
 
+  // <underscore> Doing some cleanup.
+  _epoch = -1;
+  _gen = -1;
+  _retired_gc_count = -1;
+  _is_gen_alloc_region = false;
+
   if (!par) {
     // If this is parallel, this will be done later.
     HeapRegionRemSet* hrrs = rem_set();
@@ -236,6 +242,13 @@ void HeapRegion::hr_clear(bool par, bool clear_space) {
 void HeapRegion::par_clear() {
   assert(used() == 0, "the region should have been already cleared");
   assert(capacity() == HeapRegion::GrainBytes, "should be back to normal");
+
+  // <underscore> Doing some cleanup.
+  _epoch = -1;
+  _gen = -1;
+  _retired_gc_count = -1;
+  _is_gen_alloc_region = false;
+
   HeapRegionRemSet* hrrs = rem_set();
   hrrs->clear();
   CardTableModRefBS* ct_bs =

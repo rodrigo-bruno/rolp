@@ -4494,14 +4494,20 @@ void G1CollectedHeap::init_gen_alloc_regions() {
 
 void G1CollectedHeap::release_gen_alloc_regions() {
 #if DEBUG_COLLECT_GEN
-  gclog_or_tty->print_cr("<underscore> G1CollectedHeap::release_gen_alloc_regions releasing gen alloc regions");
+  gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::release_gen_alloc_regions] releasing gen alloc regions");
 #endif
 
   for (int i = 0; i < _gen_alloc_regions->length(); i++) {
     // <underscore> release calls retire if region is gen alloc.
+#if DEBUG_COLLECT_GEN
+  gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::release_gen_alloc_regions] releasing gen alloc region %i", i);
+#endif
     _gen_alloc_regions->at(i)->release();
     assert(_gen_alloc_regions->at(i)->get() == NULL, "post-condition");
   }
+#if DEBUG_COLLECT_GEN
+  gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::release_gen_alloc_regions] releasing gen alloc regions => Done");
+#endif
 }
 // </undersore>
 
@@ -6752,7 +6758,8 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   region->set_gen_alloc_region(true);
   region->set_epoch(this->_epoch);
 #if DEBUG_NEW_GEN
-  gclog_or_tty->print_cr("<underscore> new gen alloc region bottom=["INTPTR_FORMAT"]", region->bottom());
+  gclog_or_tty->print_cr("<underscore> [GenAllocRegion::allocate_new_region] gen=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
+    this->gen(), this, region->bottom());
 #endif
   return region;
 }
@@ -6763,8 +6770,8 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
   alloc_region->set_gen_alloc_region(false);
   alloc_region->set_retired_gc_count(_g1h->total_collections());
 #if DEBUG_COLLECT_GEN
-  gclog_or_tty->print_cr("<underscore> retired gen alloc region ttgc=%d bottom=["INTPTR_FORMAT"]",
-    alloc_region->retired_gc_count(), alloc_region->bottom());
+  gclog_or_tty->print_cr("<underscore> [GenAllocRegion::retire_region] gen=%d, ttgc=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
+    this->gen(), alloc_region->retired_gc_count(), this, alloc_region->bottom());
 #endif
 }
 // </underscore>
