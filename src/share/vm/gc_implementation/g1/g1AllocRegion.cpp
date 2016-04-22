@@ -90,8 +90,8 @@ void G1AllocRegion::retire(bool fill_up) {
   trace("retiring");
   HeapRegion* alloc_region = _alloc_region;
 
-#if DEBUG_COLLECT_GEN
-  gclog_or_tty->print_cr("<underscore> retiring alloc region this=["INTPTR_FORMAT"], dummy=%s, bottom=["INTPTR_FORMAT"]",
+#if DEBUG_ALLOC_REGION
+  gclog_or_tty->print_cr("<underscore> [G1AllocRegion::retire] this=["INTPTR_FORMAT"], dummy=%s, bottom=["INTPTR_FORMAT"]",
     this,
     alloc_region == _dummy_region ? "true" : "false",
     alloc_region == _dummy_region ? NULL : alloc_region->bottom());
