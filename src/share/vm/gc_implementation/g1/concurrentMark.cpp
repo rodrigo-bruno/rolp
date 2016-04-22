@@ -1274,7 +1274,7 @@ void ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
     return;
   }
 
-  //SvcGCMarker sgcm(SvcGCMarker::OTHER); // FIXME - why is this here? <underscore>
+  SvcGCMarker sgcm(SvcGCMarker::OTHER);
 
   if (VerifyDuringGC) {
     HandleMark hm;  // handle scope
