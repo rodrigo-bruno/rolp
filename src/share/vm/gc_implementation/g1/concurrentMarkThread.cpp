@@ -110,8 +110,7 @@ void ConcurrentMarkThread::run() {
         if (G1Log::fine()) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
           gclog_or_tty->stamp(PrintGCTimeStamps);
-          // <underscore> TODO - commented to avoid log scrumble...
-          // gclog_or_tty->print_cr("[GC concurrent-root-region-scan-start]");
+          gclog_or_tty->print_cr("[GC concurrent-root-region-scan-start]");
         }
 
         _cm->scanRootRegions();
