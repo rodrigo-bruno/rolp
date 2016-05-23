@@ -189,8 +189,12 @@ public:
 
 // <underscore>
 class GenAllocRegion : public G1AllocRegion {
+    /* Generation identifier. */
     int _gen;
+    /* Epoch identifier. */
     int _epoch;
+    /* Number of regions allocated for the current epoch. */
+    int _nregions;
 protected:
 
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
@@ -201,12 +205,17 @@ public:
   GenAllocRegion(int gen = 0)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen),
-    _epoch(0) { }
+    _epoch(0),
+    _nregions(0) { }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }
   int epoch() { return _epoch; }
-  void new_epoch() { _epoch++; }
+  void new_epoch() { 
+      _epoch++;
+      _nregions = 0;
+  }
+  int get_n_regions() { return _nregions; }
 };
 // </underscore>
 

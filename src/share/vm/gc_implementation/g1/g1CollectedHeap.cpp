@@ -6757,6 +6757,7 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
   region->set_epoch(this->_epoch);
+  _nregions++;
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [GenAllocRegion::allocate_new_region] gen=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
     this->gen(), this, region->bottom());
@@ -7151,7 +7152,7 @@ jint G1CollectedHeap::new_alloc_gen() {
 
   int gen = _gen_alloc_regions->length();
 #if DEBUG_NEW_GEN
-    gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::new_alloc_gen] creating new gen (%d)", gen);
+    gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::new_alloc_gen] creating new gen=%d", gen);
 #endif
   GenAllocRegion*  new_gen = new GenAllocRegion(gen);
   new_gen->init();
@@ -7183,7 +7184,9 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
   size_t alloc_byte_size = HeapRegion::GrainBytes * HeapWordSize;
   if ((cur_used_bytes + alloc_byte_size) > marking_initiating_used_threshold) {
 #if DEBUG_COLLECT_GEN
-    gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::collect_alloc_gen] forcing minor GC");
+    gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::collect_alloc_gen] gen=%d nregions=%d: forcing minor GC",
+            gen,
+            collect_gen->get_n_regions());
 #endif
     // No need to call rebase because a GC will already do that for all generations.
     collect(GCCause::_collect_gen);
@@ -7192,8 +7195,10 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
     VM_Rebase_Gen op(gen);
     VMThread::execute(&op);
 #if DEBUG_COLLECT_GEN
-    gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::collect_alloc_gen] rebase gen %s",
-      op.prologue_succeeded() ? "succeeded" : "failed");
+    gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::collect_alloc_gen] gen=%d nregions=%d: rebased gen %s",
+            gen,
+            collect_gen->get_n_regions(),
+            op.prologue_succeeded() ? "succeeded" : "failed");
 #endif
   }
 }
