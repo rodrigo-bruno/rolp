@@ -7164,6 +7164,7 @@ jint G1CollectedHeap::new_alloc_gen() {
 
 void G1CollectedHeap::collect_alloc_gen(jint gen) {
   GenAllocRegion* collect_gen = NULL;
+  int nregions = 0;
 
   {
     MutexLockerEx ml(HeapGen_lock);
@@ -7174,6 +7175,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 
     collect_gen = _gen_alloc_regions->at(gen);
     assert(collect_gen != NULL, "Gen alloc region shouldn't be null.");
+    nregions = collect_gen->get_n_regions();
     collect_gen->new_epoch();
   }
 
@@ -7186,7 +7188,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::collect_alloc_gen] gen=%d nregions=%d: forcing minor GC",
             gen,
-            collect_gen->get_n_regions());
+            nregions);
 #endif
     // No need to call rebase because a GC will already do that for all generations.
     collect(GCCause::_collect_gen);
@@ -7197,7 +7199,7 @@ void G1CollectedHeap::collect_alloc_gen(jint gen) {
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::collect_alloc_gen] gen=%d nregions=%d: rebased gen %s",
             gen,
-            collect_gen->get_n_regions(),
+            nregions,
             op.prologue_succeeded() ? "succeeded" : "failed");
 #endif
   }
