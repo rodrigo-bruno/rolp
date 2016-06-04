@@ -4854,6 +4854,12 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
          (!from_region->is_young() && young_index == 0), "invariant" );
   G1CollectorPolicy* g1p = _g1->g1_policy();
   markOop m = old->mark();
+  // <underscore> TODO - print "survivor <name>"
+#if DEBUG_SURVIVORS
+  gclog_or_tty->print("survivor ");
+  old->klass()->print();
+#endif
+  // </underscore>
   int age = m->has_displaced_mark_helper() ? m->displaced_mark_helper()->age()
                                            : m->age();
   // <underscore> AHAHHH! This is where it decides where the object is copied.

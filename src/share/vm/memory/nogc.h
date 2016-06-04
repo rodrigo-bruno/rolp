@@ -22,5 +22,6 @@
 #define DEBUG_SLOWPATH_C2 0
 #define DEBUG_SLOWPATH_INTR 0
 #define DEBUG_REM_SET 0
+#define DEBUG_SURVIVORS 1
 #endif	/* NOGC_H */
 
