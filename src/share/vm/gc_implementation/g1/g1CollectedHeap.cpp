@@ -4857,7 +4857,7 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   // <underscore> TODO - print "survivor <name>"
 #if DEBUG_SURVIVORS
   gclog_or_tty->print("survivor ");
-  old->klass()->print();
+  old->print_on(gclog_or_tty);
 #endif
   // </underscore>
   int age = m->has_displaced_mark_helper() ? m->displaced_mark_helper()->age()
