@@ -4854,9 +4854,7 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
          (!from_region->is_young() && young_index == 0), "invariant" );
   G1CollectorPolicy* g1p = _g1->g1_policy();
   markOop m = old->mark();
-  // <underscore> TODO - print "survivor <name>"
 #if DEBUG_SURVIVORS
-  gclog_or_tty->print("survivor ");
   old->print_on(gclog_or_tty);
 #endif
   // </underscore>
@@ -6775,7 +6773,8 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
-  alloc_region->set_retired_gc_count(_g1h->total_collections());
+  // <underscore> TODO - CHECK THIS!
+  alloc_region->set_retired_gc_count(_g1h->total_collections() - _g1h->total_cms());
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [GenAllocRegion::retire_region] gen=%d, ttgc=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
     this->gen(), alloc_region->retired_gc_count(), this, alloc_region->bottom());
