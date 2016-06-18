@@ -523,35 +523,6 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
 
    if (mr.is_empty()) return NULL;
 
-  // <underscore> GC math :-)
-  unsigned int gcs = g1h->total_collections();
-  unsigned int fgcs = g1h->total_full_collections();
-  unsigned int cms = g1h->total_cms();
-  // <underscore> number of collections (minor or full)
-  unsigned int min_gcs = gcs  - cms;
-  // <underscore> Is/Was gen alloc. Not in a safepoint. Is alloc region.
-  // <underscore> TODO - shouldn't the next test be enough?
-  if (gen() != -1 && !g1h->is_gc_active() && is_gen_alloc_region()) {
-// <underscore>
-#if DEBUG_REM_SET
-  gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d gcs=%d/%d is_gc_active=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], start=["INTPTR_FORMAT", end=["INTPTR_FORMAT"]]",
-    gen(), is_gen_alloc_region(), retired_gc_count(), g1h->total_collections(), g1h->is_gc_active(), card_ptr, bottom(), top(), end(), mr.start(), mr.end());
-#endif
-// </underscore>
-    return NULL;
-  }
-
-  // <underscore> Is/Was gen alloc. Not in safepoint. Not old enough.
-  if (gen() != -1 && !g1h->is_gc_active() && (retired_gc_count() >= min_gcs)) {
-// <underscore>
-#if DEBUG_REM_SET
-  gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d gcs=%d/%d is_gc_active=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], start=["INTPTR_FORMAT", end=["INTPTR_FORMAT"]]",
-    gen(), is_gen_alloc_region(), retired_gc_count(), g1h->total_collections(), g1h->is_gc_active(), card_ptr, bottom(), top(), end(), mr.start(), mr.end());
-#endif
-// </underscore>
-
-    return NULL;
-  }
 
   // Otherwise, find the obj that extends onto mr.start().
 
@@ -565,7 +536,6 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     return NULL;
   }
 
-
   assert(!is_young(), "check value of filter_young");
 
   // We can only clean the card here, after we make the decision that
@@ -576,6 +546,37 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     // We must complete this write before we do any of the reads below.
     OrderAccess::storeload();
   }
+
+  // <underscore> GC math :-)
+  unsigned int gcs = g1h->total_collections();
+  unsigned int fgcs = g1h->total_full_collections();
+  unsigned int cms = g1h->total_cms();
+  // <underscore> number of collections (minor or full)
+  unsigned int min_gcs = gcs  - cms;
+  // <underscore> Is/Was gen alloc. Not in a safepoint. Is alloc region.
+  // <underscore> TODO - shouldn't the next test be enough?
+  if (gen() != -1 && !g1h->is_gc_active() && is_gen_alloc_region()) {
+    // <underscore>
+#if DEBUG_REM_SET
+    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d gcs=%d/%d is_gc_active=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], start=["INTPTR_FORMAT", end=["INTPTR_FORMAT"]]",
+      gen(), is_gen_alloc_region(), retired_gc_count(), g1h->total_collections(), g1h->is_gc_active(), card_ptr, bottom(), top(), end(), mr.start(), mr.end());
+#endif
+// </underscore>
+    return mr.start();
+  }
+
+  // <underscore> Is/Was gen alloc. Not in safepoint. Not old enough.
+  if (gen() != -1 && !g1h->is_gc_active() && (retired_gc_count() >= min_gcs)) {
+// <underscore>
+#if DEBUG_REM_SET
+    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d gcs=%d/%d is_gc_active=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], start=["INTPTR_FORMAT", end=["INTPTR_FORMAT"]]",
+      gen(), is_gen_alloc_region(), retired_gc_count(), g1h->total_collections(), g1h->is_gc_active(), card_ptr, bottom(), top(), end(), mr.start(), mr.end());
+#endif
+// </underscore>
+
+    return mr.start();
+  }
+
 
   // Cache the boundaries of the memory region in some const locals
   HeapWord* const start = mr.start();
