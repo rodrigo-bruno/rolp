@@ -320,16 +320,8 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
   }
   tlab.fill(obj, obj + size, new_tlab_size);
 
-  // <underscore> TODO - This code is a bit hacky...
-  G1CollectedHeap* g1h = dynamic_cast<G1CollectedHeap*>(Universe::heap());
-  HeapRegion* hr = NULL;
-  if (g1h != NULL) {
-    hr = g1h->heap_region_containing_raw(obj);
-    if (hr != NULL) {
-      hr->add_active_tlab();
-    }
-  }
-  tlab.setHeapRegion(hr);
+  // <underscore>
+  Universe::heap()->register_tlab(&tlab);
   // </underscore>
   
 
@@ -526,6 +518,10 @@ HeapWord* CollectedHeap::allocate_new_tlab(size_t size) {
 HeapWord* CollectedHeap::allocate_new_gen_tlab(int gen, size_t size) {
   guarantee(false, "thread-local allocation buffers not supported");
   return NULL;
+}
+
+void CollectedHeap::register_tlab(ThreadLocalAllocBuffer* tlab) {
+    tlab->setHeapRegion(NULL);
 }
 // </underscore>
 

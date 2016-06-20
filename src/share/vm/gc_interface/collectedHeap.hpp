@@ -131,6 +131,9 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   virtual HeapWord* allocate_new_tlab(size_t size);
   // <underscore> The new tlab will be allocated from a specific generation.
   virtual HeapWord* allocate_new_gen_tlab(int gen, size_t size);
+  
+  // <underscore> Links the TLAB with the space where it was allocated.
+  virtual void register_tlab(ThreadLocalAllocBuffer* tlab);
 
   // Accumulate statistics on all tlabs.
   virtual void accumulate_statistics_all_tlabs();

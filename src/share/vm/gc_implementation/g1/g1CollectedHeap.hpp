@@ -606,6 +606,9 @@ protected:
 
   // <underscore> allocates new tlabs in specific generation
   virtual HeapWord* allocate_new_gen_tlab(int gen, size_t word_size);
+  
+  // <underscore> Links the TLAB with the region where it was allocated.
+  virtual void register_tlab(ThreadLocalAllocBuffer* tlab);
 
   // <underscore> Added gen and is_gen_alloc arguments.
   virtual HeapWord* mem_allocate(size_t word_size,

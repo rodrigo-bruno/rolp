@@ -879,6 +879,13 @@ HeapWord* G1CollectedHeap::allocate_new_gen_tlab(int gen, size_t word_size) {
 
   return gen_attempt_allocation(gen, word_size);
 }
+
+void G1CollectedHeap::register_tlab(ThreadLocalAllocBuffer* tlab) {
+    HeapRegion* hr = g1h->heap_region_containing_raw(tlab->start());
+    assert(hr != NULL, "TLAB should be covered by one region.")
+    tlab->setHeapRegion(hr);
+    hr->add_active_tlab();
+}
 // </undescore>
 
 // <underscore> Added gen and is_alloc_gen arguments.
