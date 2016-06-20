@@ -119,6 +119,7 @@ void ThreadLocalAllocBuffer::make_parsable(bool retire) {
       // <underscore>
       if (myHeapRegion() != NULL) {
         myHeapRegion()->del_active_tlab();
+        _my_heap_region = NULL; // <underscore>
       }
       // </underscore>
     }
@@ -210,6 +211,7 @@ void ThreadLocalAllocBuffer::initialize() {
              NULL,                    // top
              NULL);                   // end
 
+  _my_heap_region = NULL; // <underscore>
   set_desired_size(initial_desired_size());
 
   // Following check is needed because at startup the main (primordial)
