@@ -308,6 +308,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // <underscore> Indicates how many gcs were started before the allocation
   // region got retied. This is used to check if a gc happened after it got retired.
   unsigned int _retired_gc_count;
+  // <underscore> Array of active tlabs (used for RSet maintenance).
+  GrowableArray<ThreadLocalAllocBuffer*>* _active_tlabs;
 
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
@@ -370,6 +372,16 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_epoch(int epoch) { _epoch = epoch; }
   unsigned int retired_gc_count() { return _retired_gc_count; }
   void set_retired_gc_count(unsigned int gc_count) { _retired_gc_count = gc_count; }
+  // <underscore> TODO - use a real list?!
+  GrowableArray<ThreadLocalAllocBuffer*>* get_active_tlabs() { return _active_tlabs; }
+  void add_active_tlab(ThreadLocalAllocBuffer* tlab) {
+      // TODO - lock
+      _active_tlabs->append(tlab);
+  }
+  void del_active_tlab(ThreadLocalAllocBuffer* tlab) {
+      // TODO - lock
+      _active_tlabs->remove(tlab);
+  }
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {

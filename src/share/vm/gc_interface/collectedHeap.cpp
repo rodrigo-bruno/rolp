@@ -318,6 +318,10 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
 #endif // ASSERT
   }
   tlab.fill(obj, obj + size, new_tlab_size);
+
+  // <underscore> TODO - set region in tlab?
+  // <underscore> TODO - get alloc region for a specific gen!
+  // <underscore> TODO - add active tlab into region (do I have the lock for it?)
 // <underscore>
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> obj allocated at %p", obj);

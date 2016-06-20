@@ -60,6 +60,10 @@ private:
 
   Thread* _my_thread;				 // the thread containing this TLAB
 
+  // <underscore>
+  HeapRegion* _my_heap_region;                        // the region containing this TLAB.
+  // <underscore>
+
   void accumulate_statistics();
   void initialize_statistics();
 
@@ -127,6 +131,9 @@ public:
 
   // <underscore> Changed scope to public (from private)
   Thread* myThread();
+  
+  HeapRegion* myHeapRegion();
+  void setHeapRegion(HeapRegion* hp);
 
   // Reserve space at the end of TLAB
   static size_t end_reserve() {

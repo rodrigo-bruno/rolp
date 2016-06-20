@@ -129,6 +129,7 @@ void ThreadLocalAllocBuffer::make_parsable(bool retire) {
   assert(!(retire || ZeroTLAB)  ||
          (start() == NULL && end() == NULL && top() == NULL),
          "TLAB must be reset");
+  // <underscore> TODO - remove tlab from active tlabs in region
 }
 
 void ThreadLocalAllocBuffer::resize_all_tlabs() {
@@ -317,6 +318,15 @@ void ThreadLocalAllocBuffer::verify() {
 Thread* ThreadLocalAllocBuffer::myThread() {
   return _my_thread;
 }
+
+// <underscore>
+HeapRegion* ThreadLocalAllocBuffer::myHeapRegion() {
+  return _my_heap_region;
+}
+void ThreadLocalAllocBuffer::setHeapRegion(HeapRegion* hr) {
+  _my_heap_region = hr;
+}
+// <underscore>
 
 
 GlobalTLABStats::GlobalTLABStats() :

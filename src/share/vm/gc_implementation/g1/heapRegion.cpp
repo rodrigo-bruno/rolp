@@ -372,6 +372,7 @@ HeapRegion::HeapRegion(uint hrs_index,
      _young_index_in_cset(-1), _surv_rate_group(NULL), _age_index(-1),
     _rem_set(NULL), _recorded_rs_length(0), _predicted_elapsed_time_ms(0),
     _predicted_bytes_to_copy(0),
+    _active_tlabs(new GrowableArray<ThreadLocalAllocBuffer*>(16,true)),     // <underscore> Added initialization.
     _is_gen_alloc_region(false), _gen(-1), _epoch(-1), _retired_gc_count(0) // <underscore> Added initialization.
 {
   _rem_set = new HeapRegionRemSet(sharedOffsetArray, this);
@@ -582,9 +583,12 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   HeapWord* const start = mr.start();
   HeapWord* const end = mr.end();
 
+  // <underscore> TODO - region before top (already solved upwards)
+  // <underscore> TODO - if between start and end touches an active tlab, ignore.
+  
   // We used to use "block_start_careful" here.  But we're actually happy
   // to update the BOT while we do this...
-  HeapWord* cur = block_start(start); // <underscore> TODO - breaks here!
+  HeapWord* cur = block_start(start);
   assert(cur <= start, "Postcondition");
 
   oop obj;
