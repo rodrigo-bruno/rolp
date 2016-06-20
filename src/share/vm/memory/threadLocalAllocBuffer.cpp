@@ -30,6 +30,7 @@
 #include "oops/oop.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/copy.hpp"
+#include "gc_implementation/g1/heapRegion.hpp"
 
 // Thread-Local Edens support
 
@@ -115,6 +116,11 @@ void ThreadLocalAllocBuffer::make_parsable(bool retire) {
 
     if (retire) {
       myThread()->incr_allocated_bytes(used_bytes());
+      // <underscore>
+      if (myHeapRegion() != NULL) {
+        myHeapRegion()->del_active_tlab();
+      }
+      // </underscore>
     }
 
     CollectedHeap::fill_with_object(top(), hard_end(), retire);
@@ -129,7 +135,6 @@ void ThreadLocalAllocBuffer::make_parsable(bool retire) {
   assert(!(retire || ZeroTLAB)  ||
          (start() == NULL && end() == NULL && top() == NULL),
          "TLAB must be reset");
-  // <underscore> TODO - remove tlab from active tlabs in region
 }
 
 void ThreadLocalAllocBuffer::resize_all_tlabs() {

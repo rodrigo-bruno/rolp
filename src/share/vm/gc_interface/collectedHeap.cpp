@@ -38,6 +38,7 @@
 #include "runtime/init.hpp"
 #include "runtime/thread.inline.hpp"
 #include "services/heapDumper.hpp"
+#include "gc_implementation/g1/heapRegion.hpp"
 
 
 #ifdef ASSERT
@@ -319,9 +320,19 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thre
   }
   tlab.fill(obj, obj + size, new_tlab_size);
 
-  // <underscore> TODO - set region in tlab?
-  // <underscore> TODO - get alloc region for a specific gen!
-  // <underscore> TODO - add active tlab into region (do I have the lock for it?)
+  // <underscore> TODO - This code is a bit hacky...
+  G1CollectedHeap* g1h = dynamic_cast<G1CollectedHeap*>(Universe::heap());
+  HeapRegion* hr = NULL;
+  if (g1h != NULL) {
+    hr = g1h->heap_region_containing_raw(obj);
+    if (hr != NULL) {
+      hr->add_active_tlab();
+    }
+  }
+  tlab.setHeapRegion(hr);
+  // </underscore>
+  
+
 // <underscore>
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab_slow -> obj allocated at %p", obj);

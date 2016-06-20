@@ -308,8 +308,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // <underscore> Indicates how many gcs were started before the allocation
   // region got retied. This is used to check if a gc happened after it got retired.
   unsigned int _retired_gc_count;
-  // <underscore> Array of active tlabs (used for RSet maintenance).
-  GrowableArray<ThreadLocalAllocBuffer*>* _active_tlabs;
+  // <underscore> number of active TLABs in region.
+  int _active_tlabs;
 
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
@@ -366,22 +366,19 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // <underscore>
   int gen() const       { return _gen; }
   void set_gen(int gen) { _gen = gen; }
+  
   bool is_gen_alloc_region()                    { return _is_gen_alloc_region; }
   void set_gen_alloc_region(bool gen_alloc_region)   { _is_gen_alloc_region = gen_alloc_region; }
+  
   int epoch() const         { return _epoch; }
   void set_epoch(int epoch) { _epoch = epoch; }
+  
   unsigned int retired_gc_count() { return _retired_gc_count; }
   void set_retired_gc_count(unsigned int gc_count) { _retired_gc_count = gc_count; }
-  // <underscore> TODO - use a real list?!
-  GrowableArray<ThreadLocalAllocBuffer*>* get_active_tlabs() { return _active_tlabs; }
-  void add_active_tlab(ThreadLocalAllocBuffer* tlab) {
-      // TODO - lock
-      _active_tlabs->append(tlab);
-  }
-  void del_active_tlab(ThreadLocalAllocBuffer* tlab) {
-      // TODO - lock
-      _active_tlabs->remove(tlab);
-  }
+  
+  int get_active_tlabs() { return _active_tlabs; }
+  void add_active_tlab() { Atomic::inc(&_active_tlabs); }
+  void del_active_tlab() { Atomic::dec(&_active_tlabs); }
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
