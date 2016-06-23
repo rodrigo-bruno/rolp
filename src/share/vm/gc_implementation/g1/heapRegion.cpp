@@ -223,7 +223,6 @@ void HeapRegion::hr_clear(bool par, bool clear_space) {
   // <underscore> Doing some cleanup.
   _epoch = -1;
   _gen = -1;
-  _retired_gc_count = -1;
   _is_gen_alloc_region = false;
 
   if (!par) {
@@ -246,7 +245,6 @@ void HeapRegion::par_clear() {
   // <underscore> Doing some cleanup.
   _epoch = -1;
   _gen = -1;
-  _retired_gc_count = -1;
   _is_gen_alloc_region = false;
 
   HeapRegionRemSet* hrrs = rem_set();
@@ -516,8 +514,8 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
 
 // <underscore>
 #if DEBUG_REM_SET
-  gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d active_tlabs=%d retired=%d gcs=%d full_gcs=%d  cms=%d is_gc_active=%d ",
-    gen(), is_gen_alloc_region(), get_active_tlabs(), retired_gc_count(), g1h->total_collections(), g1h->total_full_collections(), g1h->total_cms(), g1h->is_gc_active());
+  gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d active_tlabs=%d is_gc_active=%d ",
+    gen(), is_gen_alloc_region(), get_active_tlabs(), g1h->is_gc_active());
 #endif
 // </underscore>
 
@@ -551,7 +549,6 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   HeapWord* const start = mr.start();
   HeapWord* const end = mr.end();
 
-  // <underscore> TODO - clean retired gc count stuff (it is no longer used...)
   // <underscore> Avoid regions with active TLABs
   if (gen() != -1 && get_active_tlabs() > 0) {
 #if DEBUG_REM_SET

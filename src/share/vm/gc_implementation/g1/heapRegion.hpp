@@ -305,9 +305,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
   int _epoch;
   // <underscore> Boolean indicating if this region is a gen alloc region.
   bool _is_gen_alloc_region;
-  // <underscore> Indicates how many gcs were started before the allocation
-  // region got retied. This is used to check if a gc happened after it got retired.
-  unsigned int _retired_gc_count;
   // <underscore> number of active TLABs in region.
   int _active_tlabs;
 
@@ -372,9 +369,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
   
   int epoch() const         { return _epoch; }
   void set_epoch(int epoch) { _epoch = epoch; }
-  
-  unsigned int retired_gc_count() { return _retired_gc_count; }
-  void set_retired_gc_count(unsigned int gc_count) { _retired_gc_count = gc_count; }
   
   int get_active_tlabs() { return _active_tlabs; }
   void add_active_tlab() { Atomic::inc(&_active_tlabs); }

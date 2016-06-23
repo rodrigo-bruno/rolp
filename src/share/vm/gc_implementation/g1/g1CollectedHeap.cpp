@@ -6780,8 +6780,6 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
-  // <underscore> TODO - CHECK THIS!
-  alloc_region->set_retired_gc_count(_g1h->total_collections() - _g1h->total_cms());
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [GenAllocRegion::retire_region] gen=%d, ttgc=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
     this->gen(), alloc_region->retired_gc_count(), this, alloc_region->bottom());
