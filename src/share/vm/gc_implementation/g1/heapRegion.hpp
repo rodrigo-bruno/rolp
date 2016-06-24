@@ -306,7 +306,9 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // <underscore> Boolean indicating if this region is a gen alloc region.
   bool _is_gen_alloc_region;
   // <underscore> number of active TLABs in region.
-  int _active_tlabs;
+  unsigned char _active_tlabs[16];
+  static const int _active_tlabs_res;
+  static const int _active_tlabs_slot;
 
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
@@ -370,9 +372,12 @@ class HeapRegion: public G1OffsetTableContigSpace {
   int epoch() const         { return _epoch; }
   void set_epoch(int epoch) { _epoch = epoch; }
   
-  int get_active_tlabs() { return _active_tlabs; }
-  void add_active_tlab() { Atomic::inc(&_active_tlabs); }
-  void del_active_tlab() { Atomic::dec(&_active_tlabs); }
+  // Get number of active TLABs within the given range
+  inline int get_active_tlabs(HeapWord* start, HeapWord* end);
+  inline void inc_active_tlab(unsigned char* dest);
+  inline void dec_active_tlab(unsigned char* dest);
+  inline void add_active_tlab(HeapWord* start, HeapWord* end);
+  inline void del_active_tlab(HeapWord* start, HeapWord* end);
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
