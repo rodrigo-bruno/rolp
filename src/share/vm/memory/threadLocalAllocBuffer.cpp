@@ -31,7 +31,6 @@
 #include "runtime/thread.inline.hpp"
 #include "utilities/copy.hpp"
 #include "gc_implementation/g1/heapRegion.hpp"
-#include "gc_implementation/g1/heapRegion.inline.hpp"
 
 // Thread-Local Edens support
 

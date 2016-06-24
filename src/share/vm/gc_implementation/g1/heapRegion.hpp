@@ -308,8 +308,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // <underscore> number of active TLABs in region.
   // <underscore> NOTE: It can't be unsigned because there are no atomic opts for it.
   jbyte _active_tlabs[16];
-  static int _active_tlabs_res;
-  static int _active_tlabs_slot;
 
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
@@ -364,6 +362,9 @@ class HeapRegion: public G1OffsetTableContigSpace {
   static size_t CardsPerRegion;
 
   // <underscore>
+  static int _active_tlabs_res;
+  static int _active_tlabs_slot;
+
   int gen() const       { return _gen; }
   void set_gen(int gen) { _gen = gen; }
   
@@ -374,11 +375,11 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_epoch(int epoch) { _epoch = epoch; }
   
   // Get number of active TLABs within the given range
-  inline int get_active_tlabs(HeapWord* start, HeapWord* end);
+  int get_active_tlabs(HeapWord* start, HeapWord* end);
   inline void inc_active_tlab(jbyte* dest);
   inline void dec_active_tlab(jbyte* dest);
-  inline void add_active_tlab(HeapWord* start, HeapWord* end);
-  inline void del_active_tlab(HeapWord* start, HeapWord* end);
+  void add_active_tlab(HeapWord* start, HeapWord* end);
+  void del_active_tlab(HeapWord* start, HeapWord* end);
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
