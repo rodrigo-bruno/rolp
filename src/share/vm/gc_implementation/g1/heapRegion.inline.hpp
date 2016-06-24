@@ -128,7 +128,7 @@ inline int HeapRegion::get_active_tlabs(HeapWord* start, HeapWord* end) {
   }
 }
 
-inline void HeapRegion::inc_active_tlab(char* dest) {
+inline void HeapRegion::inc_active_tlab(jbyte* dest) {
   char curr;
   do {
     curr = *dest;
@@ -138,7 +138,7 @@ inline void HeapRegion::inc_active_tlab(char* dest) {
   } while (true);
 }
   
-inline void HeapRegion::dec_active_tlab(char* dest) {
+inline void HeapRegion::dec_active_tlab(jbyte* dest) {
   char curr;
   do {
     curr = *dest;

@@ -31,6 +31,7 @@
 #include "runtime/thread.inline.hpp"
 #include "utilities/copy.hpp"
 #include "gc_implementation/g1/heapRegion.hpp"
+#include "gc_implementation/g1/heapRegion.inline.hpp"
 
 // Thread-Local Edens support
 
@@ -118,7 +119,7 @@ void ThreadLocalAllocBuffer::make_parsable(bool retire) {
       myThread()->incr_allocated_bytes(used_bytes());
       // <underscore>
       if (myHeapRegion() != NULL) {
-        myHeapRegion()->del_active_tlab();
+        myHeapRegion()->del_active_tlab(start(), end());
         _my_heap_region = NULL; // <underscore>
       }
       // </underscore>
