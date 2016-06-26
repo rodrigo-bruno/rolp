@@ -1151,7 +1151,7 @@ inline int HeapRegion::get_active_tlabs(HeapWord* start, HeapWord* end) {
   }
 
 #if DEBUG_TLAB_SLOTS
-  gclog_or_tty->print_cr("<underscore> HeapRegion:get_active_tlab region_bt="PTR_FORMAT" start="PTR_FORMAT" end="PTR_FORMAT" res=%d", _bottom, start, end, res);
+  gclog_or_tty->print_cr("<underscore> HeapRegion:get_active_tlab region_bt="PTR_FORMAT" start="PTR_FORMAT" end="PTR_FORMAT" i=%d, j=%d curr(start)=%d curr(end)=%d, res=%d", _bottom, start, end, i, j, _active_tlabs[i], _active_tlabs[j], res);
 #endif
 
   return res;
