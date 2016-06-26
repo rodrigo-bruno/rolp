@@ -113,27 +113,4 @@ inline void HeapRegion::note_end_of_copying(bool during_initial_mark) {
     }
   }
 }
-
-// <underscore>
-inline void HeapRegion::inc_active_tlab(jbyte* dest) {
-  char curr;
-  do {
-    curr = *dest;
-    if (Atomic::cmpxchg(curr++, dest, curr) == curr) {
-      return;
-    }
-  } while (true);
-}
-  
-inline void HeapRegion::dec_active_tlab(jbyte* dest) {
-  char curr;
-  do {
-    curr = *dest;
-    if (Atomic::cmpxchg(curr--, dest, curr) == curr) {
-      return;
-    }
-  } while (true);
-}
-// </underscore>
-
 #endif // SHARE_VM_GC_IMPLEMENTATION_G1_HEAPREGION_INLINE_HPP

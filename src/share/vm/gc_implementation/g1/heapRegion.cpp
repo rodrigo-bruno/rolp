@@ -199,8 +199,13 @@ void HeapRegion::setup_heap_region_size(size_t initial_heap_size, size_t max_hea
   CardsPerRegion = GrainBytes >> CardTableModRefBS::card_shift;
 
   // <underscore>
-  _active_tlabs_res = 16;
+  _active_tlabs_res = 32;
   _active_tlabs_slot = GrainBytes / _active_tlabs_res;
+#if DEBUG_TLAB_SLOTS
+  gclog_or_tty->print_cr("<underscore> HeapRegion::setup_heap_region_size active_tlab_res=%d, active_tlabs_slot=%d",
+    _active_tlabs_res, _active_tlabs_slot);
+#endif
+
   // </underscore>
 }
 
@@ -1130,37 +1135,60 @@ void HeapRegion::verify() const {
 
 // <underscore>
 inline int HeapRegion::get_active_tlabs(HeapWord* start, HeapWord* end) {
-  int i = (_bottom - start) / _active_tlabs_slot;
-  int j = (_bottom - end) / _active_tlabs_slot;
+  int i = (start - _bottom) * HeapWordSize / _active_tlabs_slot;
+  int j = (end - _bottom) * HeapWordSize / _active_tlabs_slot;
+  int res = 0;
+
+  assert(i < _active_tlabs_res && i >= 0, "Invalid start of TLAB slot");
+  assert(j < _active_tlabs_res && j >= 0, "Invalid start of TLAB slot");
 
   if (i != j) {
     // If the interval spans two slots.
-    return _active_tlabs[i] + _active_tlabs[j];
+    res = _active_tlabs[i] + _active_tlabs[j];
   } else {
     // If the interval is contained in a single slot.
-    return _active_tlabs[i];
+    res = _active_tlabs[i];
   }
+
+#if DEBUG_TLAB_SLOTS
+  gclog_or_tty->print_cr("<underscore> HeapRegion:get_active_tlab region_bt="PTR_FORMAT" start="PTR_FORMAT" end="PTR_FORMAT" res=%d", _bottom, start, end, res);
+#endif
+
+  return res;
 }
 
 void HeapRegion::add_active_tlab(HeapWord* start, HeapWord* end) {
-  int i = (_bottom - start) / _active_tlabs_slot;
-  int j = (_bottom - end) / _active_tlabs_slot;
+  int i = (start - _bottom) * HeapWordSize / _active_tlabs_slot;
+  int j = (end - _bottom) * HeapWordSize / _active_tlabs_slot;
 
-  inc_active_tlab(_active_tlabs + i);
+#if DEBUG_TLAB_SLOTS
+  gclog_or_tty->print_cr("<underscore> HeapRegion:add_active_tlab region_bt="PTR_FORMAT" start="PTR_FORMAT" end="PTR_FORMAT" i=%d, j=%d curr(start)=%d curr(end)=%d", _bottom, start, end, i, j, _active_tlabs[i], _active_tlabs[j]);
+#endif
+
+  assert(i < _active_tlabs_res && i >= 0, "Invalid start of TLAB slot");
+  assert(j < _active_tlabs_res && j >= 0, "Invalid start of TLAB slot");
+  Atomic::inc(_active_tlabs + i);
   if (i != j) {
     // If the interval spans two slots.
-    inc_active_tlab(_active_tlabs + j);
+    Atomic::inc(_active_tlabs + j);
   }
 }
 
 void HeapRegion::del_active_tlab(HeapWord* start, HeapWord* end) { 
-  int i = (_bottom - start) / _active_tlabs_slot;
-  int j = (_bottom - end) / _active_tlabs_slot;
+  int i = (start - _bottom) * HeapWordSize / _active_tlabs_slot;
+  int j = (end - _bottom) * HeapWordSize / _active_tlabs_slot;
 
-  dec_active_tlab(_active_tlabs + i);
+#if DEBUG_TLAB_SLOTS
+  gclog_or_tty->print_cr("<underscore> HeapRegion:dec_active_tlab region_bt="PTR_FORMAT" start="PTR_FORMAT" end="PTR_FORMAT" i=%d, j=%d curr(start)=%d curr(end)=%d", _bottom, start, end, i, j, _active_tlabs[i], _active_tlabs[j]);
+#endif
+
+  assert(i < _active_tlabs_res && i >= 0, "Invalid start of TLAB slot");
+  assert(j < _active_tlabs_res && j >= 0, "Invalid start of TLAB slot");
+
+  Atomic::dec(_active_tlabs + i);
   if (i != j) {
     // If the interval spans two slots.
-    dec_active_tlab(_active_tlabs + j);
+    Atomic::dec(_active_tlabs + j);
   }
 }
 // <underscore>
