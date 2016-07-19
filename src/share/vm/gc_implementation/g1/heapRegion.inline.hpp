@@ -128,8 +128,8 @@ inline int HeapRegion::get_active_tlabs(HeapWord* start, HeapWord* end) {
   }
 }
 
-inline void HeapRegion::inc_active_tlab(char* dest) {
-  char curr;
+inline void HeapRegion::inc_active_tlab(unsigned char* dest) {
+  unsigned char curr;
   do {
     curr = *dest;
     if (Atomic::cmpxchg(curr++, dest, curr) == curr) {
@@ -138,8 +138,8 @@ inline void HeapRegion::inc_active_tlab(char* dest) {
   } while (true);
 }
   
-inline void HeapRegion::dec_active_tlab(char* dest) {
-  char curr;
+inline void HeapRegion::dec_active_tlab(unsigned char* dest) {
+  unsigned char curr;
   do {
     curr = *dest;
     if (Atomic::cmpxchg(curr--, dest, curr) == curr) {
