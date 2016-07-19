@@ -195,11 +195,6 @@ void HeapRegion::setup_heap_region_size(size_t initial_heap_size, size_t max_hea
 
   guarantee(CardsPerRegion == 0, "we should only set it once");
   CardsPerRegion = GrainBytes >> CardTableModRefBS::card_shift;
-
-  // <underscore>
-  _active_tlabs_res = 16;
-  _active_tlabs_slot = GrainBytes / _active_tlabs_res;
-  // </underscore>
 }
 
 void HeapRegion::reset_after_compaction() {
@@ -375,7 +370,7 @@ HeapRegion::HeapRegion(uint hrs_index,
      _young_index_in_cset(-1), _surv_rate_group(NULL), _age_index(-1),
     _rem_set(NULL), _recorded_rs_length(0), _predicted_elapsed_time_ms(0),
     _predicted_bytes_to_copy(0),
-    _is_gen_alloc_region(false), _gen(-1), _epoch(-1) // <underscore> Added initialization.
+    _active_tlabs(0), _is_gen_alloc_region(false), _gen(-1), _epoch(-1) // <underscore> Added initialization.
 {
   _rem_set = new HeapRegionRemSet(sharedOffsetArray, this);
   _orig_end = mr.end();
@@ -384,12 +379,6 @@ HeapRegion::HeapRegion(uint hrs_index,
   hr_clear(false /*par*/, false /*clear_space*/);
   set_top(bottom());
   set_saved_mark();
-
-  // <underscore>
-  for (int i = 0; i < _active_tlabs_res;) {
-      _active_tlabs[i++] = 0;
-  }
-  // <underscore>
 
   assert(HeapRegionRemSet::num_par_rem_sets() > 0, "Invariant.");
 }
@@ -526,7 +515,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
 // <underscore>
 #if DEBUG_REM_SET
   gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d active_tlabs=%d is_gc_active=%d ",
-    gen(), is_gen_alloc_region(), get_active_tlabs(mr.start(), mr.end()), g1h->is_gc_active());
+    gen(), is_gen_alloc_region(), get_active_tlabs(), g1h->is_gc_active());
 #endif
 // </underscore>
 
@@ -561,10 +550,10 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   HeapWord* const end = mr.end();
 
   // <underscore> Avoid regions with active TLABs
-  if (gen() != -1 && get_active_tlabs(start, end) > 0) {
+  if (gen() != -1 && get_active_tlabs() > 0) {
 #if DEBUG_REM_SET
     gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d active_tlabs=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], mr.start=["INTPTR_FORMAT", mr.end=["INTPTR_FORMAT"]]",
-      gen(), is_gen_alloc_region(), get_active_tlabs(start, end), card_ptr, bottom(), top(), this->end(), start, end);
+      gen(), is_gen_alloc_region(), get_active_tlabs(), card_ptr, bottom(), top(), this->end(), start, end);
 #endif
 
     return start;
