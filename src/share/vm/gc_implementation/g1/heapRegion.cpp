@@ -39,8 +39,6 @@ int    HeapRegion::LogOfHRGrainWords = 0;
 size_t HeapRegion::GrainBytes        = 0;
 size_t HeapRegion::GrainWords        = 0;
 size_t HeapRegion::CardsPerRegion    = 0;
-int    HeapRegion::_active_tlabs_slot  = 0;
-int    HeapRegion::_active_tlabs_res   = 0;
 
 HeapRegionDCTOC::HeapRegionDCTOC(G1CollectedHeap* g1,
                                  HeapRegion* hr, ExtendedOopClosure* cl,
@@ -568,6 +566,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d active_tlabs=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], mr.start=["INTPTR_FORMAT", mr.end=["INTPTR_FORMAT"]]",
       gen(), is_gen_alloc_region(), get_active_tlabs(start, end), card_ptr, bottom(), top(), this->end(), start, end);
 #endif
+
     return start;
   }
   
@@ -1127,43 +1126,6 @@ void HeapRegion::verify() const {
   bool dummy = false;
   verify(VerifyOption_G1UsePrevMarking, /* failures */ &dummy);
 }
-
-// <underscore>
-inline int HeapRegion::get_active_tlabs(HeapWord* start, HeapWord* end) {
-  int i = (_bottom - start) / _active_tlabs_slot;
-  int j = (_bottom - end) / _active_tlabs_slot;
-
-  if (i != j) {
-    // If the interval spans two slots.
-    return _active_tlabs[i] + _active_tlabs[j];
-  } else {
-    // If the interval is contained in a single slot.
-    return _active_tlabs[i];
-  }
-}
-
-void HeapRegion::add_active_tlab(HeapWord* start, HeapWord* end) {
-  int i = (_bottom - start) / _active_tlabs_slot;
-  int j = (_bottom - end) / _active_tlabs_slot;
-
-  inc_active_tlab(_active_tlabs + i);
-  if (i != j) {
-    // If the interval spans two slots.
-    inc_active_tlab(_active_tlabs + j);
-  }
-}
-
-void HeapRegion::del_active_tlab(HeapWord* start, HeapWord* end) { 
-  int i = (_bottom - start) / _active_tlabs_slot;
-  int j = (_bottom - end) / _active_tlabs_slot;
-
-  dec_active_tlab(_active_tlabs + i);
-  if (i != j) {
-    // If the interval spans two slots.
-    dec_active_tlab(_active_tlabs + j);
-  }
-}
-// <underscore>
 
 // G1OffsetTableContigSpace code; copied from space.cpp.  Hope this can go
 // away eventually.

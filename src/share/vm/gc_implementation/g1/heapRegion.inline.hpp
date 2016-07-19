@@ -115,6 +115,19 @@ inline void HeapRegion::note_end_of_copying(bool during_initial_mark) {
 }
 
 // <underscore>
+inline int HeapRegion::get_active_tlabs(HeapWord* start, HeapWord* end) {
+  int i = (_bottom - start) / _active_tlabs_slot;
+  int j = (_bottom - end) / _active_tlabs_slot;
+
+  if (i != j) {
+    // If the interval spans two slots.
+    return _active_tlabs[i] + _active_tlabs[j];
+  } else {
+    // If the interval is contained in a single slot.
+    return _active_tlabs[i];
+  }
+}
+
 inline void HeapRegion::inc_active_tlab(jbyte* dest) {
   char curr;
   do {
@@ -133,6 +146,28 @@ inline void HeapRegion::dec_active_tlab(jbyte* dest) {
       return;
     }
   } while (true);
+}
+  
+inline void HeapRegion::add_active_tlab(HeapWord* start, HeapWord* end) {
+  int i = (_bottom - start) / _active_tlabs_slot;
+  int j = (_bottom - end) / _active_tlabs_slot;
+
+  inc_active_tlab(_active_tlabs + i);
+  if (i != j) {
+    // If the interval spans two slots.
+    inc_active_tlab(_active_tlabs + j);
+  }
+}
+
+inline void HeapRegion::del_active_tlab(HeapWord* start, HeapWord* end) { 
+  int i = (_bottom - start) / _active_tlabs_slot;
+  int j = (_bottom - end) / _active_tlabs_slot;
+
+  dec_active_tlab(_active_tlabs + i);
+  if (i != j) {
+    // If the interval spans two slots.
+    dec_active_tlab(_active_tlabs + j);
+  }
 }
 // </underscore>
 
