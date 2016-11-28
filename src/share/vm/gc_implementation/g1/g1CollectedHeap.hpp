@@ -1393,28 +1393,29 @@ public:
         int _sockfd;
         int _free_pages;
         int _nregions;
+        int _page_size;
     public:
-        SendFreeRegion(int sockfd) : _sockfd(sockfd), _free_pages(0), _nregions(0) {}
+        SendFreeRegion(int sockfd) : _sockfd(sockfd), _free_pages(0), _nregions(0), _page_size(4*K) {}
         bool doHeapRegion(HeapRegion* r) {
             // Send if the region has at least 1 page of free space            
-            int page_size = 4*K;
-            int free_pages = (r->end() - r->top()) * sizeof(HeapWord) / page_size;
-            
+            int free_pages = (r->end() - r->top()) * sizeof(HeapWord) / _page_size;
             _free_pages += free_pages;
             _nregions++;
-            
-            gclog_or_tty->print_cr("end(" INTPTR_FORMAT ") - top(" INTPTR_FORMAT ") * sizeof(HeapWord)=%zu / page_size=%d = %d",
+
+#if DEBUG_SEND_FREGIONS
+            gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] end(" INTPTR_FORMAT ") - top(" INTPTR_FORMAT ") * sizeof(HeapWord)=%zu / page_size=%d = %d",
                     r->end(),
                     r->top(),
                     sizeof(HeapWord),
-                    page_size,
+                    _page_size,
                     free_pages);
+#endif
             if(free_pages > 0) {
                 // Write pointer into socket, read poiter (uint64_t)
-                if (write(_sockfd, r->top_addr(), sizeof(HeapWord*)) < 0) {
+                if (write(_sockfd, r->top_addr(), sizeof(HeapWord*)) != sizeof(HeapWord*)) {
                     gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->top()");
                 }
-                if (write(_sockfd, r->end_addr(), sizeof(HeapWord*)) < 0) {
+                if (write(_sockfd, r->end_addr(), sizeof(HeapWord*)) != sizeof(HeapWord*)) {
                     gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->end()");
                 }
             }
@@ -1429,7 +1430,18 @@ public:
             return _nregions;
         }
     };
-    
+
+    // This method asks the heap to send the free heap regions through the sock
+    // file descriptor.
+    virtual void send_free_regions(jint sockfd) {
+        SendFreeRegion sfr(sockfd);
+        _hrs.iterate(&sfr);
+#if DEBUG_SEND_FREGIONS
+        gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] %d free pages in %d regions", 
+                sfr.get_free_pages(), sfr.get_n_regions());
+#endif
+    }
+
     // <underscore> - Asks the heap to prepare for migration.
     virtual void prepare_migration(jlong bandwidth) {
         gclog_or_tty->print_cr("INSIDE G1 (bandwidth=%ld)", bandwidth); // DEBUG
@@ -1454,17 +1466,6 @@ public:
         
         gclog_or_tty->print_cr("DONE G1 (bandwidth=%ld)", bandwidth);  // DEBUG
         gclog_or_tty->flush(); // DEBUG
-    }
-  
-    // This method asks the heap to send the free heap regions through the sock
-    // file descriptor.
-    virtual void send_free_regions(jint sockfd) {
-        gclog_or_tty->print_cr("INSIDE G2 (sockfd=%d)!", sockfd); //DEBUG
-        _min_migration_bandwidth = 0;
-        SendFreeRegion sfr(sockfd);
-        _hrs.iterate(&sfr); 
-        gclog_or_tty->print_cr("DONE G2 (sockfd=%d), regions=%d, free_pages=%d!", sockfd, sfr.get_n_regions(), sfr.get_free_pages()); // DEBUG
-        gclog_or_tty->flush(); //DEBUG
     }
 
   // The same as above but assume that the caller holds the Heap_lock.
