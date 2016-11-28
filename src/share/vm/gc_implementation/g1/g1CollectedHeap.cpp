@@ -884,7 +884,7 @@ void G1CollectedHeap::register_tlab(ThreadLocalAllocBuffer* tlab) {
     HeapRegion* hr = heap_region_containing_raw(tlab->start());
     assert(hr != NULL, "TLAB should be covered by one region.")
     tlab->setHeapRegion(hr);
-    hr->add_active_tlab(tlab->start(), tlab->end());
+    hr->add_active_tlab();
 }
 // </undescore>
 

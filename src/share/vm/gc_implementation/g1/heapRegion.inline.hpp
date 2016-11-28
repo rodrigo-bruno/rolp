@@ -113,4 +113,5 @@ inline void HeapRegion::note_end_of_copying(bool during_initial_mark) {
     }
   }
 }
+
 #endif // SHARE_VM_GC_IMPLEMENTATION_G1_HEAPREGION_INLINE_HPP
