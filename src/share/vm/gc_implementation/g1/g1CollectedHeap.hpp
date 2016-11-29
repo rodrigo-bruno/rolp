@@ -1404,7 +1404,7 @@ public:
 
         void send(HeapWord* top, HeapWord* end) {
 #if DEBUG_SEND_FREGIONS
-            gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] sending free region start="INTPTR_FORMAT" end="INTPTR_FORMAT",
+            gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] sending free region start="INTPTR_FORMAT" end="INTPTR_FORMAT,
                     top, end);
 #endif
             // Write pointer into socket, read poiter (uint64_t)
@@ -1419,7 +1419,7 @@ public:
         bool doHeapRegion(HeapRegion* r) {
 
             // This means that we reached the end of the iteration.
-            if (r == null) {
+            if (r == NULL) {
                 send(_lst_top, _lst_end);
                 return false;
             }
