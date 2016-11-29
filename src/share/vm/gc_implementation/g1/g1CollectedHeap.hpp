@@ -1424,6 +1424,14 @@ public:
                 return false;
             }
 
+            // TODO - this is very strange. Some regions get called twice!
+            if (r->end() <= _lst_end) {
+#if DEBUG_SEND_FREGIONS
+                gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] REPEATED REGION gen=%d end="INTPTR_FORMAT, r->gen(), r->end());
+#endif
+                return false;
+            }
+
             // Calculate the number of free pages in this region.
             int free_pages = (r->end() - r->top()) * sizeof(HeapWord) / _page_size;
             _free_pages += free_pages;
