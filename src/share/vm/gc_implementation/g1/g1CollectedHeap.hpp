@@ -42,7 +42,7 @@
 #include "memory/sharedHeap.hpp"
 #include "utilities/stack.hpp"
 
-#include <unistd.h> // <underscore> - needed for fd write
+#include <sys/mman.h> // <underscore> - needed for madvise
 
 // A "G1CollectedHeap" is an implementation of a java heap for HotSpot.
 // It uses the "Garbage First" heap organization and algorithm, which
@@ -1390,92 +1390,39 @@ public:
     
     // <underscore> used to send used heap regions
     class SendFreeRegion: public HeapRegionClosure {
-        int _sockfd;
         int _free_pages;
         int _nregions;
-        int _page_size;
-        HeapWord* _lst_top;
-        HeapWord* _lst_end;
 
     public:
-        SendFreeRegion(int sockfd) : 
-                _sockfd(sockfd), _free_pages(0), _nregions(0), _page_size(4*K), 
-                _lst_top(NULL), _lst_end(NULL) {}
-
-        void send(HeapWord* top, HeapWord* end) {
-#if DEBUG_SEND_FREGIONS
-            gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] sending free region start="INTPTR_FORMAT" end="INTPTR_FORMAT",
-                    top, end);
-#endif
-            // Write pointer into socket, read poiter (uint64_t)
-            if (write(_sockfd, &top, sizeof(HeapWord*)) != sizeof(HeapWord*)) {
-                gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->top()");
-            }
-            if (write(_sockfd, &end, sizeof(HeapWord*)) != sizeof(HeapWord*)) {
-                gclog_or_tty->print_cr("[SendFreeRegion] ERROR sending r->end()");
-            }
-        }
+        SendFreeRegion() : _free_pages(0), _nregions(0) {}
 
         bool doHeapRegion(HeapRegion* r) {
+            int ret = 0;
+            int pg_sz = os::vm_page_size();
 
-            // This means that we reached the end of the iteration.
-            if (r == null) {
-                send(_lst_top, _lst_end);
-                return false;
-            }
+            // Address of the next page (regarding top).
+            void* start = align_ptr_up((void*)r->top(), pg_sz);
+            void* end = align_ptr_down((void*) r->end(), pg_sz);
 
-            // Calculate the number of free pages in this region.
-            int free_pages = (r->end() - r->top()) * sizeof(HeapWord) / _page_size;
+            // Number of free pages between top and end.
+            int free_pages = (start - end) / pg_sz;
+
             _free_pages += free_pages;
             _nregions++;
 
-#if DEBUG_SEND_FREGIONS
-            gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] end(" INTPTR_FORMAT ") - top(" INTPTR_FORMAT ") * sizeof(HeapWord)=%zu / page_size=%d = %d free pages",
-                    r->end(),
-                    r->top(),
-                    sizeof(HeapWord),
-                    _page_size,
-                    free_pages);
-#endif
-
-            // If this is the beginning of a new region, simply wait for the next one.
-            if (_lst_end == NULL && _lst_top == NULL) {
-#if DEBUG_SEND_FREGIONS
-                gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] beginning of new free region");
-#endif
-                _lst_top = r->top();
-                _lst_end = r->end();
+            if (free_pages == 0) {
                 return false;
             }
 
-            // If the region is empty, simply bump the end of the last free region
-            if (r->bottom() == r->top()) {
-#if DEBUG_SEND_FREGIONS
-                gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] continuing free region");
-#endif
-                _lst_end = r->end();
-                return false;
-            } 
-            // If the region is not empty, send previous region.
-            send(_lst_top, _lst_end);
+            ret = madvise(start, free_pages * pg_sz, MADV_DONTNEED);
 
-            // Save heapwords for the next iteration.
-            if (free_pages > 0) {
-                _lst_top = r->top();
-                _lst_end = r->end();
-            } 
-            // Forget prev region if there are no free pages.
-            else {
 #if DEBUG_SEND_FREGIONS
-                gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] ignoring region with no free pages");
+            gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] punching hole ret=%d [" INTPTR_FORMAT " - " INTPTR_FORMAT "]",
+                    ret, start, start);
 #endif
-                _lst_top = NULL;
-                _lst_end = NULL;
-            }
-
             return false;
         }
-        
+
         int get_free_pages() {
             return _free_pages;
         }
@@ -1490,7 +1437,6 @@ public:
     virtual void send_free_regions(jint sockfd) {
         SendFreeRegion sfr(sockfd);
         _hrs.iterate(&sfr);
-        sfr.doHeapRegion(NULL);
 #if DEBUG_SEND_FREGIONS
         gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] %d free pages in %d regions", 
                 sfr.get_free_pages(), sfr.get_n_regions());
