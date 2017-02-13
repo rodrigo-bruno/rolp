@@ -563,6 +563,11 @@ void DumpWriter::write_u8(u8 x) {
 }
 
 void DumpWriter::write_objectID(oop o) {
+#if DUMP_IDENTITY
+  // <underscore> The identity hash is necessary for OLR to match the dump with
+  // the allocation stack traces.
+  address a = (address)o->identity_hash();
+#else
   address a = (address)o;
 #ifdef _LP64
   write_u8((u8)a);

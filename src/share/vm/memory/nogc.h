@@ -24,5 +24,7 @@
 #define DEBUG_REM_SET 0
 #define DEBUG_SURVIVORS 0
 #define DEBUG_SEND_FREGIONS 0
+
+#define DUMP_IDENTITY 1
 #endif	/* NOGC_H */
 
