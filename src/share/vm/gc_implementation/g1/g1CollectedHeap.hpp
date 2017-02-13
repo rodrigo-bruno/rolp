@@ -1390,22 +1390,22 @@ public:
     
     // <underscore> used to send used heap regions
     class SendFreeRegion: public HeapRegionClosure {
-        int _free_pages;
-        int _nregions;
+        uint64_t _free_pages;
+        uint64_t _nregions;
 
     public:
         SendFreeRegion() : _free_pages(0), _nregions(0) {}
 
         bool doHeapRegion(HeapRegion* r) {
             int ret = 0;
-            int pg_sz = os::vm_page_size();
+            uint64_t pg_sz = os::vm_page_size();
 
             // Address of the next page (regarding top).
             void* start = align_ptr_up((void*)r->top(), pg_sz);
             void* end = align_ptr_down((void*) r->end(), pg_sz);
 
             // Number of free pages between top and end.
-            int free_pages = (start - end) / pg_sz;
+            uint64_t free_pages = (((uint64_t)end) - ((uint64_t) start)) / pg_sz;
 
             _free_pages += free_pages;
             _nregions++;
@@ -1418,16 +1418,16 @@ public:
 
 #if DEBUG_SEND_FREGIONS
             gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] punching hole ret=%d [" INTPTR_FORMAT " - " INTPTR_FORMAT "]",
-                    ret, start, start);
+                    ret, start, end);
 #endif
             return false;
         }
 
-        int get_free_pages() {
+        uint64_t get_free_pages() {
             return _free_pages;
         }
         
-        int get_n_regions() {
+        uint64_t get_n_regions() {
             return _nregions;
         }
     };
@@ -1435,10 +1435,10 @@ public:
     // This method asks the heap to send the free heap regions through the sock
     // file descriptor.
     virtual void send_free_regions(jint sockfd) {
-        SendFreeRegion sfr(sockfd);
+        SendFreeRegion sfr;
         _hrs.iterate(&sfr);
 #if DEBUG_SEND_FREGIONS
-        gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] %d free pages in %d regions", 
+        gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::send_free_regions] %lu free pages in %lu regions", 
                 sfr.get_free_pages(), sfr.get_n_regions());
 #endif
     }
