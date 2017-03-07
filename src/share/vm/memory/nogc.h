@@ -25,6 +25,16 @@
 #define DEBUG_SURVIVORS 0
 #define DEBUG_SEND_FREGIONS 0
 
+/**
+ * If enabled, heap dumps will write objects' identity hash as their object's
+ * ID instead of their memory address. This is used by the OLR profiler.
+ */
 #define DUMP_IDENTITY 1
+
+/**
+ * If enabled, NG2C dynamic profiling is active.
+ */
+#define NG2C_PROF 1
+
 #endif	/* NOGC_H */
 
