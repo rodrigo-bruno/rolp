@@ -137,6 +137,9 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
   gclog_or_tty->print_cr("<underscore> CollectedHeap::common_mem_allocate_noinit (going to mem allocate) thread=%p, size="SIZE_FORMAT") ", THREAD, size);
 #endif
   // </underscore>
+#if DEBUG_LARGE_OBJ_ALLOC
+   gclog_or_tty->print_cr(klass->external_name());
+#endif
   // <underscore> Added gen and is_gen_alloc arguments.
   result = Universe::heap()->mem_allocate(size,
                                           &gc_overhead_limit_was_exceeded,

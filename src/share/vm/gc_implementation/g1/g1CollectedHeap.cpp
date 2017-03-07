@@ -882,7 +882,7 @@ HeapWord* G1CollectedHeap::allocate_new_gen_tlab(int gen, size_t word_size) {
 
 void G1CollectedHeap::register_tlab(ThreadLocalAllocBuffer* tlab) {
     HeapRegion* hr = heap_region_containing_raw(tlab->start());
-    assert(hr != NULL, "TLAB should be covered by one region.")
+    assert(hr != NULL, "TLAB should be covered by one region.");
     tlab->setHeapRegion(hr);
     hr->add_active_tlab();
 }
@@ -904,7 +904,7 @@ G1CollectedHeap::mem_allocate(size_t word_size,
     if (!isHumongous(word_size)) {
       // <underscore>
 #if DEBUG_LARGE_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going directly to alloc region) is_alloc_gen=%d, word_size="SIZE_FORMAT") ", is_alloc_gen, word_size);
+      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going directly to alloc region) is_alloc_gen=%d, size="SIZE_FORMAT" bytes) ", is_alloc_gen, word_size*8);
 #endif
       // </underscore>
       // <underscore> Added the gen test.
@@ -914,7 +914,7 @@ G1CollectedHeap::mem_allocate(size_t word_size,
     } else {
       // <underscore>
 #if DEBUG_LARGE_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going to humongous) is_alloc_gen=%d, size="SIZE_FORMAT") ", is_alloc_gen, word_size);
+      gclog_or_tty->print_cr("<underscore> CollectedHeap::mem_allocate (going to humongous) is_alloc_gen=%d, size="SIZE_FORMAT" bytes) ", is_alloc_gen, word_size*8);
 #endif
       // </underscore>
       result = attempt_allocation_humongous(word_size, &gc_count_before, &gclocker_retry_count);
