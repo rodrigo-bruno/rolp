@@ -1701,6 +1701,11 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   }
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
+#if DEBUG_NG2C_PROF
+    gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::initialize_object installing %s header",
+            (UseBiasedLocking && (length == NULL)) ? "biased" : "normal");
+#endif
+
   rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);
   int header_size = alloc->minimum_header_size();  // conservatively small
 

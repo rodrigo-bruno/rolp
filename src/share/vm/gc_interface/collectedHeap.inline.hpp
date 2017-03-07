@@ -55,6 +55,10 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
     // May be bootstrapping
     obj->set_mark(markOopDesc::prototype());
   }
+#if DEBUG_NG2C_PROF
+    gclog_or_tty->print_cr("<underscore> CollectedHeap::post_allocation_setup_no_klass_install: mark_oop=%s",
+            obj->mark()->print_string());
+#endif
 }
 
 void CollectedHeap::post_allocation_install_obj_klass(KlassHandle klass,

@@ -24,6 +24,7 @@
 #define DEBUG_REM_SET 0
 #define DEBUG_SURVIVORS 0
 #define DEBUG_SEND_FREGIONS 0
+#define DEBUG_NG2C_PROF 1
 
 /**
  * If enabled, heap dumps will write objects' identity hash as their object's
