@@ -1713,8 +1713,8 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 
 #if NG2C_PROF
   // <underscore> TODO - make sure that other bits are initialized as zero!
-    Node* prof_mask   = intcon(0); // <underscore> TODO - load mask from method + bits.
-    mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
+//    Node* prof_mask   = intcon(0); // <underscore> TODO - load mask from method + bits.
+//    mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
 #endif
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);

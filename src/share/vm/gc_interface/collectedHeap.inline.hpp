@@ -57,7 +57,7 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
   }
 
 #if NG2C_PROF
-  obj->set_mark(obj->mark() | 0); // <underscore> Replace  0 with klass.alloc_gen()
+//  obj->set_mark(obj->mark() | 0); // <underscore> Replace  0 with klass.alloc_gen()
 #endif
 
 #if DEBUG_NG2C_PROF
