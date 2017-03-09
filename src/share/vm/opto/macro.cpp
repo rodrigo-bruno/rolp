@@ -1070,6 +1070,11 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
   if (UseTLAB) {                // Private allocation: load from TLS
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
+
+#if NG2C_PROF
+    // <underscore> TODO - using alloc_gen (hash of method + bci), decide at runtime, the best generation!
+#endif
+
     if(alloc_gen == 0) {
       tlab_top_offset = in_bytes(JavaThread::tlab_top_offset());
       tlab_end_offset = in_bytes(JavaThread::tlab_end_offset());
@@ -1208,7 +1213,13 @@ void PhaseMacroExpand::expand_allocate_common(
 // <underscore>
   int bci = alloc->jvms()->bci();
   Method* m = alloc->jvms()->method()->get_Method();
+
+#if NG2C_PROF
+  int alloc_gen = 0; // <underscore> generate or get hash from m+bci!
+#else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
+#endif
+
 #if DEBUG_C2_ALLOC
   gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
     alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
@@ -1699,6 +1710,13 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   } else {
     mark_node = makecon(TypeRawPtr::make((address)markOopDesc::prototype()));
   }
+
+#if NG2C_PROF
+  // <underscore> TODO - make sure that other bits are initialized as zero!
+//    Node* prof_mask   = intcon(0); // <underscore> TODO - load mask from method + bits.
+//    mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
+#endif
+
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
 #if DEBUG_NG2C_PROF

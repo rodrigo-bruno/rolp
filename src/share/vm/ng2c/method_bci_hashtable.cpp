@@ -1,5 +1,6 @@
 # include "ng2c/method_bci_hashtable.hpp"
 # include "classfile/altHashing.hpp"
+# include "memory/nogc.h"
 
 MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {
@@ -21,8 +22,8 @@ unsigned int
 MethodBciHashtable::calculate_hash(Method * m, int bci)
 {
   unsigned int hash = (unsigned int)AltHashing::murmur3_32(bci, (const jbyte*)m, sizeof(Method));
-// #ifdef ASSERT
-  gclog_or_tty->print_cr("[ng2c hashing] " INTPTR_FORMAT, (intptr_t)hash);
-// #endif //ASSERT
+#if DEBUG_NG2C_PROF
+  gclog_or_tty->print_cr("[ng2c-prof] object hash = " INTPTR_FORMAT, (intptr_t)hash);
+#endif
   return hash;
 }

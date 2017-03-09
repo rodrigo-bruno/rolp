@@ -26,6 +26,7 @@
 #define SHARE_VM_OOPS_MARKOOP_HPP
 
 #include "oops/oop.hpp"
+#include "memory/nogc.h"
 
 // The markOop describes the header of an object.
 //
@@ -115,6 +116,9 @@ class markOopDesc: public oopDesc {
          hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits,
          cms_bits                 = LP64_ONLY(1) NOT_LP64(0),
          epoch_bits               = 2
+#if NG2C_PROF
+          ,ng2c_prof_bits         = 25
+#endif
   };
 
   // The biased locking code currently requires that the age bits be
@@ -125,6 +129,9 @@ class markOopDesc: public oopDesc {
          cms_shift                = age_shift + age_bits,
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift
+#if NG2C_PROF
+          ,ng2c_prof_shift        = hash_shift + hash_bits
+#endif
   };
 
   enum { lock_mask                = right_n_bits(lock_bits),
@@ -154,6 +161,12 @@ class markOopDesc: public oopDesc {
     const static uintptr_t hash_mask_in_place  =
                             (address_word)hash_mask << hash_shift;
 #endif
+#if NG2C_PROF
+    const static uintptr_t ng2c_prof_mask = right_n_bits(ng2c_prof_bits);
+    const static uintptr_t ng2c_prof_mask_in_place =
+			    (address_word)ng2c_prof_mask << ng2c_prof_shift;
+#endif
+
 
   enum { locked_value             = 0,
          unlocked_value           = 1,
@@ -348,6 +361,13 @@ class markOopDesc: public oopDesc {
   bool has_no_hash() const {
     return hash() == no_hash;
   }
+#if NG2C_PROF
+    uint    ng2c_prof()               const { return mask_bits(value() >> ng2c_prof_shift, ng2c_prof_mask); }
+    markOop set_ng2c_prof(uint v) const {
+      assert((v & ~ng2c_prof_mask) == 0, "shouldn't overflow ng2c_prof field");
+      return markOop((value() & ~ng2c_prof_mask_in_place) | (((uintptr_t)v & ng2c_prof_mask) << ng2c_prof_shift));
+  }
+#endif
 
   // Prototype mark for initialization
   static markOop prototype() {
