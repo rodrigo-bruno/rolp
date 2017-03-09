@@ -3,9 +3,6 @@
 
 # include "memory/allocation.inline.hpp"
 
-// forward definition
-class NGenerationArray;
-
 typedef unsigned long ngen_t;
 
 const static int NG2C_GEN_ARRAY_SIZE = 17;
@@ -22,9 +19,12 @@ class NGenerationArray : public CHeapObj<mtGC>
 
   ngen_t * array() const { return _array; }
   int size() const { return NG2C_GEN_ARRAY_SIZE; } // hard-coded for now
-  unsigned int new_hash (int seed) { return (unsigned int)0; } // placeholder
+  unsigned int new_hash (int seed) {
+    assert(false, "new_hash called for NGenerationArray...");
+    return (unsigned int)0;
+  } // placeholder
   ngen_t at(int pos) const { return _array[pos]; }
 };
- 
+
 
 #endif // SHARE_VM_NG2C_NG2C_GLOBALS_HPP
