@@ -124,13 +124,13 @@ class markOopDesc: public oopDesc {
   // The biased locking code currently requires that the age bits be
   // contiguous to the lock bits.
   enum { lock_shift               = 0,
-         biased_lock_shift        = lock_bits,                      // 2
-         age_shift                = lock_bits + biased_lock_bits,   // 3
-         cms_shift                = age_shift + age_bits,           // 7
-         hash_shift               = cms_shift + cms_bits,           // 8
-         epoch_shift              = hash_shift                      // 8
+         biased_lock_shift        = lock_bits,
+         age_shift                = lock_bits + biased_lock_bits,
+         cms_shift                = age_shift + age_bits,
+         hash_shift               = cms_shift + cms_bits,
+         epoch_shift              = hash_shift
 #if NG2C_PROF
-          ,ng2c_prof_shift        = hash_shift + hash_bits          // 39
+          ,ng2c_prof_shift        = hash_shift + hash_bits
 #endif
   };
 
@@ -149,10 +149,6 @@ class markOopDesc: public oopDesc {
          ,hash_mask               = right_n_bits(hash_bits),
          hash_mask_in_place       = (address_word)hash_mask << hash_shift
 #endif
-#if NG2C_PROF
-         ,ng2c_prof_mask          = right_n_bits(ng2c_prof_bits),
-         ng2c_prof_mask_in_place  = (address_word)ng2c_prof_mask << ng2c_prof_shift
-#endif
   };
 
   // Alignment of JavaThread pointers encoded in object header required by biased locking
@@ -165,6 +161,12 @@ class markOopDesc: public oopDesc {
     const static uintptr_t hash_mask_in_place  =
                             (address_word)hash_mask << hash_shift;
 #endif
+#if NG2C_PROF
+    const static uintptr_t ng2c_prof_mask = right_n_bits(ng2c_prof_bits);
+    const static uintptr_t ng2c_prof_mask_in_place =
+			    (address_word)ng2c_prof_mask << ng2c_prof_shift;
+#endif
+
 
   enum { locked_value             = 0,
          unlocked_value           = 1,
