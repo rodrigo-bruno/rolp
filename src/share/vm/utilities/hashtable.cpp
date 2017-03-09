@@ -35,7 +35,6 @@
 #include "utilities/hashtable.inline.hpp"
 #include "utilities/numberSeq.hpp"
 
-
 // This is a generic hashtable, designed to be used for the symbol
 // and string tables.
 //
@@ -370,3 +369,9 @@ template class BasicHashtable<mtClass>;
 template class BasicHashtable<mtSymbol>;
 template class BasicHashtable<mtCode>;
 template class BasicHashtable<mtInternal>;
+
+// #ifdef NG2C
+template class Hashtable<NGenerationArray*, mtGC>;
+template class HashtableEntry<NGenerationArray*, mtGC>;
+template class BasicHashtable<mtGC>;
+// #endif // NG2C
