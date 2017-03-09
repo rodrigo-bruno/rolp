@@ -74,6 +74,9 @@
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
 #endif
+//#ifdef NG2C
+#include "ng2c/method_bci_hashtable.hpp"
+//#endif // NG2C
 
 class UnlockFlagSaver {
   private:
@@ -265,6 +268,7 @@ IRT_ENTRY(void, InterpreterRuntime::_new(JavaThread* thread, ConstantPool* pool,
   //       If we have a breakpoint, then we don't rewrite
   //       because the _breakpoint bytecode would be lost.
   oop obj = klass->allocate_instance(alloc_gen, CHECK);
+MethodBciHashtable::calculate_hash(method(thread), bci(thread));
   thread->set_vm_result(obj);
 
 // <undescore>
