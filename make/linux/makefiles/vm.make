@@ -76,7 +76,6 @@ endif
 
 SYSDEFS += -DNG2C_PROF
 
-
 # HOTSPOT_RELEASE_VERSION and HOTSPOT_BUILD_VERSION are defined
 # in $(GAMMADIR)/make/defs.make
 ifeq ($(HOTSPOT_BUILD_VERSION),)
