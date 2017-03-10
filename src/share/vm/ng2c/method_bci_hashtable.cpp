@@ -18,6 +18,26 @@ MethodBciHashtable::add_entry(Method * m, int bci)
   return array->at(NG2C_GEN_ARRAY_SIZE-1);
 }
 
+NGenerationArray *
+MethodBciHashtable::get_entry(uint hash)
+{
+  int idx = hash_to_index(hash);
+  MethodBciEntry * entry = (MethodBciEntry*)bucket(idx);
+  if (entry->next() != NULL) {
+    while (entry->hash() != hash) entry = entry->next();
+    return entry->literal();
+  } else {
+    return NULL;
+  }
+}
+
+ngen_t
+MethodBciHashtable::get_target_gen(uint hash)
+{
+  NGenerationArray * arr = get_entry(hash);
+  return arr->get_target_gen();
+}
+
 void
 MethodBciHashtable::apply_delta(NGenerationArray ** gclocal_ngen_arrays, int sz)
 {
