@@ -23,7 +23,8 @@ class MethodBciHashtable : public Hashtable<NGenerationArray*, mtGC>
 
   MethodBciHashtable (int table_size);
 
-  ngen_t add_entry (Method * m, int bci);
+  unsigned int add_entry (Method * m, int bci);
+  unsigned int get_target_gen(unsigned int rhash);
   static unsigned int calculate_hash(Method * m, int bci);
   
 };

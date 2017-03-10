@@ -41,6 +41,7 @@
 #include "opto/subnode.hpp"
 #include "opto/type.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.hpp"
 
 
 //
@@ -1215,7 +1216,9 @@ void PhaseMacroExpand::expand_allocate_common(
   Method* m = alloc->jvms()->method()->get_Method();
 
 #ifdef NG2C_PROF
-  int alloc_gen = 0; // <underscore> generate or get hash from m+bci!
+  G1CollectedHeap* g1_heap = (G1CollectedHeap) Universe::heap();
+  // <underscore> TODO - check if this conversion does not corrupt the value!
+  int alloc_gen = g1_heap->method_bci_hashtable()->add_entry(m, bci);
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
 #endif
@@ -1443,6 +1446,9 @@ void PhaseMacroExpand::expand_allocate_common(
     InitializeNode* init = alloc->initialization();
     fast_oop_rawmem = initialize_object(alloc,
                                         fast_oop_ctrl, fast_oop_rawmem, fast_oop,
+#ifdef NG2C_PROF
+                                        alloc_gen,
+#endif
                                         klass_node, length, size_in_bytes);
 
     // If initialization is performed by an array copy, any required
@@ -1699,6 +1705,9 @@ void PhaseMacroExpand::expand_allocate_common(
 Node*
 PhaseMacroExpand::initialize_object(AllocateNode* alloc,
                                     Node* control, Node* rawmem, Node* object,
+#ifdef NG2C_PROF
+                                    int ng2c_prof,
+#endif
                                     Node* klass_node, Node* length,
                                     Node* size_in_bytes) {
   InitializeNode* init = alloc->initialization();
@@ -1712,9 +1721,9 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   }
 
 #ifdef NG2C_PROF
-  // <underscore> TODO - make sure that other bits are initialized as zero!
-//    Node* prof_mask   = intcon(0); // <underscore> TODO - load mask from method + bits.
-//    mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
+  // <underscore> TODO - check if this is correct
+   Node* prof_mask = intcon(ng2c_prof);
+   mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
 #endif
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);

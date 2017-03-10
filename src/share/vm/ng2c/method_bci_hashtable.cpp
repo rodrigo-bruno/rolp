@@ -6,16 +6,28 @@ MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {
 }
 
-ngen_t
+unsigned int
 MethodBciHashtable::add_entry(Method * m, int bci)
 {
   unsigned int hash = calculate_hash(m, bci);
   unsigned int rhash = mask_bits ((uintptr_t)hash, 0x1FFFFFF);
   NGenerationArray * array = new NGenerationArray();
-  MethodBciEntry * entry =
-    (MethodBciEntry*)Hashtable<NGenerationArray*, mtGC>::new_entry(rhash, array);
-  // return last element to save on generated method code for faster access
-  return array->at(NG2C_GEN_ARRAY_SIZE-1);
+  Hashtable<NGenerationArray*, mtGC>::new_entry(rhash, array);
+  // TODO - memset to zero.
+  return rhash;
+}
+
+unsigned long
+MethodBciHashtable::get_target_gen(unsigned int rhash)
+{
+    // TOOD - implement.
+    return 0;
+}
+
+void
+MethodBciHashTable::update_target_gen(unsigned int rhash, NGenerationArray* array)
+{
+    // TODO - implement.
 }
 
 unsigned int

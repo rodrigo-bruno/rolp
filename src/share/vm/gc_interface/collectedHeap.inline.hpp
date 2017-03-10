@@ -51,14 +51,14 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
   assert(obj != NULL, "NULL object pointer");
   if (UseBiasedLocking && (klass() != NULL)) {
 #ifdef NG2C_PROF
-    obj->set_mark(klass->prototype_header()); // <underscore> TODO - fazer um OR com o klass.alloc_gen()
+    obj->set_mark(klass->prototype_header()->set_ng2c_prof(klass.alloc_gen()));
 #else
     obj->set_mark(klass->prototype_header());
 #endif
   } else {
     // May be bootstrapping
 #ifdef NG2C_PROF
-    obj->set_mark(markOopDesc::prototype()); // <underscore> TODO - fazer um OR com o klass.alloc_gen()
+    obj->set_mark(markOopDesc::prototype()->set_ng2c_prof(klass.alloc_gen()));
 #else
     obj->set_mark(markOopDesc::prototype());
 #endif

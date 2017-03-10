@@ -110,6 +110,9 @@ private:
 
   Node* initialize_object(AllocateNode* alloc,
                           Node* control, Node* rawmem, Node* object,
+#ifdef NG2C_PROF
+                          int ng2c_prof,
+#endif
                           Node* klass_node, Node* length,
                           Node* size_in_bytes);
 
