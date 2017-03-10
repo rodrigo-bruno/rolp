@@ -1997,6 +1997,9 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
+#ifdef NG2C_PROF
+  _method_bci_hashtable(new (ResourceObj::C_HEAP, mtGC) MethodBciHashtable(1024*1024)),
+#endif
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
