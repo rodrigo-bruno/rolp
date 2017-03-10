@@ -1071,7 +1071,7 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
 
-#if NG2C_PROF
+#ifdef NG2C_PROF
     // <underscore> TODO - using alloc_gen (hash of method + bci), decide at runtime, the best generation!
 #endif
 
@@ -1214,7 +1214,7 @@ void PhaseMacroExpand::expand_allocate_common(
   int bci = alloc->jvms()->bci();
   Method* m = alloc->jvms()->method()->get_Method();
 
-#if NG2C_PROF
+#ifdef NG2C_PROF
   int alloc_gen = 0; // <underscore> generate or get hash from m+bci!
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
@@ -1711,7 +1711,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
     mark_node = makecon(TypeRawPtr::make((address)markOopDesc::prototype()));
   }
 
-#if NG2C_PROF
+#ifdef NG2C_PROF
   // <underscore> TODO - make sure that other bits are initialized as zero!
 //    Node* prof_mask   = intcon(0); // <underscore> TODO - load mask from method + bits.
 //    mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
@@ -1719,7 +1719,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
-#if DEBUG_NG2C_PROF
+#ifdef DEBUG_NG2C_PROF
     gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::initialize_object installing %s header",
             (UseBiasedLocking && (length == NULL)) ? "biased" : "normal");
 #endif

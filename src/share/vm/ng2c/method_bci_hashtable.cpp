@@ -22,7 +22,7 @@ unsigned int
 MethodBciHashtable::calculate_hash(Method * m, int bci)
 {
   unsigned int hash = (unsigned int)AltHashing::murmur3_32(bci, (const jbyte*)m, sizeof(Method));
-#if DEBUG_NG2C_PROF
+#ifdef DEBUG_NG2C_PROF
   gclog_or_tty->print_cr("[ng2c-prof] object hash = " INTPTR_FORMAT, (intptr_t)hash);
 #endif
   return hash;

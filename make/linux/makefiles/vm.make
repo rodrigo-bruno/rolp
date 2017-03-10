@@ -74,7 +74,9 @@ else
 endif
 
 
+# NG2C sysdefs.
 SYSDEFS += -DNG2C_PROF
+SYSDEFS += -DDEBUG_NG2C_PROF
 
 # HOTSPOT_RELEASE_VERSION and HOTSPOT_BUILD_VERSION are defined
 # in $(GAMMADIR)/make/defs.make
