@@ -24,6 +24,7 @@ class MethodBciHashtable : public Hashtable<NGenerationArray*, mtGC>
   MethodBciHashtable (int table_size);
 
   ngen_t add_entry (Method * m, int bci);
+  void   apply_delta (NGenerationArray ** gclocal_ngen_arrays, int sz);
   static unsigned int calculate_hash(Method * m, int bci);
   
 };
