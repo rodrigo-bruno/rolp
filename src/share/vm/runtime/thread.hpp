@@ -279,7 +279,7 @@ class Thread: public ThreadShadow {
   // TODO - N - change set_alloc_gen to is_alloc_gen in handles and instanceKlass
 
   // Array of gen TLABs.
-  GrowableArray<ThreadLocalAllocBuffer*>* _tlabGenArray;
+  GrowableArray<ThreadLocalAllocBuffer*> _tlabGenArray;
   // The gen TLAB in use (same as indexing gen TLAB array using _alloc_gen). Used in c2.
   ThreadLocalAllocBuffer* _genTlab;
   // The TLAB chosen for the last allocation. Used in interpreter.
@@ -463,8 +463,7 @@ class Thread: public ThreadShadow {
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
   // <underscore>
-  GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs() const                { return _tlabGenArray; }
-  void set_gen_tlabs(GrowableArray<ThreadLocalAllocBuffer*>* tlabGenArray) { _tlabGenArray = tlabGenArray; }
+  GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs() const                { return &_tlabGenArray; }
 
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);
@@ -474,9 +473,9 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
-      for (int i = 0; i < _tlabGenArray->length(); i++) {
-        if (_tlabGenArray->at(i) != NULL) {
-          _tlabGenArray->at(i)->make_parsable(retire_tlabs);
+      for (int i = 0; i < _tlabGenArray.length(); i++) {
+        if (_tlabGenArray.at(i) != NULL) {
+          _tlabGenArray.at(i)->make_parsable(retire_tlabs);
         }
       }
   }
@@ -494,9 +493,9 @@ class Thread: public ThreadShadow {
   // <underscore>
   void initialize_gen_tlabs() {
     if (UseTLAB) {
-      for (int i = 0; i < _tlabGenArray->length(); i++) {
-        if (_tlabGenArray->at(i) != NULL) {
-          _tlabGenArray->at(i)->initialize();
+      for (int i = 0; i < _tlabGenArray.length(); i++) {
+        if (_tlabGenArray.at(i) != NULL) {
+          _tlabGenArray.at(i)->initialize();
         }
       }
     }
@@ -682,6 +681,9 @@ public:
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
   static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
+#ifdef NG2C_PROF
+  static ByteSize gen_tlabs_offset()             { return byte_offset_of(Thread, _tlabGenArray ); }
+#endif
 
   // <underscore> TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \

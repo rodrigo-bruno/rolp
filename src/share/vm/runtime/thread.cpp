@@ -208,7 +208,7 @@ void Thread::operator delete(void* p) {
 // JavaThread
 
 
-Thread::Thread() : _tlab(this), _tlabOld(this) {
+Thread::Thread() : _tlab(this), _tlabOld(this), _tlabGenArray(16,true) {
   // stack and get_thread
   set_stack_base(NULL);
   set_stack_size(0);
@@ -221,10 +221,6 @@ Thread::Thread() : _tlab(this), _tlabOld(this) {
   DEBUG_ONLY(_current_resource_mark = NULL;)
   set_handle_area(new (mtThread) HandleArea(NULL));
   set_metadata_handles(new (ResourceObj::C_HEAP, mtClass) GrowableArray<Metadata*>(30, true));
-  // <underscore> - NOTE: for some stange reason, the tlabGenArray could not be allocated further
-  // below. It would crash...
-  set_gen_tlabs(new (ResourceObj::C_HEAP, mtClass) GrowableArray<ThreadLocalAllocBuffer*>(16,true));
-  // </underscore>
   set_active_handles(NULL);
   set_free_handle_block(NULL);
   set_last_handle_mark(NULL);
