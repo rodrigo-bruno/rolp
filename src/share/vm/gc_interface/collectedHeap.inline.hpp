@@ -216,6 +216,7 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass->alloc_gen=%d, thread_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.alloc_gen(), thread->alloc_gen(), thread, size);
 #endif
 
+  // <underscore> TODO - choose the correct TLAB. It might be necessary to create an additional generation!
   HeapWord* obj = klass.alloc_gen() ?
       thread->tlab_gen().allocate(size) : thread->tlab().allocate(size);
   if (obj != NULL) {
