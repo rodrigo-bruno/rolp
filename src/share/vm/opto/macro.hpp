@@ -55,6 +55,11 @@ private:
     Node* adr = new (C) AddPNode(base, ptr, offset);
     return transform_later(adr);
   }
+  Node* basic_mul_int(Node* int1, Node* int2) {
+    Node* mul = new (C) MulINode(int1, int2);
+    return transform_later(mul);
+  }
+
   Node* transform_later(Node* n) {
     // equivalent to _gvn.transform in GraphKit, Ideal, etc.
     _igvn.register_new_node_with_optimizer(n);

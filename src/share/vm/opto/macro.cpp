@@ -1072,10 +1072,6 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
 
-#ifdef NG2C_PROF
-    // <underscore> TODO - using alloc_gen (hash of method + bci), decide at runtime, the best generation!
-#endif
-
     if(alloc_gen == 0) {
       tlab_top_offset = in_bytes(JavaThread::tlab_top_offset());
       tlab_end_offset = in_bytes(JavaThread::tlab_end_offset());
@@ -1086,8 +1082,18 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       tlab_top_offset = in_bytes(ThreadLocalAllocBuffer::top_offset());
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
+#ifdef NG2C_PROF
+      unsigned int* target_gen_ptr = MethodBciHashtable::get_target_gen(alloc_gen);
+      int tlab_array_offset = in_bytes(JavaThread::tlab_top_offset()) +
+                              in_bytes(GrowableArray<ThreadLocalAllocBuffer*>::data_offset());
+      Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
+      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make(target_gen_ptr)), 0, TypeRawPtr::BOTTOM, T_ADDRESS);
+      Node* tlab_offset = basic_mul_int(intcon(sizeof(ThreadLocalAllocBuffer), target_gen));
+      gen_tlab_adr = basic_plus_adr(tlab_array, tlab_offset);
+#else
       // Load gen tlab inside Thread
       gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
+#endif
 
       // Get the addressed taking as base pointer the gen tlab addr.
       eden_top_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_adr, tlab_top_offset);
