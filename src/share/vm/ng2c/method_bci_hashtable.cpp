@@ -17,7 +17,7 @@ MethodBciHashtable::add_entry(Method * m, int bci)
   return rhash;
 }
 
-unsigned long
+unsigned int*
 MethodBciHashtable::get_target_gen(unsigned int rhash)
 {
     // TOOD - implement.
