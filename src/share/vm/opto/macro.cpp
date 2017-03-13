@@ -42,6 +42,9 @@
 #include "opto/type.hpp"
 #include "runtime/sharedRuntime.hpp"
 
+#ifdef NG2C_PROF
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#endif
 
 //
 // Replace any references to "oldref" in inputs to "use" with "newref".
@@ -1071,10 +1074,6 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
 
-#if NG2C_PROF
-    // <underscore> TODO - using alloc_gen (hash of method + bci), decide at runtime, the best generation!
-#endif
-
     if(alloc_gen == 0) {
       tlab_top_offset = in_bytes(JavaThread::tlab_top_offset());
       tlab_end_offset = in_bytes(JavaThread::tlab_end_offset());
@@ -1085,8 +1084,19 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       tlab_top_offset = in_bytes(ThreadLocalAllocBuffer::top_offset());
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
+#ifdef NG2C_PROF
+      G1CollectedHeap* g1_heap =(G1CollectedHeap*) Universe::heap();
+      unsigned long* target_gen_ptr = g1_heap->method_bci_hashtable()->get_target_gen(alloc_gen);
+      int tlab_array_offset = in_bytes(JavaThread::tlab_top_offset()) + // TODO - check if this is correct!
+                              in_bytes(GrowableArray<ThreadLocalAllocBuffer*>::data_offset());
+      Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
+      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeRawPtr::BOTTOM, T_ADDRESS);
+      Node* tlab_offset = basic_mul_int(intcon(sizeof(ThreadLocalAllocBuffer)), target_gen);
+      gen_tlab_adr = basic_plus_adr(tlab_array, tlab_offset);
+#else
       // Load gen tlab inside Thread
       gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
+#endif
 
       // Get the addressed taking as base pointer the gen tlab addr.
       eden_top_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_adr, tlab_top_offset);
@@ -1214,8 +1224,10 @@ void PhaseMacroExpand::expand_allocate_common(
   int bci = alloc->jvms()->bci();
   Method* m = alloc->jvms()->method()->get_Method();
 
-#if NG2C_PROF
-  int alloc_gen = 0; // <underscore> generate or get hash from m+bci!
+#ifdef NG2C_PROF
+  G1CollectedHeap* g1_heap = (G1CollectedHeap*) Universe::heap();
+  // <underscore> TODO - check if this conversion does not corrupt the value!
+  int alloc_gen = g1_heap->method_bci_hashtable()->add_entry(m, bci);
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
 #endif
@@ -1443,6 +1455,9 @@ void PhaseMacroExpand::expand_allocate_common(
     InitializeNode* init = alloc->initialization();
     fast_oop_rawmem = initialize_object(alloc,
                                         fast_oop_ctrl, fast_oop_rawmem, fast_oop,
+#ifdef NG2C_PROF
+                                        alloc_gen,
+#endif
                                         klass_node, length, size_in_bytes);
 
     // If initialization is performed by an array copy, any required
@@ -1699,6 +1714,9 @@ void PhaseMacroExpand::expand_allocate_common(
 Node*
 PhaseMacroExpand::initialize_object(AllocateNode* alloc,
                                     Node* control, Node* rawmem, Node* object,
+#ifdef NG2C_PROF
+                                    int ng2c_prof,
+#endif
                                     Node* klass_node, Node* length,
                                     Node* size_in_bytes) {
   InitializeNode* init = alloc->initialization();
@@ -1711,15 +1729,15 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
     mark_node = makecon(TypeRawPtr::make((address)markOopDesc::prototype()));
   }
 
-#if NG2C_PROF
-  // <underscore> TODO - make sure that other bits are initialized as zero!
-//    Node* prof_mask   = intcon(0); // <underscore> TODO - load mask from method + bits.
-//    mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
+#ifdef NG2C_PROF
+  // <underscore> TODO - check if this is correct
+   Node* prof_mask = intcon(ng2c_prof);
+   mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
 #endif
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
-#if DEBUG_NG2C_PROF
+#ifdef DEBUG_NG2C_PROF
     gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::initialize_object installing %s header",
             (UseBiasedLocking && (length == NULL)) ? "biased" : "normal");
 #endif

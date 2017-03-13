@@ -32,7 +32,7 @@
 #include "runtime/handles.hpp"
 #include "memory/nogc.h"
 
-#if NG2C_PROF
+#ifdef NG2C_PROF
 #include "ng2c/ng2c_globals.hpp"
 #endif
 
@@ -289,7 +289,7 @@ protected:
 
   static int literal_size(Symbol *symbol);
   static int literal_size(oop oop);
-#if NG2C_PROF
+#ifdef NG2C_PROF
   static int literal_size(NGenerationArray * v ) { return v->size(); }
 #endif
 

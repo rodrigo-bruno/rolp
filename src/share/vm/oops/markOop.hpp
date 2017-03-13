@@ -116,7 +116,7 @@ class markOopDesc: public oopDesc {
          hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits,
          cms_bits                 = LP64_ONLY(1) NOT_LP64(0),
          epoch_bits               = 2
-#if NG2C_PROF
+#ifdef NG2C_PROF
           ,ng2c_prof_bits         = 25
 #endif
   };
@@ -129,7 +129,7 @@ class markOopDesc: public oopDesc {
          cms_shift                = age_shift + age_bits,
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift
-#if NG2C_PROF
+#ifdef NG2C_PROF
           ,ng2c_prof_shift        = hash_shift + hash_bits
 #endif
   };
@@ -161,7 +161,7 @@ class markOopDesc: public oopDesc {
     const static uintptr_t hash_mask_in_place  =
                             (address_word)hash_mask << hash_shift;
 #endif
-#if NG2C_PROF
+#ifdef NG2C_PROF
     const static uintptr_t ng2c_prof_mask = right_n_bits(ng2c_prof_bits);
     const static uintptr_t ng2c_prof_mask_in_place =
 			    (address_word)ng2c_prof_mask << ng2c_prof_shift;
@@ -361,10 +361,11 @@ class markOopDesc: public oopDesc {
   bool has_no_hash() const {
     return hash() == no_hash;
   }
-#if NG2C_PROF
+#ifdef NG2C_PROF
     uint    ng2c_prof()               const { return mask_bits(value() >> ng2c_prof_shift, ng2c_prof_mask); }
     markOop set_ng2c_prof(uint v) const {
       assert((v & ~ng2c_prof_mask) == 0, "shouldn't overflow ng2c_prof field");
+      // <underscore> TODO - make sure that the shift is not already done!
       return markOop((value() & ~ng2c_prof_mask_in_place) | (((uintptr_t)v & ng2c_prof_mask) << ng2c_prof_shift));
   }
 #endif

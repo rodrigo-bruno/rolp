@@ -50,21 +50,21 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
 
   assert(obj != NULL, "NULL object pointer");
   if (UseBiasedLocking && (klass() != NULL)) {
-#if NG2C_PROF
-    obj->set_mark(klass->prototype_header()); // <underscore> TODO - fazer um OR com o klass.alloc_gen()
+#ifdef NG2C_PROF
+    obj->set_mark(klass->prototype_header()->set_ng2c_prof(klass.alloc_gen()));
 #else
     obj->set_mark(klass->prototype_header());
 #endif
   } else {
     // May be bootstrapping
-#if NG2C_PROF
-    obj->set_mark(markOopDesc::prototype()); // <underscore> TODO - fazer um OR com o klass.alloc_gen()
+#ifdef NG2C_PROF
+    obj->set_mark(markOopDesc::prototype()->set_ng2c_prof(klass.alloc_gen()));
 #else
     obj->set_mark(markOopDesc::prototype());
 #endif
   }
 
-#if DEBUG_NG2C_PROF
+#ifdef DEBUG_NG2C_PROF
     gclog_or_tty->print_cr("[ng2c-prof] CollectedHeap::post_allocation_setup_no_klass_install installing %s header",
             (UseBiasedLocking && (klass() != NULL)) ? "biased" : "normal");
 #endif
@@ -133,7 +133,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
     return NULL;  // caller does a CHECK_0 too
   }
 
-#if NG2C_PROF
+#ifdef NG2C_PROF
   // <underscore> TODO - get klass alloc_gen and extract the target gen. Set thread's current gen.
 #endif
 
@@ -216,6 +216,7 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass->alloc_gen=%d, thread_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.alloc_gen(), thread->alloc_gen(), thread, size);
 #endif
 
+  // <underscore> TODO - choose the correct TLAB. It might be necessary to create an additional generation!
   HeapWord* obj = klass.alloc_gen() ?
       thread->tlab_gen().allocate(size) : thread->tlab().allocate(size);
   if (obj != NULL) {
