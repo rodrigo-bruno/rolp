@@ -25,7 +25,7 @@ MethodBciHashtable::get_target_gen(unsigned int rhash)
 }
 
 void
-MethodBciHashTable::update_target_gen(unsigned int rhash, NGenerationArray* array)
+MethodBciHashtable::update_target_gen(unsigned int rhash, NGenerationArray* array)
 {
     // TODO - implement.
 }

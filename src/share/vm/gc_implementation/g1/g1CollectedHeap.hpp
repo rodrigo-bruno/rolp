@@ -334,7 +334,7 @@ private:
 
 
 #ifdef NG2C_PROF
-  MethodBciHashtable* _method_bci_hashtable;
+  MethodBciHashtable _method_bci_hashtable;
 #endif
 
   // PLAB sizing policy for survivors.
@@ -1385,7 +1385,7 @@ public:
   virtual jint gens_length() { return _gen_alloc_regions->length(); }
 
 #ifdef NG2C_PROF
-  MethodBciHashtable* method_bci_hashtable() { return _method_bci_hashtable; }
+  MethodBciHashtable* method_bci_hashtable() { return &_method_bci_hashtable; }
 #endif
 
     // <underscore> used to print used heap regions

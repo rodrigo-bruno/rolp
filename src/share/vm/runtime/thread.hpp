@@ -463,7 +463,7 @@ class Thread: public ThreadShadow {
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
   // <underscore>
-  GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs() const                { return &_tlabGenArray; }
+  GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs() { return &_tlabGenArray; }
 
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);

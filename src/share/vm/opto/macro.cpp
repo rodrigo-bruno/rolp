@@ -41,8 +41,10 @@
 #include "opto/subnode.hpp"
 #include "opto/type.hpp"
 #include "runtime/sharedRuntime.hpp"
-#include "gc_implementation/g1/g1CollectedHeap.hpp"
 
+#ifdef NG2C_PROF
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#endif
 
 //
 // Replace any references to "oldref" in inputs to "use" with "newref".
@@ -1083,12 +1085,13 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #ifdef NG2C_PROF
-      unsigned int* target_gen_ptr = MethodBciHashtable::get_target_gen(alloc_gen);
+      G1CollectedHeap* g1_heap =(G1CollectedHeap*) Universe::heap();
+      unsigned int* target_gen_ptr = g1_heap->method_bci_hashtable()->get_target_gen(alloc_gen);
       int tlab_array_offset = in_bytes(JavaThread::tlab_top_offset()) +
                               in_bytes(GrowableArray<ThreadLocalAllocBuffer*>::data_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make(target_gen_ptr)), 0, TypeRawPtr::BOTTOM, T_ADDRESS);
-      Node* tlab_offset = basic_mul_int(intcon(sizeof(ThreadLocalAllocBuffer), target_gen));
+      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeRawPtr::BOTTOM, T_ADDRESS);
+      Node* tlab_offset = basic_mul_int(intcon(sizeof(ThreadLocalAllocBuffer)), target_gen);
       gen_tlab_adr = basic_plus_adr(tlab_array, tlab_offset);
 #else
       // Load gen tlab inside Thread
@@ -1222,7 +1225,7 @@ void PhaseMacroExpand::expand_allocate_common(
   Method* m = alloc->jvms()->method()->get_Method();
 
 #ifdef NG2C_PROF
-  G1CollectedHeap* g1_heap = (G1CollectedHeap) Universe::heap();
+  G1CollectedHeap* g1_heap = (G1CollectedHeap*) Universe::heap();
   // <underscore> TODO - check if this conversion does not corrupt the value!
   int alloc_gen = g1_heap->method_bci_hashtable()->add_entry(m, bci);
 #else

@@ -4690,7 +4690,7 @@ void Thread::set_alloc_gen(int gen) {
     if (g1h->gens_length() > gen) {
       _genTlab = new ThreadLocalAllocBuffer(this);
       _genTlab->initialize();
-      _tlabGenArray->at_put_grow(gen, _genTlab);
+      _tlabGenArray.at_put_grow(gen, _genTlab);
 #if DEBUG_OBJ_ALLOC
       gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s  (created new tlab)", gen, gen ? "tlabOld" : "tlabEden");
 #endif
