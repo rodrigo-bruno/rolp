@@ -31,11 +31,11 @@ MethodBciHashtable::get_entry(uint hash)
   }
 }
 
-ngen_t
+ngen_t *
 MethodBciHashtable::get_target_gen(uint hash)
 {
   NGenerationArray * arr = get_entry(hash);
-  return arr->get_target_gen();
+  return arr->get_target_gen_addr();
 }
 
 void
