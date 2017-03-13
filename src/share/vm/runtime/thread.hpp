@@ -43,6 +43,8 @@
 #include "runtime/unhandledOops.hpp"
 #include "utilities/macros.hpp"
 
+#include "ng2c/ng2c_globals.hpp"
+
 #if INCLUDE_NMT
 #include "services/memRecorder.hpp"
 #endif // INCLUDE_NMT
@@ -279,7 +281,7 @@ class Thread: public ThreadShadow {
   // TODO - N - change set_alloc_gen to is_alloc_gen in handles and instanceKlass
 
   // Array of gen TLABs.
-  GrowableArray<ThreadLocalAllocBuffer*> _tlabGenArray;
+  ThreadLocalAllocBuffer** _tlabGenArray;
   // The gen TLAB in use (same as indexing gen TLAB array using _alloc_gen). Used in c2.
   ThreadLocalAllocBuffer* _genTlab;
   // The TLAB chosen for the last allocation. Used in interpreter.
@@ -463,7 +465,7 @@ class Thread: public ThreadShadow {
   void set_metadata_handles(GrowableArray<Metadata*>* handles){ _metadata_handles = handles; }
 
   // <underscore>
-  GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs() { return &_tlabGenArray; }
+  ThreadLocalAllocBuffer** gen_tlabs() { return _tlabGenArray; }
 
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);
@@ -473,9 +475,9 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
-      for (int i = 0; i < _tlabGenArray.length(); i++) {
-        if (_tlabGenArray.at(i) != NULL) {
-          _tlabGenArray.at(i)->make_parsable(retire_tlabs);
+      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++) {
+        if (_tlabGenArray[i] != NULL) {
+          _tlabGenArray[i]->make_parsable(retire_tlabs);
         }
       }
   }
@@ -493,9 +495,9 @@ class Thread: public ThreadShadow {
   // <underscore>
   void initialize_gen_tlabs() {
     if (UseTLAB) {
-      for (int i = 0; i < _tlabGenArray.length(); i++) {
-        if (_tlabGenArray.at(i) != NULL) {
-          _tlabGenArray.at(i)->initialize();
+      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++) {
+        if (_tlabGenArray[i] != NULL) {
+          _tlabGenArray[i]->initialize();
         }
       }
     }

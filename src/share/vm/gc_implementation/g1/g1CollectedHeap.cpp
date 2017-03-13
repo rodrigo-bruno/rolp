@@ -7131,9 +7131,9 @@ public:
   ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
   virtual void do_thread(Thread* thread) {
-    GrowableArray<ThreadLocalAllocBuffer*>* gen_tlabs = thread->gen_tlabs();
-    if (gen_tlabs->length() > _gen && gen_tlabs->at(_gen) != NULL) {
-      gen_tlabs->at(_gen)->make_parsable(true);
+    ThreadLocalAllocBuffer** gen_tlabs = thread->gen_tlabs();
+    if (NG2C_GEN_ARRAY_SIZE > _gen && gen_tlabs[_gen] != NULL) {
+      gen_tlabs[_gen]->make_parsable(true);
       // <underscore> TODO - change make_parsable to clear_before_allocation
     }
   }

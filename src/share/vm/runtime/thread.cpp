@@ -208,7 +208,7 @@ void Thread::operator delete(void* p) {
 // JavaThread
 
 
-Thread::Thread() : _tlab(this), _tlabOld(this), _tlabGenArray(16,true) {
+Thread::Thread() : _tlab(this), _tlabOld(this) {
   // stack and get_thread
   set_stack_base(NULL);
   set_stack_size(0);
@@ -250,12 +250,17 @@ Thread::Thread() : _tlab(this), _tlabOld(this), _tlabGenArray(16,true) {
   omFreeProvision = 32 ;
   omInUseList = NULL ;
   omInUseCount = 0 ;
+
+  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtGC);
+  bzero(_tlabGenArray, NG2C_GEN_ARRAY_SIZE * sizeof(ThreadLocalAllocBuffer*));
   // <underscore> This adds the default gen tlab.
-  gen_tlabs()->push(&_tlabOld);
+  gen_tlabs()[0] = &_tlabOld;
   // <underscore> This will make old gen default for gen allocations.
   set_alloc_gen(0);
   // <underscore> This will make eden tlab the 'last used tlab'.
   set_cur_tlab(false);
+
+
 #ifdef ASSERT
   _visited_for_critical_count = false;
 #endif
@@ -4683,14 +4688,14 @@ void Thread::muxRelease (volatile intptr_t * Lock)  {
 void Thread::set_alloc_gen(int gen) {
 
   _alloc_gen = gen;
-  if (gen_tlabs()->length() <= gen || gen_tlabs()->at(gen) == NULL) {
+  if (NG2C_GEN_ARRAY_SIZE <= gen || gen_tlabs()[gen] == NULL) {
     // We need to create a new tlab for this thread.
     MutexLockerEx ml(HeapGen_lock);
     CollectedHeap* g1h = (CollectedHeap*) Universe::heap();
     if (g1h->gens_length() > gen) {
       _genTlab = new ThreadLocalAllocBuffer(this);
       _genTlab->initialize();
-      _tlabGenArray.at_put_grow(gen, _genTlab);
+      _tlabGenArray[gen] = _genTlab;
 #if DEBUG_OBJ_ALLOC
       gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s  (created new tlab)", gen, gen ? "tlabOld" : "tlabEden");
 #endif
@@ -4698,8 +4703,8 @@ void Thread::set_alloc_gen(int gen) {
       // Illegal tlab (it was not creeated yet!)
     }
   } else {
-    assert(gen_tlabs()->at(gen)->myThread() == this, "invariant");
-    _genTlab = gen_tlabs()->at(_alloc_gen);
+    assert(gen_tlabs()[gen]->myThread() == this, "invariant");
+    _genTlab = gen_tlabs()[_alloc_gen];
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
