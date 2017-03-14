@@ -29,6 +29,10 @@
 #include "utilities/array.hpp"
 #include "utilities/growableArray.hpp"
 
+#ifdef NG2C_PROF
+#include "ng2c/method_bci_hashtable.hpp"
+#endif
+
 // Universe is a name space holding known system classes and objects in the VM.
 //
 // Loaded classes are accessible through the SystemDictionary.
@@ -212,6 +216,10 @@ class Universe: AllStatic {
   static size_t _heap_capacity_at_last_gc;
   static size_t _heap_used_at_last_gc;
 
+#ifdef NG2C_PROF
+  static MethodBciHashtable* _method_bci_hashtable;
+#endif
+
   static jint initialize_heap();
   static void initialize_basic_type_mirrors(TRAPS);
   static void fixup_mirrors(TRAPS);
@@ -336,6 +344,10 @@ class Universe: AllStatic {
 
   // The particular choice of collected heap.
   static CollectedHeap* heap() { return _collectedHeap; }
+
+#ifdef NG2C_PROF
+  static MethodBciHashtable* method_bci_hashtable { return _method_bci_hashtable; }
+#endif
 
   // For UseCompressedOops
   // Narrow Oop encoding mode:

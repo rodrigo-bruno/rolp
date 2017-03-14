@@ -1085,8 +1085,7 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #ifdef NG2C_PROF
-      G1CollectedHeap* g1_heap =(G1CollectedHeap*) Universe::heap();
-      unsigned long* target_gen_ptr = g1_heap->method_bci_hashtable()->get_target_gen(alloc_gen);
+      unsigned long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
       int tlab_array_offset = in_bytes(JavaThread::tlab_top_offset()) + // TODO - check if this is correct!
                               in_bytes(GrowableArray<ThreadLocalAllocBuffer*>::data_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
@@ -1225,9 +1224,8 @@ void PhaseMacroExpand::expand_allocate_common(
   Method* m = alloc->jvms()->method()->get_Method();
 
 #ifdef NG2C_PROF
-  G1CollectedHeap* g1_heap = (G1CollectedHeap*) Universe::heap();
   // <underscore> TODO - check if this conversion does not corrupt the value!
-  int alloc_gen = g1_heap->method_bci_hashtable()->add_entry(m, bci);
+  int alloc_gen = Universe::method_bci_hashtable()->add_entry(m, bci);
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
 #endif
