@@ -346,7 +346,7 @@ class Universe: AllStatic {
   static CollectedHeap* heap() { return _collectedHeap; }
 
 #ifdef NG2C_PROF
-  static MethodBciHashtable* method_bci_hashtable { return _method_bci_hashtable; }
+  static MethodBciHashtable* method_bci_hashtable() { return _method_bci_hashtable; }
 #endif
 
   // For UseCompressedOops

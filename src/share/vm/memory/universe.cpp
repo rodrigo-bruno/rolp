@@ -143,7 +143,7 @@ size_t          Universe::_heap_used_at_last_gc = 0;
 CollectedHeap*  Universe::_collectedHeap = NULL;
 
 #ifdef NG2C_PROF
-MethodBciHastable* Universe::_method_bci_hashtable = NULL;
+MethodBciHashtable* Universe::_method_bci_hashtable = new MethodBciHashtable(1024*1024);
 #endif
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };
@@ -895,10 +895,6 @@ jint Universe::initialize_heap() {
            "Should support thread-local allocation buffers");
     ThreadLocalAllocBuffer::startup_initialization();
   }
-
-#ifdef NG2C_PROF
-  Universe::_method_bci_hashtable = new MethodBciHashtable(1024*1024);
-#endif
 
   return JNI_OK;
 }

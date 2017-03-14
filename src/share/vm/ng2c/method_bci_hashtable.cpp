@@ -1,6 +1,7 @@
 # include "ng2c/method_bci_hashtable.hpp"
 # include "classfile/altHashing.hpp"
 # include "memory/nogc.h"
+# include "oops/method.hpp"
 
 MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {

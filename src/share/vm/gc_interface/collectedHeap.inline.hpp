@@ -247,12 +247,12 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
 
 // <underscore>
 #if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" cgen=%d) ", size, gen);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" cgen=%u) ", size, (unsigned int)gen);
 #endif
 
 #ifdef NG2C_PROF
-  int rhash = gen;
-  klass.set_alloc_gen((Universe::method_bci_hashtable()->get_target_gen(rhash));
+  unsigned int rhash = gen;
+  klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(rhash)));
 #else
   klass.set_alloc_gen(gen);
 #endif
@@ -282,7 +282,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
 
 // <underscore>
 #if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" gcen=%d length=%d) ", size, gen, length);
+  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" gcen=%u length=%d) ", size, gen, length);
 #endif
   klass.set_alloc_gen(gen);
 // </undescore>
@@ -305,7 +305,7 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
 
 // <underscore>
 #if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" cgen=%d length=%d) ", size, gen, length);
+  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" cgen=%u length=%d) ", size, gen, length);
 #endif
   klass.set_alloc_gen(gen);
 // </undescore>

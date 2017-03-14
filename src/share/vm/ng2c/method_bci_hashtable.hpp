@@ -2,8 +2,9 @@
 #define SHARE_VM_NG2C_METHOD_BCI_HASHTABLE_HPP
 
 # include "ng2c/ng2c_globals.hpp"
-# include "oops/method.hpp"
 # include "utilities/hashtable.hpp"
+
+class Method;
 
 class MethodBciEntry : public HashtableEntry<NGenerationArray*, mtGC>
 {
