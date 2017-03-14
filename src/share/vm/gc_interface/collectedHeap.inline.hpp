@@ -252,7 +252,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
 
 #ifdef NG2C_PROF
   int rhash = gen;
-  klass.set_alloc_gen(((G1CollectedHeap*)this)->method_bci_hashtable()->get_target_gen(rhash));
+  klass.set_alloc_gen((Universe::method_bci_hashtable()->get_target_gen(rhash));
 #else
   klass.set_alloc_gen(gen);
 #endif

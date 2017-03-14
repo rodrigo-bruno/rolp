@@ -44,10 +44,6 @@
 
 #include <sys/mman.h> // <underscore> - needed for madvise
 
-#ifdef NG2C_PROF
-#include "ng2c/method_bci_hashtable.hpp"
-#endif
-
 // A "G1CollectedHeap" is an implementation of a java heap for HotSpot.
 // It uses the "Garbage First" heap organization and algorithm, which
 // may combine concurrent marking with parallel, incremental compaction of
@@ -331,11 +327,6 @@ private:
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
-
-
-#ifdef NG2C_PROF
-  MethodBciHashtable _method_bci_hashtable;
-#endif
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
@@ -1383,10 +1374,6 @@ public:
   virtual void collect_alloc_gen(jint gen);
   // <underscore> Returns the number of active gens.
   virtual jint gens_length() { return _gen_alloc_regions->length(); }
-
-#ifdef NG2C_PROF
-  MethodBciHashtable* method_bci_hashtable() { return &_method_bci_hashtable; }
-#endif
 
     // <underscore> used to print used heap regions
     class PrintHeapRegion: public HeapRegionClosure {
