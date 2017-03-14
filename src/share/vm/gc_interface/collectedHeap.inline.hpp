@@ -250,10 +250,21 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
 #if DEBUG_OBJ_ALLOC
   gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" cgen=%d) ", size, gen);
 #endif
+
+#ifdef NG2C_PROF
+  int rhash = gen;
+  klass.set_alloc_gen(((G1CollectedHeap*)this)->method_bci_hashtable()->get_target_gen(rhash));
+#else
   klass.set_alloc_gen(gen);
+#endif
 // </undescore>
 
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
+
+#ifdef NG2C_PROF
+  klass.set_alloc_gen(rhash);
+#endif
+
   post_allocation_setup_obj(klass, obj);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
 
