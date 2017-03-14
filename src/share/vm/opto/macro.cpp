@@ -1274,7 +1274,7 @@ void PhaseMacroExpand::expand_allocate_common(
     initial_slow_test = NULL;
   }
 
-#if DEBUG_SLOWPATH_C2
+#ifdef DEBUG_SLOWPATH_C2
   always_slow = true;
   initial_slow_test = NULL;
 #endif
