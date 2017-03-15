@@ -51,14 +51,14 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
   assert(obj != NULL, "NULL object pointer");
   if (UseBiasedLocking && (klass() != NULL)) {
 #ifdef NG2C_PROF
-    obj->set_mark(klass->prototype_header()->set_ng2c_prof(klass.alloc_gen()));
+    obj->set_mark(klass->prototype_header()->set_ng2c_prof(klass.as_hash()));
 #else
     obj->set_mark(klass->prototype_header());
 #endif
   } else {
     // May be bootstrapping
 #ifdef NG2C_PROF
-    obj->set_mark(markOopDesc::prototype()->set_ng2c_prof(klass.alloc_gen()));
+    obj->set_mark(markOopDesc::prototype()->set_ng2c_prof(klass.as_hash()));
 #else
     obj->set_mark(markOopDesc::prototype());
 #endif
@@ -66,7 +66,7 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
 
 #ifdef DEBUG_NG2C_PROF
    markOop m = obj->mark();
-    gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" age=%d, rhash="INTPTR_FORMAT, 
+    gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" age=%d, as_hash="INTPTR_FORMAT,
       obj, m->age(), m->ng2c_prof());
 #endif
 }
@@ -247,30 +247,26 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   assert(size >= 0, "int won't convert to size_t");
 
 // <underscore>
-#if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" cgen=%u) ", size, (unsigned int)gen);
-#endif
-
-// TODO - do the same thing for array and array_zero
 #ifdef NG2C_PROF
-  unsigned int rhash = gen;
-  // If rhash is zero, it means that are probably comming from the interpreter.
-  if (rhash != 0)
-    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(rhash)));
+  // Note: if NG2C_PROF is enabled, gen will contain a hash of the allocation site.
+  // If gen is zero, it means that are probably coming from interpreted code.
+  if (gen != 0) {
+    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
+    klass.set_as_hash(gen);
+  }
 #else
   klass.set_alloc_gen(gen);
+#endif
+
+#if DEBUG_SLOW_PATH_ALLOC
+  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate -> size="SIZE_FORMAT" gen=%d hash=%u",
+          size, klass.alloc_gen(), klass.as_hash());
 #endif
 // </undescore>
 
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
-
-#ifdef NG2C_PROF
-  klass.set_alloc_gen(rhash);
-#endif
-
   post_allocation_setup_obj(klass, obj);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-
   return (oop)obj;
 }
 
@@ -285,10 +281,21 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   assert(size >= 0, "int won't convert to size_t");
 
 // <underscore>
-#if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("<underscore> CollectedHeap::array_allocate(size="SIZE_FORMAT" gcen=%u length=%d) ", size, gen, length);
-#endif
+#ifdef NG2C_PROF
+  // Note: if NG2C_PROF is enabled, gen will contain a hash of the allocation site.
+  // If gen is zero, it means that are probably coming from interpreted code.
+  if (gen != 0) {
+    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
+    klass.set_as_hash(gen);
+  }
+#else
   klass.set_alloc_gen(gen);
+#endif
+
+#if DEBUG_SLOW_PATH_ALLOC
+  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate -> size="SIZE_FORMAT" gen=%d hash=%u length=%d",
+          size, klass.alloc_gen(), klass.as_hash(), length);
+#endif
 // </undescore>
 
   HeapWord* obj = common_mem_allocate_init(klass, size, CHECK_NULL);
@@ -308,10 +315,21 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   assert(size >= 0, "int won't convert to size_t");
 
 // <underscore>
-#if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("CollectedHeap::array_allocate_nozero(size="SIZE_FORMAT" cgen=%u length=%d) ", size, gen, length);
-#endif
+#ifdef NG2C_PROF
+  // Note: if NG2C_PROF is enabled, gen will contain a hash of the allocation site.
+  // If gen is zero, it means that are probably coming from interpreted code.
+  if (gen != 0) {
+    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
+    klass.set_as_hash(gen);
+  }
+#else
   klass.set_alloc_gen(gen);
+#endif
+
+#if DEBUG_SLOW_PATH_ALLOC
+  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate_nozero -> size="SIZE_FORMAT" gen=%d hash=%u length=%d",
+          size, klass.alloc_gen(), klass.as_hash(), length);
+#endif
 // </undescore>
 
   HeapWord* obj = common_mem_allocate_noinit(klass, size, CHECK_NULL);

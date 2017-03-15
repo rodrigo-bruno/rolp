@@ -182,15 +182,18 @@ class KlassHandle : public StackObj {
   // should be allocated. For now, > 0 means that the object should be allocated
   // in a special generation (not eden).
   int _alloc_gen;
+  // <underscore> Unsigned integer that indicates the allocation site hash that
+  // should be installed in the newly allocated object.
+  unsigned int _as_hash;
 
  protected:
    Klass* obj() const          { return _value; }
    Klass* non_null_obj() const { assert(_value != NULL, "resolving NULL _value"); return _value; }
 
  public:
-   KlassHandle()                                 : _value(NULL),_alloc_gen(0) {}
-   KlassHandle(const Klass* obj)                 : _value(const_cast<Klass *>(obj)),_alloc_gen(0) {};
-   KlassHandle(Thread* thread, const Klass* obj) : _value(const_cast<Klass *>(obj)),_alloc_gen(0) {};
+   KlassHandle()                                 : _value(NULL),_alloc_gen(0), _as_hash(0) {}
+   KlassHandle(const Klass* obj)                 : _value(const_cast<Klass *>(obj)),_alloc_gen(0), _as_hash(0) {};
+   KlassHandle(Thread* thread, const Klass* obj) : _value(const_cast<Klass *>(obj)),_alloc_gen(0), _as_hash(0) {};
 
    Klass* operator () () const { return obj(); }
    Klass* operator -> () const { return non_null_obj(); }
@@ -203,6 +206,8 @@ class KlassHandle : public StackObj {
 
    int  alloc_gen() { return _alloc_gen; }
    void set_alloc_gen(int alloc_gen) { _alloc_gen = alloc_gen; }
+   unsigned int  as_hash() { return _as_hash; }
+   void set_as_hash(unsigned int as_hash) { _as_hash = as_hash; }
 };
 
 class instanceKlassHandle : public KlassHandle {
