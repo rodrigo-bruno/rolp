@@ -28,8 +28,8 @@ class NGenerationArray : public CHeapObj<mtGC>
   uint     hash()  const { return _hash; }
   int      size()  const { return NG2C_GEN_ARRAY_SIZE + 1; } // hard-coded for now
   ngen_t   at(int pos) const { return _array[pos]; }
-  ngen_t   get_target_gen() const { return at(size()); }
-  ngen_t * get_target_gen_addr()  { return &_array[size()]; }
+  ngen_t   get_target_gen() const { return at(NG2C_GEN_ARRAY_SIZE); }
+  ngen_t * get_target_gen_addr()  { return &_array[NG2C_GEN_ARRAY_SIZE]; }
 
   void   apply_delta (NGenerationArray * thread_arr);
   unsigned int new_hash (int seed) {
