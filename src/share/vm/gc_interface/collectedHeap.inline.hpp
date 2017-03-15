@@ -65,8 +65,9 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
   }
 
 #ifdef DEBUG_NG2C_PROF
-    gclog_or_tty->print_cr("[ng2c-prof] CollectedHeap::post_allocation_setup_no_klass_install installing %s header",
-            (UseBiasedLocking && (klass() != NULL)) ? "biased" : "normal");
+   markOop m = obj->mark();
+    gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" age=%d, rhash="INTPTR_FORMAT, 
+      obj, m->age(), m->ng2c_prof());
 #endif
 }
 
@@ -250,6 +251,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   gclog_or_tty->print_cr("<underscore> CollectedHeap::obj_allocate(size="SIZE_FORMAT" cgen=%u) ", size, (unsigned int)gen);
 #endif
 
+// TODO - do the same thing for array and array_zero
 #ifdef NG2C_PROF
   unsigned int rhash = gen;
   // If rhash is zero, it means that are probably comming from the interpreter.

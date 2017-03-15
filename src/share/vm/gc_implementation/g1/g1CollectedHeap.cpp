@@ -4867,6 +4867,12 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   // </underscore>
   int age = m->has_displaced_mark_helper() ? m->displaced_mark_helper()->age()
                                            : m->age();
+
+#ifdef DEBUG_NG2C_PROF
+    gclog_or_tty->print_cr("[ng2c-prof] copy_to_survivor_space oop="INTPTR_FORMAT" age=%d, rhash="INTPTR_FORMAT,
+      old, age, m->ng2c_prof());
+#endif
+
   // <underscore> AHAHHH! This is where it decides where the object is copied.
   GCAllocPurpose alloc_purpose = g1p->evacuation_destination(from_region, age,
                                                              word_sz);
