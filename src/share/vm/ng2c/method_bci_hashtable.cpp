@@ -21,16 +21,7 @@ MethodBciHashtable::add_entry(Method * m, int bci)
 
   Hashtable<NGenerationArray*, mtGC>::add_entry((hash_to_index(rhash)), entry);
 
-  gclog_or_tty->print_cr("[ng2c-prof-table] new_entry->"INTPTR_FORMAT" get_entry->"INTPTR_FORMAT,
-    entry, ((MethodBciEntry*)bucket(hash_to_index(rhash))));
-  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> [rhash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT, 
-    m, bci, (intptr_t)rhash, hash_to_index(rhash), bucket(hash_to_index(rhash)));
-
-  assert(entry == ((MethodBciEntry*)bucket(hash_to_index(rhash))), "entry does not match hashtable get");
-
 #ifdef DEBUG_NG2C_PROF_TABLE
-//  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> "INTPTR_FORMAT,
-//    m, bci, (intptr_t)rhash);
   gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> [rhash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT, 
     m, bci, (intptr_t)rhash, hash_to_index(rhash), bucket(hash_to_index(rhash)));
 #endif
