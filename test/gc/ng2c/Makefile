@@ -1,10 +1,10 @@
 all: Test1.class Test2.class
 
 Test1.class: Test1.java
-	/usr/lib/jvm/jdk1.8.0_65/bin/javac Test1.java
+	javac Test1.java
 
 Test2.class: Test2.java
-	/usr/lib/jvm/jdk1.8.0_65/bin/javac Test2.java
+	javac Test2.java
 
 run-release: Test1.class Test2.class
 	$(HOME)/bin/ng2c-java Test2
