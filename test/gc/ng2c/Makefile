@@ -7,10 +7,13 @@ Test2.class: Test2.java
 	/usr/lib/jvm/jdk1.8.0_65/bin/javac Test2.java
 
 run-release: Test1.class Test2.class
-	$(HOME)/mercurial/jdk8/build/linux-x86_64-normal-server-release/jdk/bin/java Test2
+	$(HOME)/bin/ng2c-java Test2
 
 run-debug: Test1.class Test2.class
-	$(HOME)/mercurial/jdk8/build/linux-x86_64-normal-server-slowdebug/jdk/bin/java Test2	
+	$(HOME)/bin/ng2c-java-debug Test2
+
+run-gdb: Test1.class Test2.class
+	$(HOME)/bin/ng2c-java-gdb Test2
 
 clean:
-	rm *.class
+	rm -f *.class *.log core

@@ -16,14 +16,41 @@ MethodBciHashtable::add_entry(Method * m, int bci)
   // TODO - memset to zero.
   MethodBciEntry * entry =
     (MethodBciEntry*)Hashtable<NGenerationArray*, mtGC>::new_entry(rhash, array);
+
+  assert(entry != NULL, "new entry returned NULL");
+
+  gclog_or_tty->print_cr("[ng2c-prof-table] new_entry->"INTPTR_FORMAT" get_entry->"INTPTR_FORMAT,
+    entry, ((MethodBciEntry*)bucket(hash_to_index(rhash))));
+  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> [rhash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT, 
+    m, bci, (intptr_t)rhash, hash_to_index(rhash), bucket(hash_to_index(rhash)));
+
+  assert(entry == ((MethodBciEntry*)bucket(hash_to_index(rhash))), "entry does not match hashtable get");
+
+#ifdef DEBUG_NG2C_PROF_TABLE
+//  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> "INTPTR_FORMAT,
+//    m, bci, (intptr_t)rhash);
+  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> [rhash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT, 
+    m, bci, (intptr_t)rhash, hash_to_index(rhash), bucket(hash_to_index(rhash)));
+#endif
+
   return rhash;
 }
 
 NGenerationArray *
 MethodBciHashtable::get_entry(uint hash)
 {
+  if (hash == 0) return NULL;
+
   int idx = hash_to_index(hash);
   MethodBciEntry * entry = (MethodBciEntry*)bucket(idx);
+
+#ifdef DEBUG_NG2C_PROF_TABLE
+  gclog_or_tty->print_cr("[ng2c-prof-table] get_entry(hash="INTPTR_FORMAT") -> "INTPTR_FORMAT,
+    hash, entry);
+#endif
+
+  assert(entry != NULL, "get entry returned NULL");
+
   if (entry->next() != NULL) {
     while (entry->hash() != hash) entry = entry->next();
     return entry->literal();
@@ -35,6 +62,8 @@ MethodBciHashtable::get_entry(uint hash)
 ngen_t *
 MethodBciHashtable::get_target_gen(uint hash)
 {
+  if (hash == 0) return NULL;
+
   NGenerationArray * arr = get_entry(hash);
   return arr->get_target_gen_addr();
 }
@@ -56,8 +85,5 @@ unsigned int
 MethodBciHashtable::calculate_hash(Method * m, int bci)
 {
   unsigned int hash = (unsigned int)AltHashing::murmur3_32(bci, (const jbyte*)m, sizeof(Method));
-#ifdef DEBUG_NG2C_PROF
-  gclog_or_tty->print_cr("[ng2c-prof] object hash = " INTPTR_FORMAT, (intptr_t)hash);
-#endif
   return hash;
 }

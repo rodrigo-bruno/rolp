@@ -252,7 +252,9 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
 
 #ifdef NG2C_PROF
   unsigned int rhash = gen;
-  klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(rhash)));
+  // If rhash is zero, it means that are probably comming from the interpreter.
+  if (rhash != 0)
+    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(rhash)));
 #else
   klass.set_alloc_gen(gen);
 #endif

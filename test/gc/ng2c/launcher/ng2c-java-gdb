@@ -1,0 +1,8 @@
+#!/bin/bash
+
+JAVA_HOME=~/mercurial/jdk8/build/linux-x86_64-normal-server-slowdebug/jdk
+JAVA_EXE="$JAVA_HOME/bin/java"
+
+source $HOME/bin/ng2c-include
+
+gdb --args $JAVA_EXE $JVM_OPTS $*

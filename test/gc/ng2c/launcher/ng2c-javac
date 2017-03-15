@@ -1,0 +1,6 @@
+#!/bin/bash
+
+JAVA_HOME=~/mercurial/jdk8/build/linux-x86_64-normal-server-release/jdk
+JAVAC_EXE="$JAVA_HOME/bin/javac"
+
+$JAVAC_EXE $*
