@@ -19,6 +19,8 @@ MethodBciHashtable::add_entry(Method * m, int bci)
 
   assert(entry != NULL, "new entry returned NULL");
 
+  Hashtable<NGenerationArray*, mtGC>::add_entry((hash_to_index(rhash)), entry);
+
   gclog_or_tty->print_cr("[ng2c-prof-table] new_entry->"INTPTR_FORMAT" get_entry->"INTPTR_FORMAT,
     entry, ((MethodBciEntry*)bucket(hash_to_index(rhash))));
   gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> [rhash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT, 
@@ -51,12 +53,9 @@ MethodBciHashtable::get_entry(uint hash)
 
   assert(entry != NULL, "get entry returned NULL");
 
-  if (entry->next() != NULL) {
-    while (entry->hash() != hash) entry = entry->next();
-    return entry->literal();
-  } else {
-    return NULL;
-  }
+  if (entry->next() != NULL) while (entry->hash() != hash) entry = entry->next();
+
+  return entry->literal();
 }
 
 ngen_t *
@@ -65,6 +64,9 @@ MethodBciHashtable::get_target_gen(uint hash)
   if (hash == 0) return NULL;
 
   NGenerationArray * arr = get_entry(hash);
+
+  assert(arr != NULL, "get entry returned NULL");
+
   return arr->get_target_gen_addr();
 }
 
