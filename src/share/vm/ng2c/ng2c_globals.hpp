@@ -19,8 +19,8 @@ class NGenerationArray : public CHeapObj<mtGC>
 
  public:
   NGenerationArray(uint hash) : _hash(hash), _target_gen(0) {
-      _array = NEW_C_HEAP_ARRAY(ngen_t, NG2C_GEN_ARRAY_SIZE + 1, mtGC);
-      bzero(_array, (NG2C_GEN_ARRAY_SIZE + 1) * sizeof(ngen_t));
+      _array = NEW_C_HEAP_ARRAY(ngen_t, NG2C_GEN_ARRAY_SIZE, mtGC);
+      bzero(_array, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
   }
   NGenerationArray(ngen_t * array, uint hash, char target_gen) : _array(array), _hash(hash), _target_gen(target_gen) { }
   NGenerationArray(const NGenerationArray& copy) : _array(copy.array()), _hash(copy.hash()), _target_gen(copy.target_gen()) { }
