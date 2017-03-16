@@ -49,7 +49,7 @@ MethodBciHashtable::get_entry(uint hash)
   return entry->literal();
 }
 
-ngen_t *
+char *
 MethodBciHashtable::get_target_gen(uint hash)
 {
   if (hash == 0) return NULL;
@@ -58,7 +58,7 @@ MethodBciHashtable::get_target_gen(uint hash)
 
   assert(arr != NULL, "get entry returned NULL");
 
-  return arr->get_target_gen_addr();
+  return arr->target_gen_addr();
 }
 
 void
