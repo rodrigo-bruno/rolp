@@ -42,10 +42,6 @@
 #include "opto/type.hpp"
 #include "runtime/sharedRuntime.hpp"
 
-#ifdef NG2C_PROF
-#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
-#endif
-
 //
 // Replace any references to "oldref" in inputs to "use" with "newref".
 // Returns the number of replacements made.
@@ -1085,13 +1081,19 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #ifdef NG2C_PROF
-      unsigned long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
-      int tlab_array_offset = in_bytes(JavaThread::tlab_top_offset()) + // TODO - check if this is correct!
-                              in_bytes(GrowableArray<ThreadLocalAllocBuffer*>::data_offset());
+      long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
+      int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeRawPtr::BOTTOM, T_ADDRESS);
-      Node* tlab_offset = basic_mul_int(intcon(sizeof(ThreadLocalAllocBuffer)), target_gen);
+      makecon(TypeRawPtr::make((address) target_gen_ptr))->dump(); // DEBUG
+      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
+      Node* tlab_offset = basic_mul_long(
+          longcon((jlong)sizeof(ThreadLocalAllocBuffer*)),
+          target_gen);
+      tlab_array->dump(); // DEBUG
+      target_gen->dump(); // DEBUG
+      tlab_offset->dump(); // DEBUG
       gen_tlab_adr = basic_plus_adr(tlab_array, tlab_offset);
+//      gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
 #else
       // Load gen tlab inside Thread
       gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
@@ -1727,10 +1729,12 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
     mark_node = makecon(TypeRawPtr::make((address)markOopDesc::prototype()));
   }
 
-#ifdef NG2C_PROF
-  // <underscore> TODO - check if this is correct
-   Node* prof_mask = intcon(ng2c_prof);
-   mark_node  = transform_later(new (C) OrINode(mark_node, prof_mask));
+#ifdef NG2C_PROF 
+   unsigned long prof_mask = (((unsigned long)ng2c_prof) << markOopDesc::ng2c_prof_shift);
+   gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT, ng2c_prof, prof_mask);
+
+   Node* new_mark =  new (C) AddPNode(object, mark_node, _igvn.MakeConX(prof_mask));
+   mark_node  = transform_later(new_mark);
 #endif
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);

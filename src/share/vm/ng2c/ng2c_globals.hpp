@@ -13,7 +13,7 @@ class NGenerationArray : public CHeapObj<mtGC>
   // The hash value use is for helping reference the arrays in the hashtable
   // when applying deltas.
   uint     _hash;
-  char     _target_gen;
+  long     _target_gen;
   // The actual array.
   ngen_t * _array;
 
@@ -29,8 +29,8 @@ class NGenerationArray : public CHeapObj<mtGC>
   uint     hash()  const { return _hash; }
   int      size()  const { return NG2C_GEN_ARRAY_SIZE; } // hard-coded for now
   ngen_t   at(int pos) const { return _array[pos]; }
-  char   target_gen() const { return _target_gen; }
-  char * target_gen_addr()  { return &_target_gen; }
+  long   target_gen() const { return _target_gen; }
+  long * target_gen_addr()  { return &_target_gen; }
 
   void   apply_delta (NGenerationArray * thread_arr);
   unsigned int new_hash (int seed) {
