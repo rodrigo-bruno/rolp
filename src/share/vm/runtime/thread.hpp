@@ -949,6 +949,21 @@ class JavaThread: public Thread {
                                                  // only VM_Exit can set _vm_exited
   };
 
+  // NG2C profiler support
+#ifdef NG2C_PROF
+  // public stays first to comply with the rest of the fields
+ public:
+  
+
+ private:
+  // table for the hash<->gen_count entries indexed by hash % table_size plus offset in-case of
+  // conflict.
+  JavaLocalNGenPair** _ngen_table;
+  
+#endif // NG2C_PROF
+  
+  
+
   // In general a JavaThread's _terminated field transitions as follows:
   //
   //   _not_terminated => _thread_exiting => _thread_terminated
