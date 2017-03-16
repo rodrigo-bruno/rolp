@@ -49,7 +49,7 @@ MethodBciHashtable::get_entry(uint hash)
   return entry->literal();
 }
 
-char *
+long *
 MethodBciHashtable::get_target_gen(uint hash)
 {
   if (hash == 0) return NULL;

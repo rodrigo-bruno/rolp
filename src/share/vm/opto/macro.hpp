@@ -55,8 +55,8 @@ private:
     Node* adr = new (C) AddPNode(base, ptr, offset);
     return transform_later(adr);
   }
-  Node* basic_mul_int(Node* int1, Node* int2) {
-    Node* mul = new (C) MulINode(int1, int2);
+  Node* basic_mul_long(Node* long1, Node* long2) {
+    Node* mul = new (C) MulLNode(long1, long2);
     return transform_later(mul);
   }
 
