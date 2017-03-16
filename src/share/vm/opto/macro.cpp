@@ -1084,16 +1084,11 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
       int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-      makecon(TypeRawPtr::make((address) target_gen_ptr))->dump(); // DEBUG
       Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
       Node* tlab_offset = basic_mul_long(
           longcon((jlong)sizeof(ThreadLocalAllocBuffer*)),
           target_gen);
-      tlab_array->dump(); // DEBUG
-      target_gen->dump(); // DEBUG
-      tlab_offset->dump(); // DEBUG
-      gen_tlab_adr = basic_plus_adr(tlab_array, tlab_offset);
-//      gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
+      gen_tlab_adr = basic_plus_adr(top(), tlab_array, tlab_offset);
 #else
       // Load gen tlab inside Thread
       gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
