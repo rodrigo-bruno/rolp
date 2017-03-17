@@ -56,6 +56,10 @@ class JavaLocalNGenPair : public CHeapObj<mtGC>
   long   target_count() const { return _target_gen_count; }
   long * target_count_addr()  { return &_target_gen_count;}
 
+  // Called by C2 to get the offset of the field the JavaThread will update every allocation
+  static ByteSize target_gen_offset()
+    { return byte_offset_of(JavaLocalNGenPair, _target_gen_count); }
+
   // Called after applying deltas during safepoint.
   void reset() { _target_gen_count = 0; }
 };

@@ -1600,6 +1600,7 @@ JavaThread::JavaThread(ThreadFunction entry_point, size_t stack_sz) :
   // Allocation of the ngen_table.
   // TODO: FIXME: The size should be a constant at launch time!
   _ngen_table = NEW_C_HEAP_ARRAY(JavaLocalNGenPair*, 1024*1024,mtGC);
+  memset((void*)_ngen_table, 0, 1024*1024);
 #endif // NG2C_PROF
 }
 
