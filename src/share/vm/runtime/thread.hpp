@@ -953,7 +953,7 @@ class JavaThread: public Thread {
 #ifdef NG2C_PROF
   // public stays first to comply with the rest of the fields
  public:
-  
+  static ByteSize ngen_table_offset() { return byte_offset_of(JavaThread, _ngen_table); }
 
  private:
   // table for the hash<->gen_count entries indexed by hash % table_size plus offset in-case of
