@@ -1739,28 +1739,24 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
             (UseBiasedLocking && (length == NULL)) ? "biased" : "normal");
 #endif
 
-  rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);
-
 #ifdef NG2C_PROF
   // Allocation has been done thus we can incr the local count for the generation
   Node * thread = transform_later(new (C) ThreadLocalNode());
   int table_offset = in_bytes(JavaThread::ngen_table_offset());
-  int count_offset = in_bytes(JavaLocalNGenPair::target_gen_offset());
-  // TODO: Ugh, hard-coded table size. address is being used since it is only a pointer.
-  int idx_offset = sizeof(address) * (ng2c_prof % (1024*1024));
-  
+  int table_idx = sizeof(uint) * (ng2c_prof % (1024*1024)); // TODO - use const
+ 
+  Universe::thread_gen_mapping()->get_nearest_empty_slot(table_idx);
+ 
   Node * table  = make_load(control, rawmem, thread, table_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-  // TODO: No collision detection yet.
-  Node * ld_pair = make_load(control, rawmem, table, idx_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-  Node * count_adr = make_load(control, rawmem, ld_pair, count_offset, TypeRawPtr::BOTTOM, T_ADDRESS);// basic_plus_adr(top(), ld_pair, count_offset);
-  Node * ld_count = make_load(control, rawmem, count_adr, 0, TypeLong::LONG, T_LONG);
-  Node * inc_count = new (C) AddLNode(ld_count, longcon((jlong)1));
-  ld_pair->dump();
-  ld_count->dump();
+  Node * counter  = make_load(control, rawmem, table, table_idx, TypeLong::LONG, T_LONG);
+  Node * inc_count = new (C) AddLNode(counter, longcon((jlong)1));
+  transform_later(inc_count);
   inc_count->dump();
-  rawmem = make_store(control, rawmem, count_adr, 0, inc_count, T_LONG);
+  rawmem = make_store(control, rawmem, table, table_idx, inc_count, T_LONG);
 #endif // NG2C_PROF
   
+  rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);
+
   int header_size = alloc->minimum_header_size();  // conservatively small
 
   // Array length

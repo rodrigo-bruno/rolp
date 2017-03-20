@@ -143,7 +143,8 @@ size_t          Universe::_heap_used_at_last_gc = 0;
 CollectedHeap*  Universe::_collectedHeap = NULL;
 
 #ifdef NG2C_PROF
-MethodBciHashtable* Universe::_method_bci_hashtable = new MethodBciHashtable(1024*1024);
+MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_GEN_ARRAY_SIZE);
+ThreadLocalNGenMapping* Universe::_thread_gen_mapping = new ThreadLocalNGenMapping();
 #endif
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };

@@ -5,7 +5,9 @@
 
 typedef unsigned long ngen_t;
 
+// TODO - both these constants should be overriden at launch time!
 const static int NG2C_GEN_ARRAY_SIZE = 16;
+const static int NG2C_MAX_ALLOC_SITE = 1024*1024;
 
 class NGenerationArray : public CHeapObj<mtGC>
 {
@@ -19,8 +21,8 @@ class NGenerationArray : public CHeapObj<mtGC>
 
  public:
   NGenerationArray(uint hash) : _hash(hash), _target_gen(0) {
-      _array = NEW_C_HEAP_ARRAY(ngen_t, NG2C_GEN_ARRAY_SIZE, mtGC);
-      bzero(_array, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
+    _array = NEW_C_HEAP_ARRAY(ngen_t, NG2C_GEN_ARRAY_SIZE, mtGC);
+    memset(_array, 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
   }
   NGenerationArray(ngen_t * array, uint hash, char target_gen) : _array(array), _hash(hash), _target_gen(target_gen) { }
   NGenerationArray(const NGenerationArray& copy) : _array(copy.array()), _hash(copy.hash()), _target_gen(copy.target_gen()) { }
@@ -39,29 +41,29 @@ class NGenerationArray : public CHeapObj<mtGC>
   } // placeholder
 };
 
-class JavaLocalNGenPair : public CHeapObj<mtGC>
+class ThreadLocalNGenMapping : public CHeapObj<mtGC>
 {
  private:
-  // The hash value is used to prevent the loss of 1-1 correspondence between hash and index in
-  // the thread-local table.
-  uint _hash;
-  long _target_gen_count;
+  // The hash value is used to prevent the loss of 1-1 correspondence between
+  // hash and index in the thread-local table. In practice, using this array
+  // you know that at index I, every thread will have a counter for objects
+  // allocated at allocation site whose hash is stored at _hashes[I].
+  uint * _hashes;
 
  public:
-  JavaLocalNGenPair(uint hash) : _hash(hash) { }
-  JavaLocalNGenPair(const JavaLocalNGenPair& copy) :
-    _hash(copy.hash()), _target_gen_count(copy.target_count()) { }
+  ThreadLocalNGenMapping() {
+    _hashes = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
+    memset(_hashes, 0, (NG2C_MAX_ALLOC_SITE) * sizeof(uint));
+}
+  ThreadLocalNGenMapping(uint * hashes) : _hashes(hashes) { }
+  ThreadLocalNGenMapping(const ThreadLocalNGenMapping& copy) : _hashes(copy.hashes()) { }
 
-  uint   hash()         const { return _hash; }
-  long   target_count() const { return _target_gen_count; }
-  long * target_count_addr()  { return &_target_gen_count;}
-
-  // Called by C2 to get the offset of the field the JavaThread will update every allocation
-  static ByteSize target_gen_offset()
-    { return byte_offset_of(JavaLocalNGenPair, _target_gen_count); }
-
-  // Called after applying deltas during safepoint.
-  void reset() { _target_gen_count = 0; }
+  uint *  hashes() const { return _hashes; }
+  uint ** hashes_addr()  { return &_hashes;}
+  void    get_nearest_empty_slot(int& idx)
+  {
+    while (!_hashes[idx++ % NG2C_MAX_ALLOC_SITE]) ;
+  }
 };
 
 #endif // SHARE_VM_NG2C_NG2C_GLOBALS_HPP

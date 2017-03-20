@@ -951,18 +951,16 @@ class JavaThread: public Thread {
 
   // NG2C profiler support
 #ifdef NG2C_PROF
-  // public stays first to comply with the rest of the fields
+ // <underscore> TODO - move gen tlabs into JavaThread (vm threads will not use ngens...).
  public:
   static ByteSize ngen_table_offset() { return byte_offset_of(JavaThread, _ngen_table); }
 
  private:
-  // table for the hash<->gen_count entries indexed by hash % table_size plus offset in-case of
-  // conflict.
-  JavaLocalNGenPair** _ngen_table;
-  
+  // Array of counters for each allocation site. To get the corresponding hash,
+  // check thread_gen_mapping.
+  uint * _ngen_table;
+
 #endif // NG2C_PROF
-  
-  
 
   // In general a JavaThread's _terminated field transitions as follows:
   //

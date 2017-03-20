@@ -218,6 +218,7 @@ class Universe: AllStatic {
 
 #ifdef NG2C_PROF
   static MethodBciHashtable* _method_bci_hashtable;
+  static ThreadLocalNGenMapping* _thread_gen_mapping;
 #endif
 
   static jint initialize_heap();
@@ -346,7 +347,8 @@ class Universe: AllStatic {
   static CollectedHeap* heap() { return _collectedHeap; }
 
 #ifdef NG2C_PROF
-  static MethodBciHashtable* method_bci_hashtable() { return _method_bci_hashtable; }
+  static MethodBciHashtable* method_bci_hashtable()   { return _method_bci_hashtable; }
+  static ThreadLocalNGenMapping* thread_gen_mapping() { return _thread_gen_mapping; }
 #endif
 
   // For UseCompressedOops
