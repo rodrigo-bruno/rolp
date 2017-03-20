@@ -12,17 +12,18 @@ JVM_OPTS="$JVM_OPTS -XX:+PrintGCApplicationStoppedTime"
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCDateStamps"
 JVM_OPTS="$JVM_OPTS -Xloggc:/tmp/jvm.log"
 
-JVM_OPTS="$JVM_OPTS -Xms12g"
-JVM_OPTS="$JVM_OPTS -Xmx12g"
-JVM_OPTS="$JVM_OPTS -XX:NewSize=2g"
-JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=2g"
+# Heap sizing options
+#JVM_OPTS="$JVM_OPTS -Xms12g"
+#JVM_OPTS="$JVM_OPTS -Xmx12g"
+#JVM_OPTS="$JVM_OPTS -XX:NewSize=2g"
+#JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=2g"
 
 
 JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
 JVM_OPTS="$JVM_OPTS -XX:-ResizeTLAB"
 JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=64k"
 
-JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
+#JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
 #JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
 #JVM_OPTS="$JVM_OPTS -XX:InitialTenuringThreshold=15"
 #JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=4"
@@ -62,6 +63,7 @@ else
 fi
 
 # <Optional>
+JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
 #-XX:+PrintCompilation
 #-XX:+G1SummarizeRSetStats
 #-XX:G1SummarizeRSetStatsPeriod=1

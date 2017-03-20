@@ -7,8 +7,9 @@ import java.util.Date;
 
 public class Test2 {
     // TODO - read args to prepare all these arguments!
-    private static final boolean debug = true;
-    private static final int buf_size = 1024; // 1KB
+    private static final boolean debug = false;
+    //private static final int buf_size = 1024; // 1KB
+    private static final int buf_size = 64*1024; // 64KB
     //private static final int buf_size = 1024*1024; // 1MB
     private static final int threads = 4;
     private static final int alloc_rate = 10; // x MB/s
