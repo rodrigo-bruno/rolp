@@ -65,9 +65,9 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
   }
 
 #ifdef DEBUG_NG2C_PROF
-   markOop m = obj->mark();
-    gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" age=%d, as_hash="INTPTR_FORMAT,
-      obj, m->age(), m->ng2c_prof());
+  markOop m = obj->mark();
+  gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" mark="INTPTR_FORMAT" age=%d, as_hash="INTPTR_FORMAT,
+                         obj, (intptr_t)m, m->age(), m->ng2c_prof());
 #endif
 }
 

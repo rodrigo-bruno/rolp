@@ -37,8 +37,31 @@ class NGenerationArray : public CHeapObj<mtGC>
     assert(false, "new_hash called for NGenerationArray...");
     return (unsigned int)0;
   } // placeholder
-  
-  
+};
+
+class JavaLocalNGenPair : public CHeapObj<mtGC>
+{
+ private:
+  // The hash value is used to prevent the loss of 1-1 correspondence between hash and index in
+  // the thread-local table.
+  uint _hash;
+  long _target_gen_count;
+
+ public:
+  JavaLocalNGenPair(uint hash) : _hash(hash) { }
+  JavaLocalNGenPair(const JavaLocalNGenPair& copy) :
+    _hash(copy.hash()), _target_gen_count(copy.target_count()) { }
+
+  uint   hash()         const { return _hash; }
+  long   target_count() const { return _target_gen_count; }
+  long * target_count_addr()  { return &_target_gen_count;}
+
+  // Called by C2 to get the offset of the field the JavaThread will update every allocation
+  static ByteSize target_gen_offset()
+    { return byte_offset_of(JavaLocalNGenPair, _target_gen_count); }
+
+  // Called after applying deltas during safepoint.
+  void reset() { _target_gen_count = 0; }
 };
 
 #endif // SHARE_VM_NG2C_NG2C_GLOBALS_HPP
