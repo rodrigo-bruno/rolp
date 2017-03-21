@@ -13,10 +13,12 @@ JVM_OPTS="$JVM_OPTS -XX:+PrintGCDateStamps"
 JVM_OPTS="$JVM_OPTS -Xloggc:/tmp/jvm.log"
 
 # Heap sizing options
-#JVM_OPTS="$JVM_OPTS -Xms12g"
-#JVM_OPTS="$JVM_OPTS -Xmx12g"
-#JVM_OPTS="$JVM_OPTS -XX:NewSize=2g"
-#JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=2g"
+JVM_OPTS="$JVM_OPTS -Xms12g"
+JVM_OPTS="$JVM_OPTS -Xmx12g"
+#JVM_OPTS="$JVM_OPTS -XX:NewSize=1g"
+#JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=1g"
+JVM_OPTS="$JVM_OPTS -XX:NewSize=256m"
+JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=256m"
 
 
 JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
@@ -64,6 +66,7 @@ fi
 
 # <Optional>
 JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
+JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
 #-XX:+PrintCompilation
 #-XX:+G1SummarizeRSetStats
 #-XX:G1SummarizeRSetStatsPeriod=1
@@ -75,4 +78,4 @@ JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
 
 # DEBUG C2
 #JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:+PrintCompilation -XX:+PrintAssembly"
-#JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly -XX:+PrintCompilation -XX:MaxInlineSize=0 -XX:+PrintInlining -XX:+LogCompilation -XX:CompileCommand=compileonly,*ByteBuffer.allocate*"
+#JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly -XX:+PrintCompilation -XX:MaxInlineSize=0 -XX:+PrintInlining -XX:CompileCommand=compileonly,*ByteBuffer.allocate*"
