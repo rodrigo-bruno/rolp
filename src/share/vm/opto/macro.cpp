@@ -1269,7 +1269,7 @@ void PhaseMacroExpand::expand_allocate_common(
     initial_slow_test = NULL;
   }
 
-#ifdef DEBUG_SLOWPATH_C2
+#ifdef FORCE_SLOWPATH_C2
   always_slow = true;
   initial_slow_test = NULL;
 #endif
@@ -1743,7 +1743,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   // Allocation has been done thus we can incr the local count for the generation
   Node * thread = transform_later(new (C) ThreadLocalNode());
   int table_offset = in_bytes(JavaThread::ngen_table_offset());
-  int table_idx = sizeof(uint) * (ng2c_prof % (1024*1024)); // TODO - use const
+  int table_idx = sizeof(uint) * (ng2c_prof % (NG2C_MAX_ALLOC_SITE));
  
   Universe::thread_gen_mapping()->get_nearest_empty_slot(table_idx);
  
@@ -1751,7 +1751,6 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   Node * counter  = make_load(control, rawmem, table, table_idx, TypeLong::LONG, T_LONG);
   Node * inc_count = new (C) AddLNode(counter, longcon((jlong)1));
   transform_later(inc_count);
-  inc_count->dump();
   rawmem = make_store(control, rawmem, table, table_idx, inc_count, T_LONG);
 #endif // NG2C_PROF
   

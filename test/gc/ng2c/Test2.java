@@ -12,9 +12,9 @@ public class Test2 {
     private static final int buf_size = 64*1024; // 64KB
     //private static final int buf_size = 1024*1024; // 1MB
     private static final int threads = 4;
-    private static final int alloc_rate = 10; // x MB/s
+    private static final int alloc_rate = 64; // x MB/s
     private static final int n_lists = 16;
-    private static final int max_lists_size = 16;
+    private static final int max_lists_size = 1024;
 
     static class MyList extends LinkedList<ByteBuffer> {}
 
