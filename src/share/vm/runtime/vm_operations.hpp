@@ -39,6 +39,7 @@
 
 // Note: When new VM_XXX comes up, add 'XXX' to the template table.
 #define VM_OPS_DO(template)                       \
+  template(NG2CMergeAllocCounters)                \
   template(Rebase_Gen)                            \
   template(Dummy)                                 \
   template(ThreadStop)                            \

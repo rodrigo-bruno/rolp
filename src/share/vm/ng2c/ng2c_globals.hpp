@@ -61,7 +61,7 @@ class ThreadLocalNGenMapping : public CHeapObj<mtGC>
 
   uint *  hashes() const { return _hashes; }
   uint ** hashes_addr()  { return &_hashes;}
-  void    get_nearest_empty_slot(int& idx)
+  void    get_nearest_empty_slot(uint& idx)
   {
     while (!_hashes[idx++ % NG2C_MAX_ALLOC_SITE]) ;
   }

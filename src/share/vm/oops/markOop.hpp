@@ -130,7 +130,8 @@ class markOopDesc: public oopDesc {
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift
 #ifdef NG2C_PROF
-          ,ng2c_prof_shift        = hash_shift + hash_bits
+         ,ng2c_prof_shift        = hash_shift + hash_bits,
+         ng2c_32bit_prof_shift   = ng2c_prof_shift - 32
 #endif
   };
 
