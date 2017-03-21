@@ -1725,15 +1725,19 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   }
 
 #ifdef NG2C_PROF 
-   unsigned long prof_mask = (((unsigned long)ng2c_prof) << markOopDesc::ng2c_prof_shift);
+   uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
    gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT, ng2c_prof, prof_mask);
 
-   Node* new_mark =  new (C) AddPNode(object, mark_node, _igvn.MakeConX(prof_mask));
-   mark_node  = transform_later(new_mark);
+   // Node* new_mark = new (C) OrLNode(mark_node, _igvn.MakeConX(prof_mask));
+   // // Node* new_mark =  new (C) AddPNode(object, _igvn.MakeConX(prof_mask), mark_node);
+   // mark_node  = transform_later(new_mark);
 #endif
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
-
+#ifdef NG2C_PROF
+  rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
+#endif
+  
 #ifdef DEBUG_NG2C_PROF
     gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::initialize_object installing %s header",
             (UseBiasedLocking && (length == NULL)) ? "biased" : "normal");
@@ -1743,7 +1747,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   // Allocation has been done thus we can incr the local count for the generation
   Node * thread = transform_later(new (C) ThreadLocalNode());
   int table_offset = in_bytes(JavaThread::ngen_table_offset());
-  int table_idx = sizeof(uint) * (ng2c_prof % (NG2C_MAX_ALLOC_SITE));
+  uint table_idx = sizeof(uint) * ((uint)ng2c_prof % (NG2C_MAX_ALLOC_SITE));
  
   Universe::thread_gen_mapping()->get_nearest_empty_slot(table_idx);
  

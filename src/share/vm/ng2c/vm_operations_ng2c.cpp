@@ -6,7 +6,7 @@ VM_NG2CMergeAllocCounters::_zeroed_counter_arr = NULL;
 void
 VM_NG2CMergeAllocCounters::doit()
 {
-  assert (!calling_thread->is_VM_thread(), "should not be called by VMThread.");
+  assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
   JavaThread * thread = (JavaThread*)calling_thread();
 
   // clear
@@ -14,9 +14,9 @@ VM_NG2CMergeAllocCounters::doit()
   // save copy
   uint * thread_counters = thread->ngen_table();
   // cas-in the zeroed one
-  Atomic::cmpxchg_ptr(_zeroed_count_arr,
-                      (((intptr_t)thread) + JavaThread::ngen_table_offset()),
-                      thread_counters);
+  // Atomic::cmpxchg_ptr((intptr_t)VM_NG2CMergeAllocCounters::_zeroed_counter_arr,
+  //                     (intptr_t*)(((intptr_t)thread) + JavaThread::ngen_table_offset()),
+  //                     (intptr_t)thread_counters);
   // do count
   
 }

@@ -372,6 +372,7 @@ class oopDesc {
 
   // for code generation
   static int mark_offset_in_bytes()    { return offset_of(oopDesc, _mark); }
+  static int ng2c_install_offset_in_bytes() { return offset_of(oopDesc, _mark) + 4; }
   static int klass_offset_in_bytes()   { return offset_of(oopDesc, _metadata._klass); }
   static int klass_gap_offset_in_bytes();
 };
