@@ -35,6 +35,7 @@ class NGenerationArray : public CHeapObj<mtGC>
   long * target_gen_addr()  { return &_target_gen; }
 
   void   apply_delta (NGenerationArray * thread_arr);
+  void   update(uint age);
   unsigned int new_hash (int seed) {
     assert(false, "new_hash called for NGenerationArray...");
     return (unsigned int)0;

@@ -783,8 +783,17 @@ class NamedThread: public Thread {
 class WorkerThread: public NamedThread {
 private:
   uint _id;
+
+#ifdef NG2C_PROF
+  MethodBciHashtable * _method_bci_hashtable;
+#endif
 public:
-  WorkerThread() : _id(0)               { }
+  WorkerThread() :
+    _id(0)
+#ifdef NG2C_PROF
+    ,_method_bci_hashtable(new MethodBciHashtable(NG2C_GEN_ARRAY_SIZE))
+#endif
+    { }
   virtual bool is_Worker_thread() const { return true; }
 
   virtual WorkerThread* as_Worker_thread() const {
@@ -794,6 +803,9 @@ public:
 
   void set_id(uint work_id)             { _id = work_id; }
   uint id() const                       { return _id; }
+#ifdef NG2C_PROF
+  MethodBciHashtable * method_bci_hashtable() const { return _method_bci_hashtable; }
+#endif
 };
 
 // A single WatcherThread is used for simulating timer interrupts.

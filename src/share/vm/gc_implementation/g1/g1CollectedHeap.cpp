@@ -4927,7 +4927,12 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
     } else {
       obj->set_mark(m);
     }
-
+#define NG2C_PROF
+#ifdef NG2C_PROF
+    uint rhash = m->ng2c_prof();
+    WorkerThread * wthread = THREAD->as_Worker_thread();
+    wthread->method_bci_hashtable()->get_entry(rhash)->update(age);
+#endif
     size_t* surv_young_words = _par_scan_state->surviving_young_words();
     surv_young_words[young_index] += word_sz;
 

@@ -13,3 +13,11 @@ NGenerationArray::apply_delta(NGenerationArray * thread_arr)
     _array[idx] += delta;
   } while (++idx < max);
 }
+
+void
+NGenerationArray::update(uint age)
+{
+  assert(age > 0, "update age should be > 0");
+  _array[age-1]--;
+  _array[age]++;
+}

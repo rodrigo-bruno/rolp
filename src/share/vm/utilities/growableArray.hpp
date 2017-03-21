@@ -201,10 +201,6 @@ template<class E> class GrowableArray : public GenericGrowableArray {
   bool  is_full() const         { return _len == _max; }
   DEBUG_ONLY(E* data_addr() const      { return _data; })
 
-#ifdef NG2C_PROF
-  static ByteSize data_offset()             { return byte_offset_of(GrowableArray, _data ); }
-#endif
-
   void print();
 
   int append(const E& elem) {
