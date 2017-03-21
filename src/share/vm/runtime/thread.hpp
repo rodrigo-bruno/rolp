@@ -791,7 +791,7 @@ public:
   WorkerThread() :
     _id(0)
 #ifdef NG2C_PROF
-    ,_method_bci_hashtable(new MethodBciHashtable(NG2C_GEN_ARRAY_SIZE))
+    ,_method_bci_hashtable(new MethodBciHashtable(NG2C_MAX_ALLOC_SITE))
 #endif
     { }
   virtual bool is_Worker_thread() const { return true; }
