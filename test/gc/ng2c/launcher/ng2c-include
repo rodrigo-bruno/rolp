@@ -23,8 +23,8 @@ JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
 JVM_OPTS="$JVM_OPTS -XX:-ResizeTLAB"
 JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=64k"
 
-#JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
-#JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
+JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
+JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
 #JVM_OPTS="$JVM_OPTS -XX:InitialTenuringThreshold=15"
 #JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=4"
 
