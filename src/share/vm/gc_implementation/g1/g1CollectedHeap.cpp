@@ -58,6 +58,11 @@
 #include "runtime/vmThread.hpp"
 #include "utilities/ticks.hpp"
 
+// This is only used in the .cpp
+#ifdef NG2C_PROF
+# include "ng2c/vm_operations_ng2c.hpp"
+#endif // NG2C_PROF
+
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 
 // turn it on so that the contents of the young list (scan-only /
@@ -4385,6 +4390,13 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
   // without its logging output interfering with the logging output
   // that came from the pause.
 
+  // Setup the VMOp that will merge the ng2c counters from both
+  // Java and GC threads.
+  // ??? Does the op go as a pointer since it will be sent as a value in
+  // this function's scope ???  
+  VM_NG2CMergeAllocCounters op(this);
+  VMThread::execute(&op);
+  
   if (should_start_conc_mark) {
     // CAUTION: after the doConcurrentMark() call below,
     // the concurrent marking thread(s) could be running
