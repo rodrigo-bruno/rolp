@@ -3292,8 +3292,7 @@ void TemplateTable::_new() {
           JVM_CONSTANT_Class);
   __ jcc(Assembler::notEqual, slow_case);
 
-// <underscore> DEBUG condition
-#if DEBUG_SLOWPATH_INTR
+#ifdef FORCE_SLOWPATH_INTR 
     __ jmp(slow_case);
 #endif
 

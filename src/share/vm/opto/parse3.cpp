@@ -479,7 +479,7 @@ void Parse::do_multianewarray() {
   Array<u2>* aac = iter().method()->get_Method()->alloc_anno_cache();
   int bci = iter().cur_bci();
   int gen = PhaseMacroExpand::get_alloc_gen_2(aac, bci);
-#if DEBUG_C2_ALLOC
+#ifdef DEBUG_C2_MARR
     gclog_or_tty->print_cr("<underscore> Parse::do_multianewarray dims=%d bci=%d gen=%d", ndimensions, bci, gen);
 #endif
   // </underscore>

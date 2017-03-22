@@ -4865,7 +4865,7 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
                                            : m->age();
 
 #ifdef DEBUG_SURVIVORS
-    gclog_or_tty->print_cr("[ng2c] copy_to_survivor_space oop="INTPTR_FORMAT" age=%d, mark="INTPTR_FORMAT,
+    gclog_or_tty->print_cr("[ng2c-survivors] copy_to_survivor_space oop="INTPTR_FORMAT" age=%d, mark="INTPTR_FORMAT,
       old, age,  m);
 #endif
 

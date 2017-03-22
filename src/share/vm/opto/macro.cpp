@@ -1227,10 +1227,10 @@ void PhaseMacroExpand::expand_allocate_common(
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
 #endif
 
-#if DEBUG_C2_ALLOC
-  gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::expand_allocate_common AllocateNode->JVMState(bci=%d, Method=%p) GEN=%d",
+#ifdef DEBUG_C2
+  gclog_or_tty->print_cr("[ng2c-c2] bci=%d, Method=%p GEN=%d ",
     alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
-  alloc->jvms()->method()->print(gclog_or_tty);
+  //alloc->jvms()->method()->print(gclog_or_tty);
 #endif
 // </underscore>
 
@@ -1724,26 +1724,17 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
     mark_node = makecon(TypeRawPtr::make((address)markOopDesc::prototype()));
   }
 
+  rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
+
 #ifdef NG2C_PROF 
    uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
+
+#ifdef DEBUG_NG2C_PROF_C2
    gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT, ng2c_prof, prof_mask);
+#endif // DEBUG_NG2C_PROF_C2
 
-   // Node* new_mark = new (C) OrLNode(mark_node, _igvn.MakeConX(prof_mask));
-   // // Node* new_mark =  new (C) AddPNode(object, _igvn.MakeConX(prof_mask), mark_node);
-   // mark_node  = transform_later(new_mark);
-#endif
-
-  rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
-#ifdef NG2C_PROF
   rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
-#endif
-  
-#ifdef DEBUG_NG2C_PROF
-    gclog_or_tty->print_cr("<underscore> PhaseMacroExpand::initialize_object installing %s header",
-            (UseBiasedLocking && (length == NULL)) ? "biased" : "normal");
-#endif
 
-#ifdef NG2C_PROF
   // Allocation has been done thus we can incr the local count for the generation
   Node * thread = transform_later(new (C) ThreadLocalNode());
   int table_offset = in_bytes(JavaThread::ngen_table_offset());
