@@ -90,6 +90,7 @@ MethodBciHashtable::get_target_gen(uint hash)
   return arr->target_gen_addr();
 }
 
+// TODO - needed?
 void
 MethodBciHashtable::apply_delta(NGenerationArray ** gclocal_ngen_arrays, int sz)
 {
