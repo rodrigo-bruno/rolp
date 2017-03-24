@@ -948,8 +948,8 @@ G1CollectedHeap::mem_allocate(size_t word_size,
       }
 
 #ifdef NG2C_PROF
-      NG2C_MergeAllocCounters ng2c_op();
-      VMThread::execute(&ng2c_op);
+      NG2C_MergeAllocCounters * ng2c_op = new NG2C_MergeAllocCounters();
+      VMThread::execute(ng2c_op);
 #endif
 
       return result;
@@ -2686,8 +2686,8 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
 
 #ifdef NG2C_PROF
   // Note: when the execution gets here, I am assuming that we had a successful gc.
-  NG2C_MergeAllocCounters ng2c_op();
-  VMThread::execute(&ng2c_op);
+  NG2C_MergeAllocCounters * ng2c_op = new NG2C_MergeAllocCounters();
+  VMThread::execute(ng2c_op);
 #endif
 }
 
@@ -3828,8 +3828,8 @@ HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
 
 #ifdef NG2C_PROF
   if (ret_succeeded) {
-    NG2C_MergeAllocCounters ng2c_op();
-    VMThread::execute(&ng2c_op);
+    NG2C_MergeAllocCounters * ng2c_op = new NG2C_MergeAllocCounters();
+    VMThread::execute(ng2c_op);
   }
 #endif
   return result;

@@ -64,20 +64,28 @@ class NG2C_MergeAllocCounters : public VM_Operation
   virtual void doit()
   {
     assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
+    // TODO - print how much time is spent on each of these steps.
+    {
+      NG2C_MergeJavaThreads mjt_cljr(this);
+      MutexLocker mu(Threads_lock);
+      Threads::threads_do(&mjt_cljr);
+    }
 
-    NG2C_MergeJavaThreads mjt_cljr(this);
-    Threads::threads_do(&mjt_cljr);
 
     update_allocations();
 
-    NG2C_MergeWorkerThreads mwt_cljr(this);
-    Threads::threads_do(&mwt_cljr);
+    {
+      NG2C_MergeWorkerThreads mwt_cljr(this);
+      MutexLocker mu(Threads_lock);
+      Threads::threads_do(&mwt_cljr);
+    }
   }
 
   virtual bool doit_prologue();
 
-  virtual VMOp_Type type() const       { return VMOp_NG2CMergeAllocCounters; }
-  virtual Mode evaluation_mode() const { return _concurrent; }
+  virtual VMOp_Type type() const          { return VMOp_NG2CMergeAllocCounters; }
+  virtual Mode evaluation_mode() const    { return _concurrent; }
+  virtual bool is_cheap_allocated() const { return true; }
 
 };
 

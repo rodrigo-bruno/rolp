@@ -72,7 +72,7 @@ NG2C_MergeAllocCounters::update_allocations()
 
   uint * cinc = _inc_counter_arr;
   for (int i = 0; i < NG2C_MAX_ALLOC_SITE; i++, cinc++, gen_mapping++) {
-    if (!*cinc) {
+    if (*cinc) {
       assert (*gen_mapping != 0, "gen mapping should not be zero");
       global_hashtable->get_entry(*gen_mapping)->array()[0] += *cinc;
     }

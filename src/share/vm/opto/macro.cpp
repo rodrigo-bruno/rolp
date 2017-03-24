@@ -1727,26 +1727,26 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
 #ifdef NG2C_PROF 
-   uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
-
-#ifdef DEBUG_NG2C_PROF_C2
-   gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT, ng2c_prof, prof_mask);
-#endif // DEBUG_NG2C_PROF_C2
-
+  uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
   rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
 
   // Allocation has been done thus we can incr the local count for the generation
   Node * thread = transform_later(new (C) ThreadLocalNode());
   int table_offset = in_bytes(JavaThread::ngen_table_offset());
-  uint table_idx = sizeof(uint) * ((uint)ng2c_prof % (NG2C_MAX_ALLOC_SITE));
+  uint table_idx = (uint)ng2c_prof % (NG2C_MAX_ALLOC_SITE);
  
   Universe::thread_gen_mapping()->get_nearest_empty_slot(table_idx);
- 
+
+#ifdef DEBUG_NG2C_PROF_C2
+   gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT", gen_mapping=%u",
+     ng2c_prof, prof_mask, table_idx);
+#endif // DEBUG_NG2C_PROF_C2
+
   Node * table  = make_load(control, rawmem, thread, table_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-  Node * counter  = make_load(control, rawmem, table, table_idx, TypeLong::LONG, T_LONG);
+  Node * counter  = make_load(control, rawmem, table, table_idx * sizeof(uint), TypeLong::LONG, T_LONG);
   Node * inc_count = new (C) AddLNode(counter, longcon((jlong)1));
   transform_later(inc_count);
-  rawmem = make_store(control, rawmem, table, table_idx, inc_count, T_LONG);
+  rawmem = make_store(control, rawmem, table, table_idx * sizeof(uint), inc_count, T_LONG);
 #endif // NG2C_PROF
   
   rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);
