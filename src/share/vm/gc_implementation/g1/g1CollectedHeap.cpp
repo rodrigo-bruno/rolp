@@ -58,6 +58,10 @@
 #include "runtime/vmThread.hpp"
 #include "utilities/ticks.hpp"
 
+#ifdef NG2C_PROF
+#include "ng2c/vm_operations_ng2c.hpp"
+#endif
+
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 
 // turn it on so that the contents of the young list (scan-only /
@@ -942,8 +946,15 @@ G1CollectedHeap::mem_allocate(size_t word_size,
         // this for non-humongous allocations, though.
         dirty_young_block(result, word_size);
       }
+
+#ifdef NG2C_PROF
+      NG2C_MergeAllocCounters ng2c_op();
+      VMThread::execute(&ng2c_op);
+#endif
+
       return result;
     } else {
+      // <underscore> TODO - should we also start NG2C op here (if the gc failed)?
       if (gclocker_retry_count > GCLockerRetryAllocationCount) {
         return NULL;
       }
@@ -2672,6 +2683,12 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       }
     }
   } while (retry_gc);
+
+#ifdef NG2C_PROF
+  // Note: when the execution gets here, I am assuming that we had a successful gc.
+  NG2C_MergeAllocCounters ng2c_op();
+  VMThread::execute(&ng2c_op);
+#endif
 }
 
 bool G1CollectedHeap::is_in(const void* p) const {
@@ -3808,6 +3825,13 @@ HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
   *succeeded = ret_succeeded;
 
   assert_heap_not_locked();
+
+#ifdef NG2C_PROF
+  if (ret_succeeded) {
+    NG2C_MergeAllocCounters ng2c_op();
+    VMThread::execute(&ng2c_op);
+  }
+#endif
   return result;
 }
 
