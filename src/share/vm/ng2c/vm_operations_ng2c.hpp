@@ -53,11 +53,11 @@ class NG2C_MergeAllocCounters : public VM_Operation
   NG2C_MergeAllocCounters() {
      if (_swp_counter_arr == NULL) {
       _swp_counter_arr = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
-      memset((void*)_swp_counter_arr, 0, NG2C_MAX_ALLOC_SITE);
+      memset((void*)_swp_counter_arr, 0, NG2C_MAX_ALLOC_SITE * sizeof(uint));
     }
     if (_inc_counter_arr == NULL) {
       _inc_counter_arr = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
-      memset((void*)_inc_counter_arr, 0, NG2C_MAX_ALLOC_SITE);
+      memset((void*)_inc_counter_arr, 0, NG2C_MAX_ALLOC_SITE * sizeof(uint));
     }
   }
 
