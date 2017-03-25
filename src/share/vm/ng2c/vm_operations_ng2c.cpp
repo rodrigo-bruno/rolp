@@ -64,11 +64,12 @@ NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
 void
 NG2C_MergeAllocCounters::increment_allocations(JavaThread* thread)
 {
-  // TODO - atomic swap p->ngen_table(), _swp_counter_arr
-  // cas-in the zeroed one
-  // Atomic::cmpxchg_ptr((intptr_t)NG2C_MergeAllocCounters::_swp_counter_arr,
-  //                     (intptr_t*)(((intptr_t)thread) + JavaThread::ngen_table_offset()),
-  //                     (intptr_t)thread_counters);
+  // Note: atomically exchanging our swap buffer (zeroed) with the one
+  // the thread is using.
+  Atomic::cmpxchg_ptr(
+     (void*)_swp_counter_arr,
+     (volatile void**) thread->ngen_table_addr(),
+     (void*)thread->ngen_table());
 
   uint * cswp = _swp_counter_arr;
   uint * cinc = _inc_counter_arr;

@@ -966,12 +966,13 @@ class JavaThread: public Thread {
  // <underscore> TODO - move gen tlabs into JavaThread (vm threads will not use ngens...).
  public:
   static ByteSize ngen_table_offset() { return byte_offset_of(JavaThread, _ngen_table); }
-  uint * ngen_table() const { return _ngen_table; }
+  volatile uint *  ngen_table() const { return _ngen_table; }
+  volatile uint ** ngen_table_addr()  { return &_ngen_table; }
 
  private:
   // Array of counters for each allocation site. To get the corresponding hash,
   // check thread_gen_mapping.
-  uint * _ngen_table;
+  volatile uint * _ngen_table;
 
 #endif // NG2C_PROF
 
