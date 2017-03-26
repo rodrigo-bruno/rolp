@@ -33,7 +33,7 @@ NG2C_MergeAllocCounters::update_promotions(NGenerationArray * global, NGeneratio
     if (*sarr) *garr -= *sarr;
     *++garr += *sarr++;
   }
-  // TODO - memset survivor array to zero right?
+  memset((void*)survivors->array(), 0, sizeof(ngen_t) * NG2C_GEN_ARRAY_SIZE);
 }
 
 void
@@ -51,8 +51,9 @@ NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
 
 #ifdef DEBUG_NG2C_PROF_VMOP
       for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
-        gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
-           glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
+        if (surv_arr->array()[i])
+          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
+             glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
 #endif
       // Note: some hashes might get corrupted. If this happens, survivors will
       // register a hash that is not valid, leading to a null global array.
@@ -64,6 +65,9 @@ NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
 void
 NG2C_MergeAllocCounters::increment_allocations(JavaThread* thread)
 {
+  uint * cswp = (uint*) thread->ngen_table();
+  uint * cinc = _inc_counter_arr;
+
   // Note: atomically exchanging our swap buffer (zeroed) with the one
   // the thread is using.
   Atomic::cmpxchg_ptr(
@@ -71,10 +75,11 @@ NG2C_MergeAllocCounters::increment_allocations(JavaThread* thread)
      (volatile void**) thread->ngen_table_addr(),
      (void*)thread->ngen_table());
 
-  uint * cswp = _swp_counter_arr;
-  uint * cinc = _inc_counter_arr;
+  assert(cswp != thread->ngen_table(), "atomic cmp xchng failed for thread's ngen table");
+  _swp_counter_arr = cswp;
+
   for (int i = 0; i < NG2C_MAX_ALLOC_SITE; i++) *cinc++ += *cswp++;
-  memset((void*)_swp_counter_arr, 0, NG2C_MAX_ALLOC_SITE);
+  memset((void*)_swp_counter_arr, 0, sizeof(uint) * NG2C_MAX_ALLOC_SITE);
 }
 
 void

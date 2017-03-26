@@ -1221,7 +1221,6 @@ void PhaseMacroExpand::expand_allocate_common(
   Method* m = alloc->jvms()->method()->get_Method();
 
 #ifdef NG2C_PROF
-  // <underscore> TODO - check if this conversion does not corrupt the value!
   int alloc_gen = Universe::method_bci_hashtable()->add_entry(m, bci);
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
@@ -1733,9 +1732,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   // Allocation has been done thus we can incr the local count for the generation
   Node * thread = transform_later(new (C) ThreadLocalNode());
   int table_offset = in_bytes(JavaThread::ngen_table_offset());
-  uint table_idx = (uint)ng2c_prof % (NG2C_MAX_ALLOC_SITE);
- 
-  Universe::thread_gen_mapping()->get_nearest_empty_slot(table_idx);
+  uint table_idx = Universe::thread_gen_mapping()->get_slot(ng2c_prof);
 
 #ifdef DEBUG_NG2C_PROF_C2
    gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT", gen_mapping=%u",
