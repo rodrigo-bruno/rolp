@@ -79,6 +79,8 @@ class NG2C_MergeAllocCounters : public VM_Operation
       MutexLocker mu(Threads_lock);
       Threads::threads_do(&mwt_cljr);
     }
+
+    update_target_gen();
   }
 
   virtual bool doit_prologue();

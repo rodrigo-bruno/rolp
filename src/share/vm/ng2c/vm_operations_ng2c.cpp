@@ -25,13 +25,16 @@ NG2C_MergeAllocCounters::update_promotions(NGenerationArray * global, NGeneratio
   assert (survivors != NULL, "survivors array should not be NULL");
   ngen_t * garr = global->array();
   ngen_t * sarr = survivors->array();
+  ngen_t * end_sarr = sarr + survivors->size();
 
   // Note: survivors array will never have a value for the first position. This
   // is leveraged to speed up the next for cicle.
   sarr++;
   for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++) {
-    if (*sarr) *garr -= *sarr;
-    *++garr += *sarr++;
+    if (sarr < end_sarr && *sarr) {
+      *garr -= *sarr;
+      *++garr += *sarr++;
+    }
   }
   memset((void*)survivors->array(), 0, sizeof(ngen_t) * NG2C_GEN_ARRAY_SIZE);
 }
@@ -124,16 +127,31 @@ NG2C_MergeAllocCounters::update_target_gen()
     for (; p != NULL; p = p->next()) {
       ngen_t * arr = p->literal()->array();
       long * target_gen = p->literal()->target_gen_addr();
-      if (arr[0] < arr[1]) {
+      int j = 0;
+      int max_idx = 0;
+      // careful with overflowing
+      while (j < NG2C_GEN_ARRAY_SIZE - 1) {
+        if (arr[j] < arr[j+1])
+          max_idx = j+1;
+        j++;
+      }
+#ifdef DEBUG_NG2C_PROF_VMOP
+      // Must be done prior to restarting the arr.
+      gclog_or_tty->print("[ng2c-vmop] <updating target-gen> [");
+      for (int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
+        gclog_or_tty->print(INT64_FORMAT "; ", arr[k]);
+      gclog_or_tty->print_cr("] target_gen = " INT32_FORMAT,
+                             max_idx > *target_gen ? (*target_gen) + 1 : *target_gen);
+#endif
+      if (max_idx > *target_gen) {
+        (*target_gen)++; // TODO - atomic? volatile?
         // Note: If we decide to change the target gen, we should clear the
         // ngen array. This is necessary because we need to know how many
         // objects (already allocated in the target gen) still survivo a
         // collection.
         memset(arr, 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
-        (*target_gen)++; // TODO - atomic? volatile?
       }
     }
-
   }
 }
 
