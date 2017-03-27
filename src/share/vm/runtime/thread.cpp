@@ -1500,6 +1500,12 @@ void JavaThread::initialize() {
   _popframe_preserved_args_size = 0;
 
   pd_initialize();
+
+#ifdef NG2C_PROF
+  _ngen_table = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
+  memset((void*)_ngen_table, 0, sizeof(uint)*NG2C_MAX_ALLOC_SITE);
+#endif // NG2C_PROF
+
 }
 
 #if INCLUDE_ALL_GCS
@@ -1595,11 +1601,6 @@ JavaThread::JavaThread(ThreadFunction entry_point, size_t stack_sz) :
   // by creator! Furthermore, the thread must also explicitly be added to the Threads list
   // by calling Threads:add. The reason why this is not done here, is because the thread
   // object must be fully initialized (take a look at JVM_Start)
-
-#ifdef NG2C_PROF
-  _ngen_table = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
-  memset((void*)_ngen_table, 0, sizeof(uint)*NG2C_MAX_ALLOC_SITE);
-#endif // NG2C_PROF
 }
 
 JavaThread::~JavaThread() {

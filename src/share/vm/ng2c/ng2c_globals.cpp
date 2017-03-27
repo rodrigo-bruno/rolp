@@ -1,5 +1,6 @@
 # include "ng2c/ng2c_globals.hpp"
 
+// TODO - needed?
 void
 NGenerationArray::apply_delta(NGenerationArray * thread_arr)
 {
@@ -18,6 +19,5 @@ void
 NGenerationArray::update(uint age)
 {
   assert(age > 0, "update age should be > 0");
-  _array[age-1]--;
   _array[age]++;
 }

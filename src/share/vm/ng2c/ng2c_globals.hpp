@@ -6,6 +6,12 @@
 typedef unsigned long ngen_t;
 
 // TODO - both these constants should be overriden at launch time!
+// TODO - NG2C_GEN_ARRAY_SIZE is not necessary. If I only increase or reduce
+// the target gen by one unit, then I only need to know if objects allocated
+// (in the current target gen) still survive collections. This means that I
+// should increase the target gen. In other words, I don't need to track the
+// age of an object. I only need to know that it was allocated in a specific gen
+// and if it survived or not to collections. Think about it!
 const static int NG2C_GEN_ARRAY_SIZE = 16;
 const static int NG2C_MAX_ALLOC_SITE = 1024*1024;
 
@@ -34,6 +40,7 @@ class NGenerationArray : public CHeapObj<mtGC>
   long   target_gen() const { return _target_gen; }
   long * target_gen_addr()  { return &_target_gen; }
 
+  // TODO - needed?
   void   apply_delta (NGenerationArray * thread_arr);
   void   update(uint age);
   unsigned int new_hash (int seed) {
@@ -61,9 +68,12 @@ class ThreadLocalNGenMapping : public CHeapObj<mtGC>
 
   uint *  hashes() const { return _hashes; }
   uint ** hashes_addr()  { return &_hashes;}
-  void    get_nearest_empty_slot(uint& idx)
+  uint    get_slot(uint hash)
   {
-    while (_hashes[idx++ % NG2C_MAX_ALLOC_SITE]) ;
+    uint idx = hash % NG2C_MAX_ALLOC_SITE;
+    while (_hashes[idx % NG2C_MAX_ALLOC_SITE] && _hashes[idx] != hash) idx++;
+    if (!_hashes[idx]) _hashes[idx] = hash;
+    return idx;
   }
 };
 

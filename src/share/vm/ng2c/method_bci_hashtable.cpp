@@ -51,9 +51,10 @@ MethodBciHashtable::get_entry(uint hash)
 
   while (entry->next() != NULL && entry->hash() != hash) entry = entry->next();
 
-  assert(entry->hash() == hash, "hash not found");
-
-  return entry->literal();
+// TODO - is this the right thing to do?
+//  assert(entry->hash() == hash, "hash not found");
+  if (entry->hash() == hash) return entry->literal();
+  return NULL;
 }
 
 NGenerationArray *
@@ -90,6 +91,7 @@ MethodBciHashtable::get_target_gen(uint hash)
   return arr->target_gen_addr();
 }
 
+// TODO - needed?
 void
 MethodBciHashtable::apply_delta(NGenerationArray ** gclocal_ngen_arrays, int sz)
 {
