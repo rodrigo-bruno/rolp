@@ -91,20 +91,6 @@ MethodBciHashtable::get_target_gen(uint hash)
   return arr->target_gen_addr();
 }
 
-// TODO - needed?
-void
-MethodBciHashtable::apply_delta(NGenerationArray ** gclocal_ngen_arrays, int sz)
-{
-  assert (sz > 0, "check if it's worth calling this in the first place.");
-  
-  int idx = 0;
-  do {
-    NGenerationArray * temp_arr = gclocal_ngen_arrays[idx];
-    NGenerationArray * real_arr = get_entry(temp_arr->hash());
-    real_arr->apply_delta(temp_arr);
-  } while (++idx < sz);
-}
-
 unsigned int
 MethodBciHashtable::calculate_hash(Method * m, int bci)
 {
