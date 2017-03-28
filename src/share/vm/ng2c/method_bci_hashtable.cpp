@@ -79,7 +79,7 @@ MethodBciHashtable::get_entry_not_null(uint hash)
 
 }
 
-long *
+volatile long *
 MethodBciHashtable::get_target_gen(uint hash)
 {
   if (hash == 0) return NULL;

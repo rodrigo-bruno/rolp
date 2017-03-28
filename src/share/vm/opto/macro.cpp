@@ -1081,7 +1081,7 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #ifdef NG2C_PROF
-      long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
+      volatile long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
       int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
       Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
