@@ -366,7 +366,6 @@ class markOopDesc: public oopDesc {
     uint    ng2c_prof()               const { return mask_bits(value() >> ng2c_prof_shift, ng2c_prof_mask); }
     markOop set_ng2c_prof(uint v) const {
       assert((v & ~ng2c_prof_mask) == 0, "shouldn't overflow ng2c_prof field");
-      // <underscore> TODO - make sure that the shift is not already done!
       return markOop((value() & ~ng2c_prof_mask_in_place) | (((uintptr_t)v & ng2c_prof_mask) << ng2c_prof_shift));
   }
 #endif
