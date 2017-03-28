@@ -219,6 +219,7 @@ class Universe: AllStatic {
 #ifdef NG2C_PROF
   static MethodBciHashtable* _method_bci_hashtable;
   static ThreadLocalNGenMapping* _thread_gen_mapping;
+  static unsigned int        _total_target_gen_updates;
 #endif
 
   static jint initialize_heap();
@@ -349,6 +350,8 @@ class Universe: AllStatic {
 #ifdef NG2C_PROF
   static MethodBciHashtable* method_bci_hashtable()   { return _method_bci_hashtable; }
   static ThreadLocalNGenMapping* thread_gen_mapping() { return _thread_gen_mapping; }
+  static unsigned int        total_target_gen_updates () { return _total_target_gen_updates; }
+  static void                incr_target_gen_updates () { _total_target_gen_updates++; }
 #endif
 
   // For UseCompressedOops

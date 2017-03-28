@@ -81,9 +81,13 @@ class NG2C_MergeAllocCounters : public VM_Operation
     }
 
     // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
+    // Needs an expression because ConcurrentMarkCleanups both update
+    // total_collections and total_cms.
     CollectedHeap * heap = Universe::heap();
-    if (!(heap->total_collections() - heap->total_cms()) % NG2C_GEN_ARRAY_SIZE) {
+    if ((heap->total_collections() - heap->total_cms()) >=
+        (Universe::total_target_gen_updates() + 1) * NG2C_GEN_ARRAY_SIZE) {
       update_target_gen();
+      Universe::incr_target_gen_updates();
     }
 
 #ifdef DEBUG_NG2C_PROF_VMOP

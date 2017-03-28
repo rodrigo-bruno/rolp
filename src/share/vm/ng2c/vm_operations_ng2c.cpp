@@ -120,18 +120,19 @@ NG2C_MergeAllocCounters::update_target_gen()
 
     for (; p != NULL; p = p->next()) {
       ngen_t * arr = p->literal()->array();
+      ngen_t * sav = arr;
       volatile long * target_gen = p->literal()->target_gen_addr();
       long promo_counter = 0;
 
       for (int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *arr++;
         // TODO - replace .5 with constant (defined at launch time!)
-      if (promo_counter > p->literal()->array()[0] * .5) {
+      if (promo_counter > *sav * .5) {
         Atomic::inc((volatile jint *)target_gen);
         // Note: If we decide to change the target gen, we should clear the
         // ngen array. This is necessary because we need to know how many
         // objects (already allocated in the target gen) still survivo a
         // collection.
-        memset(arr, 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
+        memset(sav, 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
 
 #ifdef DEBUG_NG2C_PROF_VMOP
         // Must be done prior to restarting the arr.
