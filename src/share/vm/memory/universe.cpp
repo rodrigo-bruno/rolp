@@ -143,7 +143,7 @@ size_t          Universe::_heap_used_at_last_gc = 0;
 CollectedHeap*  Universe::_collectedHeap = NULL;
 
 #ifdef NG2C_PROF
-MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_GEN_ARRAY_SIZE);
+MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_MAX_ALLOC_SITE);
 ThreadLocalNGenMapping* Universe::_thread_gen_mapping = new ThreadLocalNGenMapping();
 #endif
 
