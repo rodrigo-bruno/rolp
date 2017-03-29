@@ -75,7 +75,10 @@ endif
 
 
 # <NG2C sysdefs>
+## Enables n-generational profiler
 SYSDEFS += -DNG2C_PROF
+## Enables n-generational allocation (takes advantage of n-generational profiler)
+#SYSDEFS += -DNG2C_PROF_ALLOC
 #SYSDEFS += -DFORCE_SLOWPATH_C2
 #SYSDEFS += -DFORCE_SLOWPATH_INTR
 

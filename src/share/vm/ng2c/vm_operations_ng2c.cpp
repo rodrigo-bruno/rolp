@@ -128,7 +128,9 @@ NG2C_MergeAllocCounters::update_target_gen()
       for (int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *++arr;
         // TODO - replace .5 with constant (defined at launch time!)
       if (promo_counter > *sav * .5) {
+#ifdef NG2C_PROF_ALLOC
         Atomic::inc((volatile jint *)target_gen);
+#endif
         // Note: If we decide to change the target gen, we should clear the
         // ngen array. This is necessary because we need to know how many
         // objects (already allocated in the target gen) still survivo a
