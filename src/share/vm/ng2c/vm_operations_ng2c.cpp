@@ -47,12 +47,10 @@ NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
       NGenerationArray * glbl_arr = global_hashtable->get_entry(hash);
 
 #ifdef DEBUG_NG2C_PROF_VMOP
-      if (glbl_arr != NULL) {
-        for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
-          if (surv_arr->array()[i])
-            gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
-                                   glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
-      }
+      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
+        if (surv_arr->array()[i])
+          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
+             glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
 #endif
       // Note: some hashes might get corrupted. If this happens, survivors will
       // register a hash that is not valid, leading to a null global array.
