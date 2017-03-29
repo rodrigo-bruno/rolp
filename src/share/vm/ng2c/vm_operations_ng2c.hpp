@@ -83,7 +83,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
     // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
     _total_update_target_gen++;
-    if (_total_update_target_gen % NG2C_GEN_ARRAY_SIZE == 0) {
+    if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
       update_target_gen();
     }
 

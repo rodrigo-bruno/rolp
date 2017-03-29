@@ -3828,7 +3828,11 @@ class CommandLineFlags {
           "Enable event-based tracing")                                     \
                                                                             \
   product(bool, UseLockedTracing, false,                                    \
-          "Use locked-tracing when doing event-based tracing")
+          "Use locked-tracing when doing event-based tracing")              \
+                                                                            \
+  product(uintx, NG2CUpdateThreshold, 16,                                   \
+          "Sets the number of GC cycles required to update the "            \
+          "target gen value.")                                              \
 
 /*
  *  Macros for factoring of globals
