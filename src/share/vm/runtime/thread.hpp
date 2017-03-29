@@ -286,8 +286,6 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer* _genTlab;
   // The TLAB chosen for the last allocation. Used in interpreter.
   ThreadLocalAllocBuffer* _curTlab;
-  // The default gen tlab. This is here just to facilitate its allocation.
-  ThreadLocalAllocBuffer _tlabOld;
   // Indicates in which gen we are currently allocating.
   int _alloc_gen;
   // </underscore>
@@ -475,10 +473,9 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer& curr_tlab() { return *_curTlab; }
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
-      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++) {
-        if (_tlabGenArray[i] != NULL) {
-          _tlabGenArray[i]->make_parsable(retire_tlabs);
-        }
+      // Note: first position belongs to eden tlab.
+      for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+        _tlabGenArray[i]->make_parsable(retire_tlabs);
       }
   }
 // </underscore>
@@ -495,11 +492,9 @@ class Thread: public ThreadShadow {
   // <underscore>
   void initialize_gen_tlabs() {
     if (UseTLAB) {
-      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++) {
-        if (_tlabGenArray[i] != NULL) {
-          _tlabGenArray[i]->initialize();
-        }
-      }
+      // Note: first position belongs to eden tlab.
+      for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+        _tlabGenArray[i]->initialize();
     }
   }
   // <underscore>
