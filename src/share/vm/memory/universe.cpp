@@ -145,7 +145,6 @@ CollectedHeap*  Universe::_collectedHeap = NULL;
 #ifdef NG2C_PROF
 MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_GEN_ARRAY_SIZE);
 ThreadLocalNGenMapping* Universe::_thread_gen_mapping = new ThreadLocalNGenMapping();
-unsigned int        Universe::_total_target_gen_updates = 0;
 #endif
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };

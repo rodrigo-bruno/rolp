@@ -2,6 +2,7 @@
 
 uint * NG2C_MergeAllocCounters::_swp_counter_arr = NULL;
 uint * NG2C_MergeAllocCounters::_inc_counter_arr = NULL;
+uint   NG2C_MergeAllocCounters::_total_update_target_gen = 0;
 
 void
 NG2C_MergeJavaThreads::do_thread(Thread * thread)
