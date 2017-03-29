@@ -47,7 +47,9 @@ MethodBciHashtable::get_entry(uint hash)
     hash, entry);
 #endif
 
-  assert(entry != NULL, "get entry returned NULL");
+  if (entry == NULL) return NULL;
+
+  assert(entry != NULL, "get entry returned NULL and did not return");
 
   while (entry->next() != NULL && entry->hash() != hash) entry = entry->next();
 

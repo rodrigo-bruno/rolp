@@ -47,10 +47,12 @@ NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
       NGenerationArray * glbl_arr = global_hashtable->get_entry(hash);
 
 #ifdef DEBUG_NG2C_PROF_VMOP
-      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
-        if (surv_arr->array()[i])
-          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
-             glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
+      if (glbl_arr != NULL) {
+        for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
+          if (surv_arr->array()[i])
+            gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
+                                   glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
+      }
 #endif
       // Note: some hashes might get corrupted. If this happens, survivors will
       // register a hash that is not valid, leading to a null global array.
@@ -125,7 +127,7 @@ NG2C_MergeAllocCounters::update_target_gen()
       volatile long * target_gen = p->literal()->target_gen_addr();
       long promo_counter = 0;
 
-      for (int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *arr++;
+      for (int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *++arr;
         // TODO - replace .5 with constant (defined at launch time!)
       if (promo_counter > *sav * .5) {
         Atomic::inc((volatile jint *)target_gen);
