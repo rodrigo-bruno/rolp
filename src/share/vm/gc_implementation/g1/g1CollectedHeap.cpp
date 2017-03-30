@@ -4951,8 +4951,9 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
     uint rhash = m->ng2c_prof();
     if (rhash != 0) {
       Thread * thread = Thread::current();
-      WorkerThread * wthread = thread->as_Worker_thread();
-      wthread->method_bci_hashtable()->get_entry_not_null(rhash)->update(
+      assert(thread->is_Named_thread(), "should be named thread");
+      NamedThread * nthread = (NamedThread*)thread;
+      nthread->method_bci_hashtable()->get_entry_not_null(rhash)->update(
          age == markOopDesc::max_age ? age : age +1);
     }
 #endif

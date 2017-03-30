@@ -1216,7 +1216,11 @@ void JavaThread::allocate_threadObj(Handle thread_group, char* thread_name, bool
 
 // NamedThread --  non-JavaThread subclasses with multiple
 // uniquely named instances should derive from this.
-NamedThread::NamedThread() : Thread() {
+NamedThread::NamedThread() : Thread()
+#ifdef NG2C_PROF
+   , _method_bci_hashtable(new MethodBciHashtable(NG2C_MAX_ALLOC_SITE))
+#endif
+{
   _name = NULL;
   _processed_thread = NULL;
 }

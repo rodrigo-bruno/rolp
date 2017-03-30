@@ -764,6 +764,11 @@ class NamedThread: public Thread {
   // log JavaThread being processed by oops_do
   JavaThread* _processed_thread;
 
+#ifdef NG2C_PROF
+  // TODO - we need to free the data structure when the thread is destroyed!
+  MethodBciHashtable * _method_bci_hashtable;
+#endif
+
  public:
   NamedThread();
   ~NamedThread();
@@ -773,6 +778,9 @@ class NamedThread: public Thread {
   virtual char* name() const { return _name == NULL ? (char*)"Unknown Thread" : _name; }
   JavaThread *processed_thread() { return _processed_thread; }
   void set_processed_thread(JavaThread *thread) { _processed_thread = thread; }
+#ifdef NG2C_PROF
+  MethodBciHashtable * method_bci_hashtable() const { return _method_bci_hashtable; }
+#endif
 };
 
 // Worker threads are named and have an id of an assigned work.
@@ -780,16 +788,8 @@ class WorkerThread: public NamedThread {
 private:
   uint _id;
 
-#ifdef NG2C_PROF
-  MethodBciHashtable * _method_bci_hashtable;
-#endif
 public:
-  WorkerThread() :
-    _id(0)
-#ifdef NG2C_PROF
-    ,_method_bci_hashtable(new MethodBciHashtable(NG2C_MAX_ALLOC_SITE))
-#endif
-    { }
+  WorkerThread() : _id(0) { }
   virtual bool is_Worker_thread() const { return true; }
 
   virtual WorkerThread* as_Worker_thread() const {
@@ -799,9 +799,6 @@ public:
 
   void set_id(uint work_id)             { _id = work_id; }
   uint id() const                       { return _id; }
-#ifdef NG2C_PROF
-  MethodBciHashtable * method_bci_hashtable() const { return _method_bci_hashtable; }
-#endif
 };
 
 // A single WatcherThread is used for simulating timer interrupts.

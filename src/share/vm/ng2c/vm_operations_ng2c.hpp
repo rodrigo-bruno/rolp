@@ -43,7 +43,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
   // TODO - this methods should be part of closures not the operation...
   void update_promotions(NGenerationArray * global, NGenerationArray * survivors);
-  void update_promotions(WorkerThread * thread);
+  void update_promotions(NamedThread * thread);
   void update_allocations();
   void increment_allocations(JavaThread* thread);
   void update_target_gen();

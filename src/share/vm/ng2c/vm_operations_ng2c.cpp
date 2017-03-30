@@ -14,8 +14,8 @@ NG2C_MergeJavaThreads::do_thread(Thread * thread)
 void
 NG2C_MergeWorkerThreads::do_thread(Thread * thread)
 {
-  if (!thread->is_Worker_thread()) return;
-  _op->update_promotions((WorkerThread*)thread);
+  if (!thread->is_Named_thread()) return;
+  _op->update_promotions((NamedThread*)thread);
 }
 
 
@@ -34,7 +34,7 @@ NG2C_MergeAllocCounters::update_promotions(NGenerationArray * global, NGeneratio
 }
 
 void
-NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
+NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
 {
   MethodBciHashtable * hashtable = thread->method_bci_hashtable();
   MethodBciHashtable * global_hashtable = Universe::method_bci_hashtable();
