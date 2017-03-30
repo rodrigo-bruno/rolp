@@ -99,3 +99,26 @@ MethodBciHashtable::calculate_hash(Method * m, int bci)
   unsigned int hash = (unsigned int)AltHashing::murmur3_32(bci, (const jbyte*)m, sizeof(Method));
   return hash;
 }
+
+/* printing */
+void
+MethodBciHashtable::print_on(outputStream * st, const char * tag)
+{
+  // TODO: Should we implement a kind of keySet here to
+  // speedup this loop and other's similar?
+  for (int i = 0; i < table_size(); i++) {
+    MethodBciEntry * p = (MethodBciEntry*)bucket(i);
+
+    for (; p != NULL; p = p->next()) {
+      ngen_t * arr = p->literal()->array();
+      volatile long * target_gen = p->literal()->target_gen_addr();
+      st->print("[ng2c-vmop] <%s> hash=%u target_gen=%u [",
+                          tag, p->literal()->hash(), *target_gen);
+
+      for (int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
+        st->print(INT64_FORMAT "; ", arr[k]);
+
+      st->print_cr("]");
+    }
+  }
+}

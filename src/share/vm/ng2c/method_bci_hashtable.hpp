@@ -33,6 +33,7 @@ class MethodBciHashtable : public Hashtable<NGenerationArray*, mtGC>
   NGenerationArray * get_entry_not_null(uint hash);
   volatile long    * get_target_gen(uint hash);
   static unsigned int calculate_hash(Method * m, int bci);
+  void               print_on(outputStream * st, const char * tag = "global hashtable");
 };
 
 #endif // SHARE_VM_NG2C_METHOD_BCI_HASHTABLE_HPP
