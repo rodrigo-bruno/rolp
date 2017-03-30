@@ -347,7 +347,7 @@ Thread::~Thread() {
   for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
       delete _tlabGenArray[i];
   }
-  free(_tlabGenArray);
+  FREE_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, _tlabGenArray, mtThread);
   // </underscore>
 
   // Reclaim the objectmonitors from the omFreeList of the moribund thread.
