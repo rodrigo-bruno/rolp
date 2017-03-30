@@ -67,6 +67,8 @@ private:
   }
 
   void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen);
+  Node* make_load( Node* ctl, Node* mem, Node* base, Node* offset,
+                   const Type* value_type, BasicType bt);
   Node* make_load( Node* ctl, Node* mem, Node* base, int offset,
                    const Type* value_type, BasicType bt);
   Node* make_store(Node* ctl, Node* mem, Node* base, int offset,
