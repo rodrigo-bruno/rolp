@@ -251,19 +251,6 @@ Thread::Thread() : _tlab(this) {
   omInUseList = NULL ;
   omInUseCount = 0 ;
 
-  // <underscore> NG2C tlab initialization.
-  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtGC);
-  _tlabGenArray[0] = _tlab;
-  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
-      _tlabGenArray[i] = new ThreadLocalAllocBuffer(this);
-  }
-  // This will make old gen default for gen allocations.
-  set_alloc_gen(1);
-  // This will make eden tlab the 'last used tlab'.
-  set_cur_tlab(false);
-  // </underscore>
-
-
 #ifdef ASSERT
   _visited_for_critical_count = false;
 #endif
@@ -307,6 +294,19 @@ Thread::Thread() : _tlab(this) {
            "bug in forced alignment of thread objects");
   }
 #endif /* ASSERT */
+
+  // <underscore> NG2C tlab initialization.
+  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtThread);
+  memset(_tlabGenArray, 0, sizeof(ThreadLocalAllocBuffer*)*NG2C_GEN_ARRAY_SIZE);
+  _tlabGenArray[0] = &_tlab;
+  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+    _tlabGenArray[i] = new ThreadLocalAllocBuffer(this);
+  }
+  // This will make old gen default for gen allocations.
+  set_alloc_gen(0); // TODO - use 1 instead of 0!
+  // This will make eden tlab the 'last used tlab'.
+  set_cur_tlab(false);
+  // </underscore>
 }
 
 void Thread::initialize_thread_local_storage() {
@@ -343,6 +343,13 @@ void Thread::record_stack_base_and_size() {
 
 
 Thread::~Thread() {
+  // <underscore> Free _tlabGenArray
+  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+      delete _tlabGenArray[i];
+  }
+  free(_tlabGenArray);
+  // </underscore>
+
   // Reclaim the objectmonitors from the omFreeList of the moribund thread.
   ObjectSynchronizer::omFlush (this) ;
 
@@ -4695,7 +4702,8 @@ void Thread::muxRelease (volatile intptr_t * Lock)  {
 
 // <underscore> Implementation of set_alloc_gen.
 void Thread::set_alloc_gen(int gen) {
-  assert(gen > 0 && gen < g1->gens_length(), "invalid gen number");
+  // TODO - assert gen is a valid gen number (< gen array size)
+  assert(gen >= 0, "invalid gen number");
   assert(gen_tlabs()[gen]->myThread() == this, "invariant");
   _alloc_gen = gen;
   _genTlab = _tlabGenArray[gen];

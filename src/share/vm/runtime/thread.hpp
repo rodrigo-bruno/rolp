@@ -495,6 +495,7 @@ class Thread: public ThreadShadow {
       // Note: first position belongs to eden tlab.
       for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
         _tlabGenArray[i]->initialize();
+      }
     }
   }
   // <underscore>
