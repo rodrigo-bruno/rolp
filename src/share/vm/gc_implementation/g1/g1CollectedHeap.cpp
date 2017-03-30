@@ -2007,7 +2007,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   // <underscore> added initialization.
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
-  _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
+  _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(NG2C_GEN_ARRAY_SIZE,true)),
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
@@ -7154,7 +7154,7 @@ void G1CollectedHeap::rebuild_strong_code_roots() {
 }
 
 // <underscore> Thread closure to release threads TLAB.
-// <underscore> NOTE: This must be called inside a safepoint.
+// <underscore> NOTE: This is called inside a safepoint.
 class ThreadCollectGenClosure: public ThreadClosure {
 private:
   int _gen;
@@ -7162,11 +7162,8 @@ public:
   ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
   virtual void do_thread(Thread* thread) {
-    ThreadLocalAllocBuffer** gen_tlabs = thread->gen_tlabs();
-    if (NG2C_GEN_ARRAY_SIZE > _gen && gen_tlabs[_gen] != NULL) {
-      gen_tlabs[_gen]->make_parsable(true);
-      // <underscore> TODO - change make_parsable to clear_before_allocation
-    }
+    thread->gen_tlabs()[_gen]->make_parsable(true);
+    // <underscore> TODO - change make_parsable to clear_before_allocation
   }
 };
 
@@ -7174,6 +7171,8 @@ public:
 // never have a race here (because collect_alloc_gen is synchronized).
 void G1CollectedHeap::rebase_alloc_gen(int gen) {
   assert_at_safepoint(true /* should_be_vm_thread */);
+  assert(gen > 0, "trying to rebase eden?");
+  assert(gen < gens_length(), "gen is higher than the number of created gens");
 
 #if DEBUG_COLLECT_GEN
     gclog_or_tty->print_cr("<underscore> collect_alloc_gen: rebasing gen %d", gen);
@@ -7193,6 +7192,7 @@ void G1CollectedHeap::rebase_alloc_gen(int gen) {
 
 jint G1CollectedHeap::new_alloc_gen() {
   MutexLockerEx ml(HeapGen_lock);
+  // TODO - we should now create a new TLAB for this gen for every thread!
 
   int gen = _gen_alloc_regions->length();
 #if DEBUG_NEW_GEN

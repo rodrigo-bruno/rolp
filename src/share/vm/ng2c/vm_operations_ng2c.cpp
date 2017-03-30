@@ -47,12 +47,10 @@ NG2C_MergeAllocCounters::update_promotions(WorkerThread * thread)
       NGenerationArray * glbl_arr = global_hashtable->get_entry(hash);
 
 #ifdef DEBUG_NG2C_PROF_VMOP
-      if (glbl_arr != NULL) {
-        for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
-          if (surv_arr->array()[i])
-            gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
-                                   glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
-      }
+      for (int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
+        if (surv_arr->array()[i])
+          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
+             glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
 #endif
       // Note: some hashes might get corrupted. If this happens, survivors will
       // register a hash that is not valid, leading to a null global array.
@@ -130,7 +128,9 @@ NG2C_MergeAllocCounters::update_target_gen()
       for (int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *++arr;
         // TODO - replace .5 with constant (defined at launch time!)
       if (promo_counter > *sav * .5) {
+#ifdef NG2C_PROF_ALLOC
         Atomic::inc((volatile jint *)target_gen);
+#endif
         // Note: If we decide to change the target gen, we should clear the
         // ngen array. This is necessary because we need to know how many
         // objects (already allocated in the target gen) still survivo a

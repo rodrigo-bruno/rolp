@@ -208,7 +208,7 @@ void Thread::operator delete(void* p) {
 // JavaThread
 
 
-Thread::Thread() : _tlab(this), _tlabOld(this) {
+Thread::Thread() : _tlab(this) {
   // stack and get_thread
   set_stack_base(NULL);
   set_stack_size(0);
@@ -250,16 +250,6 @@ Thread::Thread() : _tlab(this), _tlabOld(this) {
   omFreeProvision = 32 ;
   omInUseList = NULL ;
   omInUseCount = 0 ;
-
-  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtGC);
-  bzero(_tlabGenArray, NG2C_GEN_ARRAY_SIZE * sizeof(ThreadLocalAllocBuffer*));
-  // <underscore> This adds the default gen tlab.
-  gen_tlabs()[0] = &_tlabOld;
-  // <underscore> This will make old gen default for gen allocations.
-  set_alloc_gen(0);
-  // <underscore> This will make eden tlab the 'last used tlab'.
-  set_cur_tlab(false);
-
 
 #ifdef ASSERT
   _visited_for_critical_count = false;
@@ -304,6 +294,19 @@ Thread::Thread() : _tlab(this), _tlabOld(this) {
            "bug in forced alignment of thread objects");
   }
 #endif /* ASSERT */
+
+  // <underscore> NG2C tlab initialization.
+  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtThread);
+  memset(_tlabGenArray, 0, sizeof(ThreadLocalAllocBuffer*)*NG2C_GEN_ARRAY_SIZE);
+  _tlabGenArray[0] = &_tlab;
+  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+    _tlabGenArray[i] = new ThreadLocalAllocBuffer(this);
+  }
+  // This will make old gen default for gen allocations.
+  set_alloc_gen(0); // TODO - use 1 instead of 0!
+  // This will make eden tlab the 'last used tlab'.
+  set_cur_tlab(false);
+  // </underscore>
 }
 
 void Thread::initialize_thread_local_storage() {
@@ -340,6 +343,13 @@ void Thread::record_stack_base_and_size() {
 
 
 Thread::~Thread() {
+  // <underscore> Free _tlabGenArray
+  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+      delete _tlabGenArray[i];
+  }
+  free(_tlabGenArray);
+  // </underscore>
+
   // Reclaim the objectmonitors from the omFreeList of the moribund thread.
   ObjectSynchronizer::omFlush (this) ;
 
@@ -4692,29 +4702,14 @@ void Thread::muxRelease (volatile intptr_t * Lock)  {
 
 // <underscore> Implementation of set_alloc_gen.
 void Thread::set_alloc_gen(int gen) {
-
+  // TODO - assert gen is a valid gen number (< gen array size)
+  assert(gen >= 0, "invalid gen number");
+  assert(gen_tlabs()[gen]->myThread() == this, "invariant");
   _alloc_gen = gen;
-  if (NG2C_GEN_ARRAY_SIZE <= gen || gen_tlabs()[gen] == NULL) {
-    // We need to create a new tlab for this thread.
-    MutexLockerEx ml(HeapGen_lock);
-    CollectedHeap* g1h = (CollectedHeap*) Universe::heap();
-    if (g1h->gens_length() > gen) {
-      _genTlab = new ThreadLocalAllocBuffer(this);
-      _genTlab->initialize();
-      _tlabGenArray[gen] = _genTlab;
-#if DEBUG_OBJ_ALLOC
-      gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s  (created new tlab)", gen, gen ? "tlabOld" : "tlabEden");
-#endif
-    } else {
-      // Illegal tlab (it was not creeated yet!)
-    }
-  } else {
-    assert(gen_tlabs()[gen]->myThread() == this, "invariant");
-    _genTlab = gen_tlabs()[_alloc_gen];
+  _genTlab = _tlabGenArray[gen];
 #if DEBUG_OBJ_ALLOC
     gclog_or_tty->print_cr("<underscore> setAllocGen (gen=%d) -> %s is now being used ", gen, gen ? "tlabOld" : "tlabEden");
 #endif
-  }
 }
 
 void Threads::verify() {

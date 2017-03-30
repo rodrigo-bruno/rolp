@@ -75,7 +75,10 @@ endif
 
 
 # <NG2C sysdefs>
+## Enables n-generational profiler
 SYSDEFS += -DNG2C_PROF
+## Enables n-generational allocation (takes advantage of n-generational profiler)
+#SYSDEFS += -DNG2C_PROF_ALLOC
 #SYSDEFS += -DFORCE_SLOWPATH_C2
 #SYSDEFS += -DFORCE_SLOWPATH_INTR
 
@@ -84,9 +87,9 @@ SYSDEFS += -DNG2C_PROF
 SYSDEFS += -DDEBUG_NG2C_PROF_C2
 SYSDEFS += -DDEBUG_NG2C_PROF_VMOP
 
-SYSDEFS += -DDEBUG_SURVIVORS
-SYSDEFS += -DDEBUG_C2
-SYSDEFS += -DDEBUG_C2_MARR
+#SYSDEFS += -DDEBUG_SURVIVORS
+#SYSDEFS += -DDEBUG_C2
+#SYSDEFS += -DDEBUG_C2_MARR
 # </NG2C sysdefs>
 
 # HOTSPOT_RELEASE_VERSION and HOTSPOT_BUILD_VERSION are defined

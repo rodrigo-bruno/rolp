@@ -53,13 +53,10 @@ MethodBciHashtable::get_entry(uint hash)
 
   if (entry == NULL) return NULL;
 
-  assert(entry != NULL, "get entry returned NULL and did not return");
-
   while (entry->next() != NULL && entry->hash() != hash) entry = entry->next();
 
-// TODO - is this the right thing to do?
-//  assert(entry->hash() == hash, "hash not found");
   if (entry->hash() == hash) return entry->literal();
+
   return NULL;
 }
 
