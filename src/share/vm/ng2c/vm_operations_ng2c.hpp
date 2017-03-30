@@ -32,9 +32,9 @@ class NG2C_MergeWorkerThreads : public ThreadClosure
 
 class NG2C_MergeAllocCounters : public VM_Operation
 {
- // Note: necessary so that these closures can call private methods.
- friend class NG2C_MergeJavaThreads;
- friend class NG2C_MergeWorkerThreads;
+  // Note: necessary so that these closures can call private methods.
+  friend class NG2C_MergeJavaThreads;
+  friend class NG2C_MergeWorkerThreads;
 
  private:
   static uint * _swp_counter_arr;
@@ -52,7 +52,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
   // There is no need to call the set_calling_thread since the VMThread::execute(&op)
   // will take care of it.
   NG2C_MergeAllocCounters() {
-     if (_swp_counter_arr == NULL) {
+    if (_swp_counter_arr == NULL) {
       _swp_counter_arr = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
       memset((void*)_swp_counter_arr, 0, NG2C_MAX_ALLOC_SITE * sizeof(uint));
     }
@@ -63,50 +63,38 @@ class NG2C_MergeAllocCounters : public VM_Operation
   }
 
   virtual void doit()
-  {
-    assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
-    // TODO - print how much time is spent on each of these steps.
     {
-      NG2C_MergeJavaThreads mjt_cljr(this);
-      MutexLocker mu(Threads_lock);
-      Threads::threads_do(&mjt_cljr);
-    }
+      assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
+      
+      // TODO - print how much time is spent on each of these steps.
+      {
+        NG2C_MergeJavaThreads mjt_cljr(this);
+        MutexLocker mu(Threads_lock);
+        Threads::threads_do(&mjt_cljr);
+      }
 
+      update_allocations();
 
-    update_allocations();
+      {
+        NG2C_MergeWorkerThreads mwt_cljr(this);
+        MutexLocker mu(Threads_lock);
+        Threads::threads_do(&mwt_cljr);
+      }
 
-    {
-      NG2C_MergeWorkerThreads mwt_cljr(this);
-      MutexLocker mu(Threads_lock);
-      Threads::threads_do(&mwt_cljr);
-    }
-
-    // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
-    _total_update_target_gen++;
-    if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
+      // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
+      _total_update_target_gen++;
+      // if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
       update_target_gen();
-    }
+      // }
 
 #ifdef DEBUG_NG2C_PROF_VMOP
-    MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
+      {
+        MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
 
-    for (int i = 0; i < hashtable->table_size(); i++) {
-      MethodBciEntry * p = (MethodBciEntry*)hashtable->bucket(i);
-
-      for (; p != NULL; p = p->next()) {
-        ngen_t * arr = p->literal()->array();
-        volatile long * target_gen = p->literal()->target_gen_addr();
-        gclog_or_tty->print("[ng2c-vmop] <global hashtable> hash=%u target_gen=%u [",
-           p->literal()->hash(), *target_gen);
-
-        for (int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
-          gclog_or_tty->print(INT64_FORMAT "; ", arr[k]);
-
-        gclog_or_tty->print_cr("]");
+        hashtable->print_on(gclog_or_tty);
       }
-    }
 #endif
-  }
+    }
 
   virtual bool doit_prologue();
 
