@@ -24,6 +24,9 @@ MethodBciHashtable::add_entry(uint hash)
 
   assert(entry != NULL, "new entry returned NULL");
 
+  if (get_entry(hash) != NULL)
+    goto Return;
+
   Hashtable<NGenerationArray*, mtGC>::add_entry((hash_to_index(hash)), entry);
 
 #ifdef DEBUG_NG2C_PROF_TABLE
@@ -31,6 +34,7 @@ MethodBciHashtable::add_entry(uint hash)
     m, bci, (intptr_t)hash, hash_to_index(hash), bucket(hash_to_index(hash)));
 #endif
 
+Return:
   return hash;
 }
 
