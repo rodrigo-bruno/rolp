@@ -1065,7 +1065,7 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
 // <underscore> Added alloc_gen to arguments and differentiated from the
 // alloc_gen == 0
 //---------------------------set_eden_pointers-------------------------
-void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen) {
+void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen) {
   if (UseTLAB) {                // Private allocation: load from TLS
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
@@ -1088,15 +1088,15 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
       Node* tlab_offset = basic_mul_long(
           longcon((jlong)sizeof(ThreadLocalAllocBuffer*)),
           target_gen);
-      gen_tlab_adr = basic_plus_adr(top(), tlab_array, tlab_offset);
+      gen_tlab = make_load(ctrl, mem, tlab_array, tlab_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
 #else
       // Load gen tlab inside Thread
-      gen_tlab_adr = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
+      gen_tlab = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_tlab_offset()), TypeRawPtr::BOTTOM, T_ADDRESS);
 #endif
 
       // Get the addressed taking as base pointer the gen tlab addr.
-      eden_top_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_adr, tlab_top_offset);
-      eden_end_adr = basic_plus_adr(top()/*not oop*/, gen_tlab_adr, tlab_end_offset);
+      eden_top_adr = basic_plus_adr(top()/*not oop*/, gen_tlab, tlab_top_offset);
+      eden_end_adr = basic_plus_adr(top()/*not oop*/, gen_tlab, tlab_end_offset);
     }
   } else {                      // Shared allocation: load from globals
     CollectedHeap* ch = Universe::heap();
@@ -1107,6 +1107,13 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab_
   }
 }
 
+Node* PhaseMacroExpand::make_load(Node* ctl, Node* mem, Node* base, Node* offset, const Type* value_type, BasicType bt) {
+  Node* adr = basic_plus_adr(base, offset);
+  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+  Node* value = LoadNode::make(_igvn, ctl, mem, adr, adr_type, value_type, bt);
+  transform_later(value);
+  return value;
+}
 
 Node* PhaseMacroExpand::make_load(Node* ctl, Node* mem, Node* base, int offset, const Type* value_type, BasicType bt) {
   Node* adr = basic_plus_adr(base, offset);
