@@ -31,6 +31,7 @@ class MethodBciHashtable : public Hashtable<NGenerationArray*, mtGC>
   unsigned int       add_entry (uint hash);
   NGenerationArray * get_entry(uint hash);
   NGenerationArray * get_entry_not_null(uint hash);
+  ngen_t *           get_alloc_slot(uint hash);
   volatile long    * get_target_gen(uint hash);
   static unsigned int calculate_hash(Method * m, int bci);
   void               print_on(outputStream * st, const char * tag = "global hashtable");
