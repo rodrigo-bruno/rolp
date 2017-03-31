@@ -1080,7 +1080,7 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab,
       tlab_top_offset = in_bytes(ThreadLocalAllocBuffer::top_offset());
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
-#ifdef NG2C_PROF
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_TLAB)
       volatile long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
       int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
@@ -1227,7 +1227,7 @@ void PhaseMacroExpand::expand_allocate_common(
   int bci = alloc->jvms()->bci();
   Method* m = alloc->jvms()->method()->get_Method();
 
-#ifdef NG2C_PROF
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2)
   int alloc_gen = Universe::method_bci_hashtable()->add_entry(m, bci);
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
@@ -1732,7 +1732,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
-#ifdef NG2C_PROF 
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_COUNTER)
   uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
   rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
 

@@ -947,7 +947,7 @@ G1CollectedHeap::mem_allocate(size_t word_size,
         dirty_young_block(result, word_size);
       }
 
-#ifdef NG2C_PROF
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_VMOP)
       NG2C_MergeAllocCounters * ng2c_op = new NG2C_MergeAllocCounters();
       VMThread::execute(ng2c_op);
 #endif
@@ -2684,7 +2684,7 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
     }
   } while (retry_gc);
 
-#ifdef NG2C_PROF
+#if defined(NG2C_PROF) && !defined(DISABLED_NG2C_PROF_VMOP)
   // Note: when the execution gets here, I am assuming that we had a successful gc.
   NG2C_MergeAllocCounters * ng2c_op = new NG2C_MergeAllocCounters();
   VMThread::execute(ng2c_op);
@@ -3826,7 +3826,7 @@ HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
 
   assert_heap_not_locked();
 
-#ifdef NG2C_PROF
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_VMOP)
   if (ret_succeeded) {
     NG2C_MergeAllocCounters * ng2c_op = new NG2C_MergeAllocCounters();
     VMThread::execute(ng2c_op);
