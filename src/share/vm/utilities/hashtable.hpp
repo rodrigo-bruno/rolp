@@ -31,10 +31,7 @@
 #include "oops/symbol.hpp"
 #include "runtime/handles.hpp"
 #include "memory/nogc.h"
-
-#ifdef NG2C_PROF
 #include "ng2c/ng2c_globals.hpp"
-#endif
 
 // This is a generic hashtable, designed to be used for the symbol
 // and string tables.
@@ -289,9 +286,7 @@ protected:
 
   static int literal_size(Symbol *symbol);
   static int literal_size(oop oop);
-#ifdef NG2C_PROF
   static int literal_size(NGenerationArray * v ) { return v->size(); }
-#endif
 
   // The following two are currently not used, but are needed anyway because some
   // C++ compilers (MacOS and Solaris) force the instantiation of

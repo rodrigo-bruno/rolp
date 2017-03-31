@@ -369,10 +369,7 @@ template class BasicHashtable<mtClass>;
 template class BasicHashtable<mtSymbol>;
 template class BasicHashtable<mtCode>;
 template class BasicHashtable<mtInternal>;
-
-#ifdef NG2C_PROF
 template class Hashtable<NGenerationArray*, mtGC>;
 template class HashtableEntry<NGenerationArray*, mtGC>;
 template class BasicHashtable<mtGC>;
-#endif
 

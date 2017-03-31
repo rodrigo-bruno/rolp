@@ -679,9 +679,7 @@ public:
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
   static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
-#ifdef NG2C_PROF
   static ByteSize gen_tlabs_offset()             { return byte_offset_of(Thread, _tlabGenArray ); }
-#endif
 
   // <underscore> TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
@@ -764,10 +762,8 @@ class NamedThread: public Thread {
   // log JavaThread being processed by oops_do
   JavaThread* _processed_thread;
 
-#ifdef NG2C_PROF
-  // TODO - we need to free the data structure when the thread is destroyed!
+  // <underscore> TODO - we need to free the data structure when the thread is destroyed!
   MethodBciHashtable * _method_bci_hashtable;
-#endif
 
  public:
   NamedThread();
@@ -778,9 +774,7 @@ class NamedThread: public Thread {
   virtual char* name() const { return _name == NULL ? (char*)"Unknown Thread" : _name; }
   JavaThread *processed_thread() { return _processed_thread; }
   void set_processed_thread(JavaThread *thread) { _processed_thread = thread; }
-#ifdef NG2C_PROF
   MethodBciHashtable * method_bci_hashtable() const { return _method_bci_hashtable; }
-#endif
 };
 
 // Worker threads are named and have an id of an assigned work.
@@ -954,8 +948,6 @@ class JavaThread: public Thread {
                                                  // only VM_Exit can set _vm_exited
   };
 
-  // NG2C profiler support
-#ifdef NG2C_PROF
  // <underscore> TODO - move gen tlabs into JavaThread (vm threads will not use ngens...).
  public:
   static ByteSize ngen_table_offset() { return byte_offset_of(JavaThread, _ngen_table); }
@@ -966,8 +958,6 @@ class JavaThread: public Thread {
   // Array of counters for each allocation site. To get the corresponding hash,
   // check thread_gen_mapping.
   volatile uint * _ngen_table;
-
-#endif // NG2C_PROF
 
   // In general a JavaThread's _terminated field transitions as follows:
   //

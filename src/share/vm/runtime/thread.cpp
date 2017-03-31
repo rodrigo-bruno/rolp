@@ -1219,6 +1219,8 @@ void JavaThread::allocate_threadObj(Handle thread_group, char* thread_name, bool
 NamedThread::NamedThread() : Thread()
 #ifdef NG2C_PROF
    , _method_bci_hashtable(new MethodBciHashtable(NG2C_MAX_ALLOC_SITE))
+#else
+   , _method_bci_hashtable(NULL)
 #endif
 {
   _name = NULL;
@@ -1518,6 +1520,8 @@ void JavaThread::initialize() {
 #ifdef NG2C_PROF
   _ngen_table = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
   memset((void*)_ngen_table, 0, sizeof(uint)*NG2C_MAX_ALLOC_SITE);
+#else
+  _ngen_table =NULL;
 #endif // NG2C_PROF
 
 }
