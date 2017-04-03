@@ -98,6 +98,13 @@ void G1SATBCardTableModRefBS::g1_mark_as_young(const MemRegion& mr) {
   memset(first, g1_young_gen, last - first);
 }
 
+void G1SATBCardTableModRefBS::g1_mark_as_dirty(const MemRegion& mr) {
+  jbyte *const first = byte_for(mr.start());
+  jbyte *const last = byte_after(mr.last());
+
+  memset(first, dirty_card, last - first);
+}
+
 #ifndef PRODUCT
 void G1SATBCardTableModRefBS::verify_g1_young_region(MemRegion mr) {
   verify_region(mr, g1_young_gen,  true);

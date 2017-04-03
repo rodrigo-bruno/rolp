@@ -125,6 +125,11 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
     MutexLocker ml(Heap_lock);
     result = _gen_alloc_regions->at(gen)->attempt_allocation_locked(word_size, true /* bot_updates */);
   }
+
+  if (result != NULL) {
+    MemRegion mr(result, word_size);
+    g1_barrier_set()->g1_mark_as_dirty(mr);
+  }
   return result;
 }
 // </underscore>
