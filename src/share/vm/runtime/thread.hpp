@@ -948,17 +948,6 @@ class JavaThread: public Thread {
                                                  // only VM_Exit can set _vm_exited
   };
 
- // <underscore> TODO - move gen tlabs into JavaThread (vm threads will not use ngens...).
- public:
-  static ByteSize ngen_table_offset() { return byte_offset_of(JavaThread, _ngen_table); }
-  volatile uint *  ngen_table() const { return _ngen_table; }
-  volatile uint ** ngen_table_addr()  { return &_ngen_table; }
-
- private:
-  // Array of counters for each allocation site. To get the corresponding hash,
-  // check thread_gen_mapping.
-  volatile uint * _ngen_table;
-
   // In general a JavaThread's _terminated field transitions as follows:
   //
   //   _not_terminated => _thread_exiting => _thread_terminated

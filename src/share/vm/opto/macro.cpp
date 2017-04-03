@@ -1740,8 +1740,8 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   ngen_t * alloc_counter_adr = Universe::method_bci_hashtable()->get_alloc_slot(ng2c_prof);
 
 #ifdef DEBUG_NG2C_PROF_C2
-   gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT", gen_mapping=%u",
-     ng2c_prof, prof_mask, table_idx);
+   gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT,
+     ng2c_prof, prof_mask);
 #endif // DEBUG_NG2C_PROF_C2
 
    Node * alloc_counter = make_load(control, rawmem, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, TypeLong::LONG, T_LONG);

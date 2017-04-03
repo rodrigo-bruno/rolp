@@ -1517,13 +1517,6 @@ void JavaThread::initialize() {
 
   pd_initialize();
 
-#ifdef NG2C_PROF
-  _ngen_table = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
-  memset((void*)_ngen_table, 0, sizeof(uint)*NG2C_MAX_ALLOC_SITE);
-#else
-  _ngen_table =NULL;
-#endif // NG2C_PROF
-
 }
 
 #if INCLUDE_ALL_GCS

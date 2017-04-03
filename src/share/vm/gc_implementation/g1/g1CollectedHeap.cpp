@@ -7163,6 +7163,7 @@ public:
   ThreadCollectGenClosure(int gen) : _gen(gen) { }
 
   virtual void do_thread(Thread* thread) {
+    assert (_gen > 0, "gen 0 is eden, we should not be making it parsable");
     thread->gen_tlabs()[_gen]->make_parsable(true);
     // <underscore> TODO - change make_parsable to clear_before_allocation
   }

@@ -215,7 +215,6 @@ class Universe: AllStatic {
   static size_t _heap_used_at_last_gc;
 
   static MethodBciHashtable* _method_bci_hashtable;
-  static ThreadLocalNGenMapping* _thread_gen_mapping;
 
   static jint initialize_heap();
   static void initialize_basic_type_mirrors(TRAPS);
@@ -343,7 +342,6 @@ class Universe: AllStatic {
   static CollectedHeap* heap() { return _collectedHeap; }
 
   static MethodBciHashtable* method_bci_hashtable()   { return _method_bci_hashtable; }
-  static ThreadLocalNGenMapping* thread_gen_mapping() { return _thread_gen_mapping; }
 
   // For UseCompressedOops
   // Narrow Oop encoding mode:

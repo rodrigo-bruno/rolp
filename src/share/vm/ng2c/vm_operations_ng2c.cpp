@@ -1,15 +1,6 @@
 # include "ng2c/vm_operations_ng2c.hpp"
 
-uint * NG2C_MergeAllocCounters::_swp_counter_arr = NULL;
-uint * NG2C_MergeAllocCounters::_inc_counter_arr = NULL;
 uint   NG2C_MergeAllocCounters::_total_update_target_gen = 0;
-
-void
-NG2C_MergeJavaThreads::do_thread(Thread * thread)
-{
-  if (!thread->is_Java_thread()) return;
-  _op->increment_allocations((JavaThread*)thread);
-}
 
 void
 NG2C_MergeWorkerThreads::do_thread(Thread * thread)
@@ -55,58 +46,6 @@ NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
       // Note: some hashes might get corrupted. If this happens, survivors will
       // register a hash that is not valid, leading to a null global array.
       if (glbl_arr != NULL) update_promotions(glbl_arr, surv_arr);
-    }
-  }
-}
-
-void
-NG2C_MergeAllocCounters::increment_allocations(JavaThread* thread)
-{
-  uint * cswp = (uint*) thread->ngen_table();
-  uint * cinc = _inc_counter_arr;
-
-  // Note: atomically exchanging our swap buffer (zeroed) with the one
-  // the thread is using.
-  Atomic::cmpxchg_ptr(
-     (void*)_swp_counter_arr,
-     (volatile void**) thread->ngen_table_addr(),
-     (void*)thread->ngen_table());
-
-  assert(cswp != thread->ngen_table(), "atomic cmp xchng failed for thread's ngen table");
-  _swp_counter_arr = cswp;
-
-  for (int i = 0; i < NG2C_MAX_ALLOC_SITE; i++) *cinc++ += *cswp++;
-  memset((void*)_swp_counter_arr, 0, sizeof(uint) * NG2C_MAX_ALLOC_SITE);
-}
-
-void
-NG2C_MergeAllocCounters::update_allocations()
-{
-  MethodBciHashtable * global_hashtable = Universe::method_bci_hashtable();
-  uint * gen_mapping = Universe::thread_gen_mapping()->hashes();
-  uint * cinc = _inc_counter_arr;
-
-#ifdef DEBUG_NG2C_PROF_VMOP
-  for (int i = 0; i < NG2C_MAX_ALLOC_SITE; i++, cinc++) {
-    if (*cinc) {
-      gclog_or_tty->print_cr("[ng2c-vmop] <new allocations> hash_position=%u allocations=%u",
-         i, *cinc);
-    }
-  }
-  for (int i = 0; i < NG2C_MAX_ALLOC_SITE; i++, gen_mapping++) {
-    if (*gen_mapping) {
-      gclog_or_tty->print_cr("[ng2c-vmop] <position mappings> hash_position=%u hash=%u",
-         i, *gen_mapping);
-    }
-  }
-  gen_mapping = Universe::thread_gen_mapping()->hashes();
-  cinc = _inc_counter_arr;
-#endif
-
-  for (int i = 0; i < NG2C_MAX_ALLOC_SITE; i++, cinc++, gen_mapping++) {
-    if (*cinc) {
-      assert (*gen_mapping != 0, "gen mapping should not be zero");
-      global_hashtable->get_entry(*gen_mapping)->array()[0] += *cinc;
     }
   }
 }

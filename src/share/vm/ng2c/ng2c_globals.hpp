@@ -47,32 +47,4 @@ class NGenerationArray : public CHeapObj<mtGC>
   } // placeholder
 };
 
-class ThreadLocalNGenMapping : public CHeapObj<mtGC>
-{
- private:
-  // The hash value is used to prevent the loss of 1-1 correspondence between
-  // hash and index in the thread-local table. In practice, using this array
-  // you know that at index I, every thread will have a counter for objects
-  // allocated at allocation site whose hash is stored at _hashes[I].
-  uint * _hashes;
-
- public:
-  ThreadLocalNGenMapping() {
-    _hashes = NEW_C_HEAP_ARRAY(uint, NG2C_MAX_ALLOC_SITE, mtGC);
-    memset(_hashes, 0, (NG2C_MAX_ALLOC_SITE) * sizeof(uint));
-}
-  ThreadLocalNGenMapping(uint * hashes) : _hashes(hashes) { }
-  ThreadLocalNGenMapping(const ThreadLocalNGenMapping& copy) : _hashes(copy.hashes()) { }
-
-  uint *  hashes() const { return _hashes; }
-  uint ** hashes_addr()  { return &_hashes;}
-  uint    get_slot(uint hash)
-  {
-    uint idx = hash % NG2C_MAX_ALLOC_SITE;
-    while (_hashes[idx % NG2C_MAX_ALLOC_SITE] && _hashes[idx] != hash) idx++;
-    if (!_hashes[idx]) _hashes[idx] = hash;
-    return idx;
-  }
-};
-
 #endif // SHARE_VM_NG2C_NG2C_GLOBALS_HPP

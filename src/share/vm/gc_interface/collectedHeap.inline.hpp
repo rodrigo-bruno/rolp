@@ -66,16 +66,12 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
 
 #ifdef NG2C_PROF
   if (klass.as_hash()) {
-    uint table_idx = Universe::thread_gen_mapping()->get_slot(klass.as_hash());
-    Thread* thread = Thread::current();
-    assert(thread->is_Java_thread(), "only java threads should be allocating java objects");
-    ((JavaThread*) thread)->ngen_table()[table_idx]++;
+    (*Universe::method_bci_hashtable()->get_alloc_slot(klass.as_hash()))++;
   }
 #endif
 
 #ifdef DEBUG_NG2C_PROF
   markOop m = obj->mark();
-  // TODO - print table_idx
   gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" mark="INTPTR_FORMAT" age=%d, as_hash="INTPTR_FORMAT,
                          obj, (intptr_t)m, m->age(), m->ng2c_prof());
 #endif

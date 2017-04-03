@@ -144,10 +144,8 @@ CollectedHeap*  Universe::_collectedHeap = NULL;
 
 #ifdef NG2C_PROF
 MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_MAX_ALLOC_SITE);
-ThreadLocalNGenMapping* Universe::_thread_gen_mapping = new ThreadLocalNGenMapping();
 #else
 MethodBciHashtable* Universe::_method_bci_hashtable   = NULL;
-ThreadLocalNGenMapping* Universe::_thread_gen_mapping = NULL;
 #endif
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };
