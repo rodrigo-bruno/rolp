@@ -2058,8 +2058,11 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
 
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
   
-  // <underscore>
-  _gen_alloc_regions->push(&_gen_alloc_region);
+  // Note: Gen 0 corresponds to eden, avoid using it here.
+  _gen_alloc_regions->at_put(0, NULL);
+  for (int i = 1; i < _gen_alloc_regions->length(); i++) {
+    _gen_alloc_regions->at_put(i, new GenAllocRegion(i));
+  }
 }
 
 jint G1CollectedHeap::initialize() {
@@ -2428,7 +2431,7 @@ size_t G1CollectedHeap::used() const {
     result += hr->used();
 
   // <underscore> Add from all active gen alloc regions.
-  for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+  for (int i = 1; i < _gen_alloc_regions->length(); i++) {
     hr = _gen_alloc_regions->at(i)->get();
     if (hr != NULL) {
       result += hr->used();
@@ -4517,7 +4520,7 @@ void G1CollectedHeap::abandon_gc_alloc_regions() {
 
 // <underscore>
 void G1CollectedHeap::init_gen_alloc_regions() {
-  for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+  for (int i = 1; i < _gen_alloc_regions->length(); i++) {
     assert(_gen_alloc_regions->at(i)->get() == NULL, "pre-condition");
     _gen_alloc_regions->at(i)->init();
   }
@@ -4528,7 +4531,7 @@ void G1CollectedHeap::release_gen_alloc_regions() {
   gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::release_gen_alloc_regions] releasing gen alloc regions");
 #endif
 
-  for (int i = 0; i < _gen_alloc_regions->length(); i++) {
+  for (int i = 1; i < _gen_alloc_regions->length(); i++) {
     // <underscore> release calls retire if region is gen alloc.
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [G1CollectedHeap::release_gen_alloc_regions] releasing gen alloc region %i", i);

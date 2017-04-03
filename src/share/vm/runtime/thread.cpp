@@ -303,7 +303,7 @@ Thread::Thread() : _tlab(this) {
     _tlabGenArray[i] = new ThreadLocalAllocBuffer(this);
   }
   // This will make old gen default for gen allocations.
-  set_alloc_gen(0); // TODO - use 1 instead of 0!
+  set_alloc_gen(1);
   // This will make eden tlab the 'last used tlab'.
   set_cur_tlab(false);
   // </underscore>

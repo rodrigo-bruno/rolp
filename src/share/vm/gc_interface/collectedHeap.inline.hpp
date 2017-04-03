@@ -140,10 +140,6 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(KlassHandle klass, size_t si
     return NULL;  // caller does a CHECK_0 too
   }
 
-#ifdef NG2C_PROF
-  // <underscore> TODO - get klass alloc_gen and extract the target gen. Set thread's current gen.
-#endif
-
   HeapWord* result = NULL;
   // <underscore> UseTLAB is a runtime flag. It should always be on.
   if (UseTLAB) {
@@ -223,7 +219,6 @@ HeapWord* CollectedHeap::allocate_from_tlab(KlassHandle klass, Thread* thread, s
     gclog_or_tty->print_cr("<underscore> CollectedHeap::allocate_from_tlab(klass->alloc_gen=%d, thread_gen=%d, thread=%p, size="SIZE_FORMAT") ", klass.alloc_gen(), thread->alloc_gen(), thread, size);
 #endif
 
-  // <underscore> TODO - choose the correct TLAB. It might be necessary to create an additional generation!
   HeapWord* obj = klass.alloc_gen() ?
       thread->tlab_gen().allocate(size) : thread->tlab().allocate(size);
   if (obj != NULL) {
@@ -259,6 +254,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   if (gen != 0) {
     klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
     klass.set_as_hash(gen);
+    THREAD->set_alloc_gen(klass.alloc_gen());
   }
 #else
   klass.set_alloc_gen(gen);
@@ -293,6 +289,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   if (gen != 0) {
     klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
     klass.set_as_hash(gen);
+    THREAD->set_alloc_gen(klass.alloc_gen());
   }
 #else
   klass.set_alloc_gen(gen);
@@ -327,6 +324,7 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   if (gen != 0) {
     klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
     klass.set_as_hash(gen);
+    THREAD->set_alloc_gen(klass.alloc_gen());
   }
 #else
   klass.set_alloc_gen(gen);

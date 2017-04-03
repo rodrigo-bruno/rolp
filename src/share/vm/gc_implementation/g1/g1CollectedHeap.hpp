@@ -323,8 +323,6 @@ private:
   // survivor objects.
   SurvivorGCAllocRegion _survivor_gc_alloc_region;
 
-  // <underscore> By default gen allocation region.
-  GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
 
