@@ -2059,9 +2059,9 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
   
   // Note: Gen 0 corresponds to eden, avoid using it here.
-  _gen_alloc_regions->at_put(0, NULL);
-  for (int i = 1; i < _gen_alloc_regions->length(); i++) {
-    _gen_alloc_regions->at_put(i, new GenAllocRegion(i));
+  _gen_alloc_regions->append(NULL);
+  for (int i = 1; i < _gen_alloc_regions->max_length(); i++) {
+    _gen_alloc_regions->append(new GenAllocRegion(i));
   }
 }
 

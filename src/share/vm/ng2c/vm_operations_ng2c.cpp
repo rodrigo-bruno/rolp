@@ -77,8 +77,7 @@ NG2C_MergeAllocCounters::update_target_gen()
         // collection.
         memset(sav, 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
 
-#ifdef DEBUG_NG2C_PROF_VMOP
-        // Must be done prior to restarting the arr.
+#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
         gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash=%u target_gen=%u",
            p->literal()->hash(), *target_gen);
 #endif

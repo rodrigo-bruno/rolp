@@ -47,12 +47,6 @@ class NG2C_MergeAllocCounters : public VM_Operation
         Threads::threads_do(&mwt_cljr);
       }
 
-      // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
-      _total_update_target_gen++;
-      if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
-        update_target_gen();
-      }
-
 #ifdef DEBUG_NG2C_PROF_VMOP
       {
         MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
@@ -60,6 +54,12 @@ class NG2C_MergeAllocCounters : public VM_Operation
         hashtable->print_on(gclog_or_tty);
       }
 #endif
+
+      // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
+      _total_update_target_gen++;
+      if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
+        update_target_gen();
+      }
     }
 
   virtual bool doit_prologue();

@@ -796,7 +796,6 @@ jint Universe::initialize_heap() {
     g1p->initialize_all();
     G1CollectedHeap* g1h = new G1CollectedHeap(g1p);
     Universe::_collectedHeap = g1h;
-    g1h->print();
 #else  // INCLUDE_ALL_GCS
     fatal("UseG1GC not supported in java kernel vm.");
 #endif // INCLUDE_ALL_GCS
