@@ -398,6 +398,13 @@ CompactibleSpace* HeapRegion::next_compaction_space() const {
   return NULL;
 }
 
+void
+HeapRegion::enqueue_gen_cards() {
+  G1SATBCardTableModRefBS* ct_bs = (G1SATBCardTableModRefBS*)G1CollectedHeap::heap()->barrier_set();
+  ct_bs->g1_enqueue_mr(MemRegion(bottom(), end()));
+}
+
+
 void HeapRegion::save_marks() {
   set_saved_mark();
 }
@@ -571,7 +578,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     cur = next;
 // <underscore>
 #ifdef DEBUG_REM_SET
-    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful cur=["INTPTR_FORMAT"]", cur);
+    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful card_ptr=["INTPTR_FORMAT"] cur=["INTPTR_FORMAT"]", card_ptr, cur);
 #endif
 // </underscore>
 

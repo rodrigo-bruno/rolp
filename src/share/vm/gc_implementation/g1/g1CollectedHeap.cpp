@@ -6814,7 +6814,10 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
-  if (_gen && !_active_tlabs) { enqueue_gen_cards(); }
+  if (alloc_region->gen() && !alloc_region->get_active_tlabs()) {
+    G1SATBCardTableModRefBS* ct_bs = (G1SATBCardTableModRefBS*)G1CollectedHeap::heap()->barrier_set();
+    ct_bs->g1_enqueue_mr(MemRegion(alloc_region->bottom(), alloc_region->end()));
+  }
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [GenAllocRegion::retire_region] gen=%d, ttgc=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
     this->gen(), alloc_region->retired_gc_count(), this, alloc_region->bottom());

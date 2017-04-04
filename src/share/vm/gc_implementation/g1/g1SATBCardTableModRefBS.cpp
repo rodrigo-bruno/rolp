@@ -105,6 +105,14 @@ void G1SATBCardTableModRefBS::g1_mark_as_dirty(const MemRegion& mr) {
   memset(first, dirty_card, last - first);
 }
 
+void G1SATBCardTableModRefBS::g1_enqueue_mr(const MemRegion& mr) {
+  MutexLockerEx x(Shared_DirtyCardQ_lock, Mutex::_no_safepoint_check_flag);
+  DirtyCardQueue* sdcq = JavaThread::dirty_card_queue_set().shared_dirty_card_queue();
+  jbyte *const first = byte_for(mr.start());
+  jbyte *const last = byte_for(mr.last());
+  for (jbyte * p = first; p <= last; p++) sdcq->enqueue(p);
+}
+
 #ifndef PRODUCT
 void G1SATBCardTableModRefBS::verify_g1_young_region(MemRegion mr) {
   verify_region(mr, g1_young_gen,  true);
