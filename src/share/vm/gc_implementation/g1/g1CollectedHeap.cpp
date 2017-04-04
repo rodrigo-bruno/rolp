@@ -4876,10 +4876,6 @@ template <bool do_gen_barrier, G1Barrier barrier, bool do_mark_object>
 oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   ::copy_to_survivor_space(oop old) {
   HeapRegion* from_region = _g1->heap_region_containing_raw(old);
-#if DEBUG_REM_SET
-  gclog_or_tty->print_cr("<underscore> G1ParCopyClosure::copy_to_survivor_space region bottom=["INTPTR_FORMAT"] top=["INTPTR_FORMAT"] end=["INTPTR_FORMAT"]",
-    from_region->bottom(), from_region->top(), from_region->end());
-#endif
   size_t word_sz = old->size();
 
   // +1 to make the -1 indexes valid...

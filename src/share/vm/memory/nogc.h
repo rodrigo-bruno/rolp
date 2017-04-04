@@ -19,7 +19,6 @@
 #define DEBUG_ALLOC_REGION 0
 #define DEBUG_MINOR_CC 0
 #define DEBUG_PRINT_REGIONS 0
-#define DEBUG_REM_SET 0
 #define DEBUG_SEND_FREGIONS 0
 
 /**
