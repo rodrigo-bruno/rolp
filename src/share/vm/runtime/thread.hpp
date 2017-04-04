@@ -474,7 +474,7 @@ class Thread: public ThreadShadow {
 
   void make_gen_tlabs_parsable(bool retire_tlabs) {
       // Note: first position belongs to eden tlab.
-      for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+      for (unsigned int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
         _tlabGenArray[i]->make_parsable(retire_tlabs);
       }
   }
@@ -493,7 +493,7 @@ class Thread: public ThreadShadow {
   void initialize_gen_tlabs() {
     if (UseTLAB) {
       // Note: first position belongs to eden tlab.
-      for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+      for (unsigned int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
         _tlabGenArray[i]->initialize();
       }
     }

@@ -299,7 +299,7 @@ Thread::Thread() : _tlab(this) {
   _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtThread);
   memset(_tlabGenArray, 0, sizeof(ThreadLocalAllocBuffer*)*NG2C_GEN_ARRAY_SIZE);
   _tlabGenArray[0] = &_tlab;
-  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+  for (unsigned int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
     _tlabGenArray[i] = new ThreadLocalAllocBuffer(this);
   }
   // This will make old gen default for gen allocations.
@@ -344,7 +344,7 @@ void Thread::record_stack_base_and_size() {
 
 Thread::~Thread() {
   // <underscore> Free _tlabGenArray
-  for (int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+  for (unsigned int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
       delete _tlabGenArray[i];
   }
   FREE_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, _tlabGenArray, mtThread);

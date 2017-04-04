@@ -128,7 +128,7 @@ MethodBciHashtable::print_on(outputStream * st, const char * tag)
       st->print("[ng2c-vmop] <%s> hash=%u target_gen=%u [",
                 tag, p->literal()->hash(), *target_gen);
 
-      for (int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
+      for (unsigned int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
         st->print(INT64_FORMAT "; ", arr[k]);
 
       st->print_cr("]");
