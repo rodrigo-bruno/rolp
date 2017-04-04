@@ -1236,7 +1236,8 @@ void PhaseMacroExpand::expand_allocate_common(
 #ifdef DEBUG_C2
   gclog_or_tty->print_cr("[ng2c-c2] bci=%d, Method=%p GEN=%d ",
     alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
-  //alloc->jvms()->method()->print(gclog_or_tty);
+  alloc->jvms()->method()->print(gclog_or_tty);
+  gclog_or_tty->print_cr("");
 #endif
 // </underscore>
 
