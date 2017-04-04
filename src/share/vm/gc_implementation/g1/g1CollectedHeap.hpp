@@ -202,11 +202,13 @@ protected:
 public:
   // <underscore> We must force BOT updates because GenAllocRegions are not
   // (although but it can happen) scanned by the GC when a collection takes place.
-  GenAllocRegion(int gen = 0)
+  GenAllocRegion(int gen)
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen),
     _epoch(0),
-    _nregions(0) { }
+    _nregions(0) {
+      assert(gen != 0, "gen alloc region should not belong to gen 0");
+  }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }

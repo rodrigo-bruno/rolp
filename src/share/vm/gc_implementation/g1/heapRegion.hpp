@@ -371,8 +371,22 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void set_epoch(int epoch) { _epoch = epoch; }
   
   int get_active_tlabs() { return _active_tlabs; }
-  void add_active_tlab() { Atomic::inc(&_active_tlabs); }
-  void del_active_tlab() { Atomic::dec(&_active_tlabs); }
+  void add_active_tlab() {
+      Atomic::inc(&_active_tlabs);
+  }
+  void del_active_tlab() {
+      Atomic::dec(&_active_tlabs);
+      if (_gen && !_active_tlabs && !_is_gen_alloc_region) { enqueue_gen_cards(); }
+  }
+
+  void enqueue_gen_cards() {
+    MutexLockerEx x(Shared_DirtyCardQ_lock, Mutex::_no_safepoint_check_flag);
+    DirtyCardQueue* sdcq = JavaThread::dirty_card_queue_set().shared_dirty_card_queue();
+    CardTableModRefBS* ct_bs =(CardTableModRefBS*)G1CollectedHeap::heap()->barrier_set();
+    jbyte *const first = ct_bs->byte_for(this->bottom());
+    jbyte *const last = ct_bs->byte_for(this->end());
+    for (jbyte * p = first; p <= last; p++) sdcq->enqueue(p);
+  }
   // </underscore>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
