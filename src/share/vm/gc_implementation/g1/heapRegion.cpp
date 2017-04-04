@@ -513,7 +513,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   }
 
 // <underscore>
-#if DEBUG_REM_SET
+#ifdef DEBUG_REM_SET
   gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d active_tlabs=%d is_gc_active=%d ",
     gen(), is_gen_alloc_region(), get_active_tlabs(), g1h->is_gc_active());
 #endif
@@ -551,7 +551,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
 
   // <underscore> Avoid regions with active TLABs
   if (gen() != -1 && get_active_tlabs() > 0) {
-#if DEBUG_REM_SET
+#ifdef DEBUG_REM_SET
     gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d active_tlabs=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], mr.start=["INTPTR_FORMAT", mr.end=["INTPTR_FORMAT"]]",
       gen(), is_gen_alloc_region(), get_active_tlabs(), card_ptr, bottom(), top(), this->end(), start, end);
 #endif
@@ -570,7 +570,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   while (next <= start) {
     cur = next;
 // <underscore>
-#if DEBUG_REM_SET
+#ifdef DEBUG_REM_SET
     gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful cur=["INTPTR_FORMAT"]", cur);
 #endif
 // </underscore>
@@ -967,7 +967,7 @@ void HeapRegion::verify(VerifyOption vo,
   size_t object_num = 0;
 
 // <underscore>
-#if DEBUG_REM_SET
+#ifdef DEBUG_REM_SET
   if(gen() != -1) {
     gclog_or_tty->print_cr("<underscore> HeapRegion::verify gen=%d bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"]", gen(), bottom(), top(), end());
   }
@@ -976,7 +976,7 @@ void HeapRegion::verify(VerifyOption vo,
 
   while (p < top()) {
 // <underscore>
-#if DEBUG_REM_SET
+#ifdef DEBUG_REM_SET
   if(gen() != -1) {
     gclog_or_tty->print_cr("<underscore> HeapRegion::verify p=["INTPTR_FORMAT"] gen=%d bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"]", p, gen(), bottom(), top(), end());
   }

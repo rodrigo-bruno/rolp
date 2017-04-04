@@ -4,6 +4,5 @@ void
 NGenerationArray::update(uint age)
 {
   assert(age > 0, "update age should be > 0");
-  // TODO - this is not correct, it should be target_gen - age?
-  _array[age]++;
+  _array[age >= NG2C_GEN_ARRAY_SIZE ? NG2C_GEN_ARRAY_SIZE - 1 : age]++;
 }

@@ -109,7 +109,7 @@ MethodBciHashtable::get_target_gen(uint hash)
 unsigned int
 MethodBciHashtable::calculate_hash(Method * m, int bci)
 {
-  unsigned int hash = (unsigned int)AltHashing::murmur3_32(bci, (const jbyte*)m, sizeof(Method));
+  unsigned int hash = (unsigned int)AltHashing::murmur3_32(bci, (const jbyte*)m->constMethod(), sizeof(ConstMethod));
   return hash;
 }
 
