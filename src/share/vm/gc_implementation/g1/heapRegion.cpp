@@ -400,13 +400,20 @@ CompactibleSpace* HeapRegion::next_compaction_space() const {
 
 void
 HeapRegion::enqueue_gen_cards() {
-  verify();
   G1SATBCardTableModRefBS* ct_bs = (G1SATBCardTableModRefBS*)G1CollectedHeap::heap()->barrier_set();
   ct_bs->g1_enqueue_mr(MemRegion(bottom(), end()));
+  bot_update_all();
+}
+
+void
+HeapRegion::bot_update_all() {
   // Set in the BlockOffsetTable every object found
-  for (HeapWord * p = bottom(); p < end(); p += oop(p)->size()) {
-    
-  }
+  HeapWord * p = bottom();
+  while (p < end()) {
+    const size_t sz = oop(p)->size();
+    offsets()->alloc_block(p, sz);
+    p += oop(p)->size();
+  }    
 }
 
 
