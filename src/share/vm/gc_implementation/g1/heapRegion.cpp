@@ -519,13 +519,6 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     mr = mr.intersection(used_region());
   }
 
-// <underscore>
-#ifdef DEBUG_REM_SET
-  gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d active_tlabs=%d is_gc_active=%d ",
-    gen(), is_gen_alloc_region(), get_active_tlabs(), g1h->is_gc_active());
-#endif
-// </underscore>
-
    if (mr.is_empty()) return NULL;
 
 
@@ -556,13 +549,13 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   HeapWord* const start = mr.start();
   HeapWord* const end = mr.end();
 
-  // <underscore> Avoid regions with active TLABs
-  if (gen() != -1 && get_active_tlabs() > 0) {
 #ifdef DEBUG_REM_SET
-    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful avoided! gen=%d is_alloc_gen=%d active_tlabs=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], mr.start=["INTPTR_FORMAT", mr.end=["INTPTR_FORMAT"]]",
-      gen(), is_gen_alloc_region(), get_active_tlabs(), card_ptr, bottom(), top(), this->end(), start, end);
+  gclog_or_tty->print_cr("[ng2c-remset] oops_on_card_seq_iterate_careful gen=%d is_alloc_gen=%d active_tlabs=%d card_ptr=%p bottom=["INTPTR_FORMAT"], top=["INTPTR_FORMAT"], end=["INTPTR_FORMAT"], mr.start=["INTPTR_FORMAT", mr.end=["INTPTR_FORMAT"] %s",
+      gen(), is_gen_alloc_region(), get_active_tlabs(), card_ptr, bottom(), top(), this->end(), start, end, gen() > 0 && get_active_tlabs() > 0 ? "avoided!" : "");
 #endif
 
+  // <underscore> Avoid regions with active TLABs
+  if (gen() > 0 && get_active_tlabs() > 0) {
     return start;
   }
   
@@ -578,7 +571,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     cur = next;
 // <underscore>
 #ifdef DEBUG_REM_SET
-    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful card_ptr=["INTPTR_FORMAT"] cur=["INTPTR_FORMAT"]", card_ptr, cur);
+//    gclog_or_tty->print_cr("<underscore> HeapRegion::oops_on_card_seq_iterate_careful card_ptr=["INTPTR_FORMAT"] cur=["INTPTR_FORMAT"]", card_ptr, cur);
 #endif
 // </underscore>
 
