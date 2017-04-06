@@ -2063,6 +2063,11 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   for (int i = 1; i < _gen_alloc_regions->max_length(); i++) {
     _gen_alloc_regions->append(new GenAllocRegion(i));
   }
+  // Sanitize the NG2CPromotionThreshold
+  if (NG2CPromotionThreshold < 0.0 || NG2CPromotionThreshold > 1.0) {
+    NG2CPromotionThreshold = MAX2(MIN(NG2CPromotionThreshold, 1.0), 0.0);
+    warning("NG2CPromotionThreshold sanitized to %f", NG2CPromotionThreshold);
+  }
 }
 
 jint G1CollectedHeap::initialize() {
