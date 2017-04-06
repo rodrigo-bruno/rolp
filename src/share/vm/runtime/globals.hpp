@@ -3830,10 +3830,14 @@ class CommandLineFlags {
   product(bool, UseLockedTracing, false,                                    \
           "Use locked-tracing when doing event-based tracing")              \
                                                                             \
-  /* NG2C profiler flag */                                                      \
-  product(uintx, NG2CUpdateThreshold, 4,                                   \
+  /* NG2C profiler flag */                                                  \
+  product(uintx, NG2CUpdateThreshold, 4,                                    \
           "Sets the number of GC cycles required to update the "            \
           "target gen value.")                                              \
+                                                                            \
+  product(double, NG2CPromotionThreshold, 0.5,                              \
+          "Sets the threshold between number of promotions and "            \
+          "since the last update of the target generation.")                \
 
 /*
  *  Macros for factoring of globals

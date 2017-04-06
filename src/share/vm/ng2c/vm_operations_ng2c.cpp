@@ -67,7 +67,7 @@ NG2C_MergeAllocCounters::update_target_gen()
       for (unsigned int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *++arr;
         // TODO - if we exceed  NG2C_GEN_ARRAY_SIZE, then we need to create a new gen
         // TODO - replace .5 with constant (defined at launch time!)
-      if (promo_counter > *sav * .5) {
+      if (promo_counter > *sav * NG2CPromotionThreshold) {
 #ifdef NG2C_PROF_ALLOC
         Atomic::inc((volatile jint *)target_gen);
 #endif
