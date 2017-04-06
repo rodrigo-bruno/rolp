@@ -6818,6 +6818,9 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
 #ifndef DISABLE_NG2C_PROF_BOT_UPDATES
     alloc_region->bot_update_all();
 #endif
+#ifndef FORCE_NG2C_HR_VERIFY
+    alloc_region->verify();
+#endif
     G1SATBCardTableModRefBS* ct_bs = (G1SATBCardTableModRefBS*)G1CollectedHeap::heap()->barrier_set();
     ct_bs->g1_enqueue_mr(MemRegion(alloc_region->bottom(), alloc_region->end()));
   }
