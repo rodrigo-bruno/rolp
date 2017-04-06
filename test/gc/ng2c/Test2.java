@@ -14,7 +14,7 @@ public class Test2 {
     private static final int threads = 4;
     private static final int alloc_rate = 64; // x MB/s
     private static final int n_lists = 16;
-    private static final int max_lists_size = 1024;
+    private static final int max_lists_size = 2048;
 
     static class MyList extends LinkedList<ByteBuffer> {}
 

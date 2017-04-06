@@ -13,20 +13,24 @@ JVM_OPTS="$JVM_OPTS -XX:+PrintGCDateStamps"
 JVM_OPTS="$JVM_OPTS -Xloggc:/tmp/jvm.log"
 
 # Heap sizing options
-JVM_OPTS="$JVM_OPTS -Xms12g"
-JVM_OPTS="$JVM_OPTS -Xmx12g"
+JVM_OPTS="$JVM_OPTS -Xms6g"
+JVM_OPTS="$JVM_OPTS -Xmx6g"
 #JVM_OPTS="$JVM_OPTS -XX:NewSize=1g"
 #JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=1g"
 JVM_OPTS="$JVM_OPTS -XX:NewSize=256m"
 JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=256m"
 
+# Compressed Stuff
+JVM_OPTS="$JVM_OPTS -XX:-UseCompressedOops"
+JVM_OPTS="$JVM_OPTS -XX:-UseCompressedClassPointers"
+
 
 JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
 JVM_OPTS="$JVM_OPTS -XX:-ResizeTLAB"
-JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=64k"
+JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=16k"
 
-JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
-JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
+# JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
+# JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
 #JVM_OPTS="$JVM_OPTS -XX:InitialTenuringThreshold=15"
 #JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=4"
 
@@ -53,7 +57,7 @@ then
 	JVM_OPTS="$JVM_OPTS -XX:MaxGCPauseMillis=100"
 	JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
 	# Note: we use 32M heap regions for graphchi
-	JVM_OPTS="$JVM_OPTS -XX:G1HeapRegionSize=32m"
+	# JVM_OPTS="$JVM_OPTS -XX:G1HeapRegionSize=32m"
 	JVM_OPTS="$JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=10"
 	JVM_OPTS="$JVM_OPTS -XX:InitiatingHeapOccupancyPercent=50"
 	JVM_OPTS="$JVM_OPTS -XX:G1HeapWastePercent=25"
@@ -64,8 +68,12 @@ else
 	exit 1
 fi
 
+# <NG2C options>
+JVM_OPTS="$JVM_OPTS -XX:NG2CUpdateThreshold=2"
+
 # <Optional>
-JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
+# JVM_OPTS="$JVM_OPTS -XX:+G1TraceHeapRegionRememberedSet"
+# JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
 JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
 #-XX:+PrintCompilation
 #-XX:+G1SummarizeRSetStats
