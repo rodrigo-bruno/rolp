@@ -380,9 +380,9 @@ class HeapRegion: public G1OffsetTableContigSpace {
   }
 
   void enqueue_gen_cards();
+  void bot_update_all();
   // </underscore>
 
-  void bot_update_all();
 
   static size_t align_up_to_region_byte_size(size_t sz) {
     return (sz + (size_t) GrainBytes - 1) &

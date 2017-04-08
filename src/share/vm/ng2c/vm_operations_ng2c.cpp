@@ -59,15 +59,12 @@ NG2C_MergeAllocCounters::update_target_gen()
     MethodBciEntry * p = (MethodBciEntry*)hashtable->bucket(i);
 
     for (; p != NULL; p = p->next()) {
-      ngen_t * arr = p->literal()->array();
-      ngen_t * sav = arr;
       volatile long * target_gen = p->literal()->target_gen_addr();
-      long promo_counter = 0;
+      long promo_counter = p->literal()->array()[1];
+      long alloc_counter = p->literal()->array()[0];
 
-      for (unsigned int j = 1; j < NG2C_GEN_ARRAY_SIZE; j++) promo_counter += *++arr;
-        // TODO - if we exceed  NG2C_GEN_ARRAY_SIZE, then we need to create a new gen
-        // TODO - replace .5 with constant (defined at launch time!)
-      if (promo_counter > *sav * NG2CPromotionThreshold) {
+       // TODO - if we exceed  NG2C_GEN_ARRAY_SIZE, then we need to create a new gen
+      if (promo_counter > alloc_counter * NG2CPromotionThreshold) {
 #ifdef NG2C_PROF_ALLOC
         Atomic::inc((volatile jint *)target_gen);
 #endif
@@ -75,7 +72,7 @@ NG2C_MergeAllocCounters::update_target_gen()
         // ngen array. This is necessary because we need to know how many
         // objects (already allocated in the target gen) still survivo a
         // collection.
-        memset(sav, 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
+        memset(p->literal()->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
 
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
         gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash=%u target_gen=%u",
