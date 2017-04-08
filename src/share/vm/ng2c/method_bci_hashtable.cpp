@@ -30,8 +30,8 @@ MethodBciHashtable::add_entry(uint hash)
   Hashtable<NGenerationArray*, mtGC>::add_entry((hash_to_index(hash)), entry);
 
 #ifdef DEBUG_NG2C_PROF_TABLE
-  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry(method="INTPTR_FORMAT", bci=%d) -> [hash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT,
-                         m, bci, (intptr_t)hash, hash_to_index(hash), bucket(hash_to_index(hash)));
+  gclog_or_tty->print_cr("[ng2c-prof-table] add_entry hash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT,
+    (intptr_t)hash, hash_to_index(hash), bucket(hash_to_index(hash)));
 #endif
 
 Return:
