@@ -51,7 +51,9 @@ class NG2C_MergeAllocCounters : public VM_Operation
       {
         MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
 
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable>");
         hashtable->print_on(gclog_or_tty);
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable> done!");
       }
 #endif
 
@@ -60,6 +62,17 @@ class NG2C_MergeAllocCounters : public VM_Operation
       if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
         update_target_gen();
       }
+
+#ifdef DEBUG_NG2C_PROF_VMOP
+      {
+        MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
+
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable>");
+        hashtable->print_on(gclog_or_tty);
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable> done!");
+      }
+#endif
+
     }
 
   virtual bool doit_prologue();
