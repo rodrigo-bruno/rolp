@@ -1,4 +1,6 @@
-# include "ng2c/vm_operations_ng2c.hpp"
+#include "ng2c/vm_operations_ng2c.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1CollectorPolicy.hpp"
 
 uint   NG2C_MergeAllocCounters::_total_update_target_gen = 0;
 
@@ -54,31 +56,38 @@ void
 NG2C_MergeAllocCounters::update_target_gen()
 {
   MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
+  unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
+
+#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
+        gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> cur_tenuring_threshold=%u",
+           cur_tenuring_threshold);
+#endif
 
   for (int i = 0; i < hashtable->table_size(); i++) {
     MethodBciEntry * p = (MethodBciEntry*)hashtable->bucket(i);
 
     for (; p != NULL; p = p->next()) {
-      volatile long * target_gen = p->literal()->target_gen_addr();
-      long promo_counter = p->literal()->array()[1];
-      long alloc_counter = p->literal()->array()[0];
+      NGenerationArray * ngen_arr = p->literal();
+      volatile long * target_gen = ngen_arr->target_gen_addr();
+      long promo_counter = 0;
+      //for (unsigned int i = 1; i < NG2CUpdateThreshold; i++) promo_counter += ngen_arr->array()[i];
+      promo_counter = ngen_arr->array()[cur_tenuring_threshold];
+      long alloc_counter = ngen_arr->array()[0];
 
        // TODO - if we exceed  NG2C_GEN_ARRAY_SIZE, then we need to create a new gen
-      if (promo_counter > alloc_counter * NG2CPromotionThreshold) {
+       // TODO - make this 50 a constant somewhere!
+      if (cur_tenuring_threshold > 1 && alloc_counter > 50 && promo_counter > alloc_counter * NG2CPromotionThreshold) {
 #ifdef NG2C_PROF_ALLOC
         Atomic::inc((volatile jint *)target_gen);
 #endif
-        // Note: If we decide to change the target gen, we should clear the
-        // ngen array. This is necessary because we need to know how many
-        // objects (already allocated in the target gen) still survivo a
-        // collection.
-        memset(p->literal()->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
 
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
         gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash=%u target_gen=%u",
-           p->literal()->hash(), *target_gen);
+           ngen_arr->hash(), *target_gen);
 #endif
       }
+      // Note: we clean the arry to ensure that we look at a single time window.
+      memset(ngen_arr->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
     }
   }
 }
