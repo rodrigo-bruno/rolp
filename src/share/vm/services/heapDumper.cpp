@@ -571,6 +571,9 @@ void DumpWriter::write_objectID(oop o) {
     a = (address)o;
   } else {
     a = (address)o->mark()->hash();
+#if DUMP_IDENTITY_DEBUG
+    gclog_or_tty->print_cr("object ID =%d", (int) o->mark()->hash());
+#endif
   }
 #else
   address a = (address)o;

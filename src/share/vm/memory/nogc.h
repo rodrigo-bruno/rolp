@@ -26,5 +26,6 @@
 #define DEBUG_SEND_FREGIONS 0
 
 #define DUMP_IDENTITY 1
+#define DUMP_IDENTITY_DEBUG 1
 #endif	/* NOGC_H */
 
