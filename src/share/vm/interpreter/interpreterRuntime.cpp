@@ -204,9 +204,12 @@ int get_alloc_gen(ConstantPool* pool, Method* method, int bci, int n_dims = 0) {
       // situation there is no need to fix the bci. Only if they differ, we
       // should look into the size of make sure that both bcis are a match.
       int anno_bc_len = 0;
+
+#if !ASM_ANNOTATIONS
       for (int i = 0; i < n_dims; i++) {
           anno_bc_len += Bytecodes::length_for(Bytecodes::code_at(method, anno_bci + anno_bc_len));
       }
+#endif
 
 #if DEBUG_ANNO_ALLOC
       gclog_or_tty->print_cr("<underscore> target type for annotation = %u", anno_target);
@@ -317,8 +320,8 @@ IRT_ENTRY(void, InterpreterRuntime::newarray(JavaThread* thread, BasicType type,
 // <undescore>
   int alloc_gen = get_alloc_gen(method(thread)->constants(), method(thread), bci(thread), 1);
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d)",
-    thread, method(thread), bcp(thread), bci(thread));
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::newarray(thread=%p, method=%p, bcp=%u, bci=%d, gen=%d, size=%d)",
+    thread, method(thread), bcp(thread), bci(thread), alloc_gen, size);
 #endif
 // </undescore>
 
@@ -336,8 +339,8 @@ IRT_ENTRY(void, InterpreterRuntime::anewarray(JavaThread* thread, ConstantPool* 
 // <underscore>
   int alloc_gen = get_alloc_gen(pool, method(thread), bci(thread), 1);
 #if DEBUG_OBJ_ALLOC
-  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::anewarray(thread=%p, method=%p, bcp=%u, bci=%d)",
-    thread, method(thread), bcp(thread), bci(thread));
+  gclog_or_tty->print_cr("<underscore> InterpreterRuntime::anewarray(thread=%p, method=%p, bcp=%u, bci=%d, gen=%d, size=%d)",
+    thread, method(thread), bcp(thread), bci(thread), alloc_gen, size);
 #endif
 // </undescore>
 
