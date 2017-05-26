@@ -1,0 +1,9 @@
+#!/bin/bash
+
+JAVA_HOME=~/mercurial/jdk8/build/linux-x86_64-normal-server-release/jdk
+JAVA_EXE="$JAVA_HOME/bin/java"
+
+mdir=`dirname $0`
+source $mdir/ng2c-include
+
+$JAVA_EXE $JVM_OPTS $*
