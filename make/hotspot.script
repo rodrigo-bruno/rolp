@@ -190,6 +190,10 @@ case "$MODE" in
 	    emacs_gud_cmd="gdba"
 	    emacs_gud_args="--annotate=3"
 	    ;;
+            *GNU\ Emacs\ 2[4]*)
+            emacs_gud_cmd="gdb"
+            emacs_gud_args="-i=mi"
+            ;;
 	    *)
 		emacs_gud_cmd="gdb"
 		emacs_gud_args=
