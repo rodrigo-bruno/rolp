@@ -3828,7 +3828,11 @@ class CommandLineFlags {
           "Enable event-based tracing")                                     \
                                                                             \
   product(bool, UseLockedTracing, false,                                    \
-          "Use locked-tracing when doing event-based tracing")
+          "Use locked-tracing when doing event-based tracing")              \
+                                                                            \
+  product(ccstr, LAG1Classes, "",                                           \
+          "List of classes (comma-separated) to trace with locality-aware " \
+          "policies on the G1 GC.")
 
 /*
  *  Macros for factoring of globals

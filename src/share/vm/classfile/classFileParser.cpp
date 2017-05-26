@@ -61,6 +61,11 @@
 #include "utilities/array.hpp"
 #include "utilities/globalDefinitions.hpp"
 
+// LAP
+// <dpatricio>
+#include "lag1/container_map.hpp"
+
+
 // We generally try to create the oops directly when parsing, rather than
 // allocating temporary data structures and copying the bytes twice. A
 // temporary area is only needed when parsing utf8 entries in the constant
@@ -4219,6 +4224,17 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
   // Extended Class Redefinition)
   instanceKlassHandle this_klass (THREAD, preserve_this_klass);
   debug_only(this_klass->verify();)
+
+#ifdef LAG1
+  bool success = Universe::ct_map()->register_entry_or_null(this_klass());
+#ifdef LAG1_TRACE_CLASSES
+  if (success) {
+    gclog_or_tty->print_cr("[lap-trace] Registered class %s from ContainerMap with id " INT32_FORMAT,
+                           this_klass()->external_name(), this_klass()->ct_id());
+    Universe::ct_map()->print_klass_names(gclog_or_tty);
+  }
+#endif
+#endif
 
   // Clear class if no error has occurred so destructor doesn't deallocate it
   _klass = NULL;
