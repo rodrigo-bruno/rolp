@@ -1,19 +1,19 @@
-# include "bda/gen_map.hpp"
+# include "lag1/container_map.hpp"
 
 /**
  * Static members initialization
  */
 // uint
-// GenMap::_next_gen_id = GenMap::gen_zero;
-// GrowableArray<GenMap::GenEl*> *
-// GenMap::_bda_klass_names = new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenEl*>(0, true);
+// ContainerMap::_next_ct_id = ContainerMap::ct_zero;
+// GrowableArray<ContainerMap::ContainerEl*> *
+// ContainerMap::_bda_klass_names = new (ResourceObj::C_HEAP, mtGC) GrowableArray<ContainerEl*>(0, true);
 
 /**
  * Static functions definition
  */
 
 void
-GenMap::parse_from_string(const char * line, void (GenMap::* parse_line)(char*))
+ContainerMap::parse_from_string(const char * line, void (ContainerMap::* parse_line)(char*))
 {
   char buffer[256];
   char delimiter = ',';
@@ -38,7 +38,7 @@ GenMap::parse_from_string(const char * line, void (GenMap::* parse_line)(char*))
 }
 
 void
-GenMap::parse_from_line(char * line)
+ContainerMap::parse_from_line(char * line)
 {
   // Accept dots '.' and slashes '/' but not mixed.
   char delimiter;
@@ -66,42 +66,42 @@ GenMap::parse_from_line(char * line)
     str = NEW_C_HEAP_ARRAY(char, i + 1, mtGC);
     strcpy(str, buffer);
     // construct the object and push while shifting the next_region value
-    GenEl* el = new GenEl(str, _next_gen_id);
-    _next_gen_id++; // << region_shift;
-    _bda_klass_names->push(el);
+    ContainerEl* el = new ContainerEl(str, _next_ct_id);
+    _next_ct_id++; // << region_shift;
+    _klass_names->push(el);
   }
 }
 
 void
-GenMap::initialize()
+ContainerMap::initialize()
 {
-  _next_gen_id = GenMap::gen_start;
-  _bda_klass_names = new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenEl*>(0, true);
+  _next_ct_id = ContainerMap::ct_start;
+  _klass_names = new (ResourceObj::C_HEAP, mtGC) GrowableArray<ContainerEl*>(0, true);
   // Parse the launch parameter
-  parse_from_string(LAClasses, &GenMap::parse_from_line);
+  parse_from_string(LAG1Classes, &ContainerMap::parse_from_line);
 }
 
 bool
-GenMap::register_entry_or_null(Klass * k)
+ContainerMap::register_entry_or_null(Klass * k)
 {
   const char * klass_name = k->external_name();
-  int idx = bda_klass_names()->find((void*)klass_name, GenEl::equals_name);
+  int idx = klass_names()->find((void*)klass_name, ContainerEl::equals_name);
   if (idx >= 0) {
-    const GenEl * el  = bda_klass_names()->at(idx);
-    const uint gen_id = el->gen_id();
-    k->set_gen_id(gen_id);
+    const ContainerEl * el  = klass_names()->at(idx);
+    const uint ct_id = el->ct_id();
+    k->set_ct_id(ct_id);
     return true;
   } else {
-    k->set_gen_id(gen_zero);
+    k->set_ct_id(ct_zero);
     return false;
   }
 }
 
 void
-GenMap::print_klass_names(outputStream * ostream)
+ContainerMap::print_klass_names(outputStream * ostream)
 {
-  for (int i = 0; i < bda_klass_names()->length(); i++) {
-    const GenEl * el = bda_klass_names()->at(i);
-    ostream->print_cr("[lap-trace-debug] klass name: %s gen_id " INT32_FORMAT, el->klass_name(), el->gen_id() );
+  for (int i = 0; i < klass_names()->length(); i++) {
+    const ContainerEl * el = klass_names()->at(i);
+    ostream->print_cr("[lap-trace-debug] klass name: %s ct_id " INT32_FORMAT, el->klass_name(), el->ct_id() );
   }
 }
