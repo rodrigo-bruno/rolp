@@ -72,7 +72,9 @@ fi
 # JVM_OPTS="$JVM_OPTS -XX:NG2CUpdateThreshold=2"
 
 # <LAG1 options>
-JVM_OPTS="$JVM_OPTS -XX:LAG1Classes=Test2'$'MyList"
+JVM_OPTS="$JVM_OPTS -XX:LAG1Classes=Test2\$MyList"
+# (use this version with gud because of the way parameters are passed)
+# JVM_OPTS="$JVM_OPTS -XX:LAG1Classes=Test2'$'MyList"
 
 # <Optional>
 # JVM_OPTS="$JVM_OPTS -XX:+G1TraceHeapRegionRememberedSet"
