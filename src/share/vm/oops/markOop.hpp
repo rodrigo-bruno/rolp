@@ -326,6 +326,10 @@ class markOopDesc: public oopDesc {
     return (markOop) (tmp | (bias_epoch << epoch_shift) | (age << age_shift) | biased_lock_pattern);
   }
 
+  // LAP
+  // <dpatricio> TODO : put this in the enum above?
+  static int32_t lag1_mark_mask() { return 0x1 << (age_shift + age_bits); }
+
   // used to encode pointers during GC
   markOop clear_lock_bits() { return markOop(value() & ~lock_mask_in_place); }
 

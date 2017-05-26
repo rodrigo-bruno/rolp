@@ -153,6 +153,13 @@ ContainerMap * Universe::_ct_map = NULL;
 #endif
 unsigned int
 Universe::number_lag1_klasses() { return (unsigned int)ct_map()->number_klasses(); }
+#ifdef LAG1_DEBUG_INTERPRETER
+void
+Universe::lag1_debug_print_oop(oop o)
+{
+  gclog_or_tty->print_cr("[lag1-debug-interpreter] oop " INTPTR_FORMAT " initialized with header " INTPTR_FORMAT, (intptr_t)o, (uintptr_t)*(o->mark_addr()));
+}
+#endif
 // </dpatricio>
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };

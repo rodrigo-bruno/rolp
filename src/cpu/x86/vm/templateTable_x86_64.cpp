@@ -3504,6 +3504,20 @@ void TemplateTable::_new() {
     __ store_klass_gap(rax, rcx);  // zero klass gap for compressed oops
     __ store_klass(rax, rsi);      // store klass last
 
+#ifdef LAG1
+    Label no_lag1_bit;
+    // Do the test for a different-than-0 value on the klass ct field
+    __ cmpb(Address(rsi, Klass::ct_id_offset()), 0);
+    __ jcc(Assembler::zero, no_lag1_bit);
+    __ orq(Address(rax, oopDesc::mark_offset_in_bytes()), (int32_t)markOopDesc::lag1_mark_mask());
+#ifdef LAG1_DEBUG_INTERPRETER
+    __ push(rax);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Universe::lag1_debug_print_oop), rax);
+    __ pop(rax);
+#endif
+    __ bind(no_lag1_bit);
+#endif
+
     {
       SkipIfEqual skip(_masm, &DTraceAllocProbes, false);
       // Trigger dtrace event for fastpath

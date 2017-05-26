@@ -310,6 +310,9 @@ class Klass : public Metadata {
   static ByteSize modifier_flags_offset()        { return in_ByteSize(offset_of(Klass, _modifier_flags)); }
   static ByteSize layout_helper_offset()         { return in_ByteSize(offset_of(Klass, _layout_helper)); }
   static ByteSize access_flags_offset()          { return in_ByteSize(offset_of(Klass, _access_flags)); }
+  // LAP
+  // <dpatricio>
+  static ByteSize ct_id_offset()                 { return in_ByteSize(offset_of(Klass, _ct_id)); }
 
   // Unpacking layout_helper:
   enum {

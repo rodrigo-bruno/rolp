@@ -293,6 +293,9 @@ class Universe: AllStatic {
   // <dpatricio>
   static ContainerMap * ct_map() { return _ct_map; }
   static unsigned int number_lag1_klasses();
+#ifdef LAG1_DEBUG_INTERPRETER
+  static void lag1_debug_print_oop(oop p);
+#endif
   // </dpatricio>
 
   // table of same
