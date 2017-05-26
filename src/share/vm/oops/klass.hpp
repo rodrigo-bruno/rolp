@@ -176,6 +176,12 @@ class Klass : public Metadata {
   jbyte _modified_oops;             // Card Table Equivalent (YC/CMS support)
   jbyte _accumulated_modified_oops; // Mod Union Equivalent (CMS support)
 
+  // LAG1
+  // <dpatricio>
+  // Leave to the end to avoid messing with the klass structure
+  unsigned int _ct_id;
+  // </dpatricio>
+
   // Constructor
   Klass();
 
@@ -279,6 +285,12 @@ class Klass : public Metadata {
   void accumulate_modified_oops()        { if (has_modified_oops()) _accumulated_modified_oops = 1; }
   void clear_accumulated_modified_oops() { _accumulated_modified_oops = 0; }
   bool has_accumulated_modified_oops()   { return _accumulated_modified_oops == 1; }
+
+  // LAP
+  // <dpatricio>
+  void set_ct_id(unsigned int ct_id) { _ct_id = ct_id; }
+  unsigned int ct_id() const         { return _ct_id; }
+  // </dpatricio>
 
  protected:                                // internal accessors
   Klass* subklass_oop() const            { return _subklass; }

@@ -77,6 +77,9 @@
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
 #endif // INCLUDE_ALL_GCS
+// LAG1
+// <dpatricio>
+#include "lag1/container_map.hpp"
 
 // Known objects
 Klass* Universe::_boolArrayKlassObj                 = NULL;
@@ -141,6 +144,16 @@ size_t          Universe::_heap_capacity_at_last_gc;
 size_t          Universe::_heap_used_at_last_gc = 0;
 
 CollectedHeap*  Universe::_collectedHeap = NULL;
+
+// <dpatricio>
+#ifdef LAG1
+ContainerMap * Universe::_ct_map = new ContainerMap();
+#else
+ContainerMap * Universe::_ct_map = NULL;
+#endif
+unsigned int
+Universe::number_lag1_klasses() { return (unsigned int)ct_map()->number_klasses(); }
+// </dpatricio>
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };
 NarrowPtrStruct Universe::_narrow_klass = { NULL, 0, true };
@@ -635,6 +648,11 @@ jint universe_init() {
   GC_locker::lock();  // do not allow gc during bootstrapping
   JavaClasses::compute_hard_coded_offsets();
 
+#ifdef LAG1
+  // <dpatricio>
+  Universe::ct_map()->initialize();
+#endif
+  
   jint status = Universe::initialize_heap();
   if (status != JNI_OK) {
     return status;

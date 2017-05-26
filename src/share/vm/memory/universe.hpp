@@ -39,6 +39,9 @@
 
 class CollectedHeap;
 class DeferredObjAllocEvent;
+// LAG1
+// <dpatricio>
+class ContainerMap;
 
 
 // A helper class for caching a Method* when the user of the cache
@@ -212,6 +215,12 @@ class Universe: AllStatic {
   static size_t _heap_capacity_at_last_gc;
   static size_t _heap_used_at_last_gc;
 
+  // LAG1
+  // <dpatricio>
+  // The mapping for lag1 classes and containers
+  static ContainerMap * _ct_map;
+  // </dpatricio>
+  
   static jint initialize_heap();
   static void initialize_basic_type_mirrors(TRAPS);
   static void fixup_mirrors(TRAPS);
@@ -279,6 +288,12 @@ class Universe: AllStatic {
   static oop long_mirror()                  { return check_mirror(_long_mirror); }
   static oop short_mirror()                 { return check_mirror(_short_mirror); }
   static oop void_mirror()                  { return check_mirror(_void_mirror); }
+
+  // LAG1
+  // <dpatricio>
+  static ContainerMap * ct_map() { return _ct_map; }
+  static unsigned int number_lag1_klasses();
+  // </dpatricio>
 
   // table of same
   static oop _mirrors[T_VOID+1];
