@@ -1065,7 +1065,11 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
 // <underscore> Added alloc_gen to arguments and differentiated from the
 // alloc_gen == 0
 //---------------------------set_eden_pointers-------------------------
-void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen) {
+void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab, Node* &eden_top_adr, Node* &eden_end_adr,
+#ifdef LAP
+                                         Node * klass_node,
+#endif
+                                         int alloc_gen) {
   if (UseTLAB) {                // Private allocation: load from TLS
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
@@ -1081,10 +1085,15 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab,
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_TLAB)
+// #ifdef LAP
+//       Node * target_gen = make_load(ctrl, mem, klass_node, in_bytes(Klass::gen_id_byte_offset()), TypeLong::LONG, T_LONG);
+// #else
+// #endif
       volatile long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
+      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
+
       int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
       Node* tlab_offset = basic_mul_long(
           longcon((jlong)sizeof(ThreadLocalAllocBuffer*)),
           target_gen);
@@ -1318,7 +1327,11 @@ void PhaseMacroExpand::expand_allocate_common(
     Node* eden_end_adr;
     Node* gen_tlab_adr = NULL; // <underscore>
 
-    set_eden_pointers(ctrl, mem, gen_tlab_adr, eden_top_adr, eden_end_adr, alloc_gen);
+    set_eden_pointers(ctrl, mem, gen_tlab_adr, eden_top_adr, eden_end_adr,
+#ifdef LAP
+                      klass_node,
+#endif
+                      alloc_gen);
 
     // Load Eden::end.  Loop invariant and hoisted.
     //
@@ -1715,7 +1728,7 @@ void PhaseMacroExpand::expand_allocate_common(
 // Initializes the newly-allocated storage.
 Node*
 PhaseMacroExpand::initialize_object(AllocateNode* alloc,
-                                    Node* control, Node* rawmem, Node* object,
+                                    Node*& control, Node* rawmem, Node* object,
 #ifdef NG2C_PROF
                                     int ng2c_prof,
 #endif
@@ -1734,8 +1747,34 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_COUNTER)
+
+#ifdef LAP
+  enum { fall_in_path = 1, install_hash_path = 2 };
+  Node * lap_region = new (C) RegionNode(3);
+  Node * lap_phi_rawmem = new (C) PhiNode( lap_region, Type::MEMORY, TypeRawPtr::BOTTOM );
+  
+  Node * klass_gen = make_load(control, rawmem, klass_node, in_bytes(Klass::gen_id_byte_offset()), TypeInt::INT, T_INT);
+  Node * first_gen = intcon((jint)1);
+  Node * lap_gen_cmp = new (C) CmpINode(klass_gen, first_gen);
+  transform_later(lap_gen_cmp);
+  Node * lap_gen_bol = new (C) BoolNode(lap_gen_cmp, BoolTest::ge);
+  transform_later(lap_gen_bol);
+  IfNode * install_hash_iff = new (C) IfNode(control, lap_gen_bol, PROB_MIN, COUNT_UNKNOWN);
+  transform_later(install_hash_iff);
+
+  // True node
+  Node * install_hash_true = new (C) IfTrueNode(install_hash_iff);
+  transform_later(install_hash_true);
+  // False node
+  Node * install_hash_false = new (C) IfFalseNode(install_hash_iff);
+  transform_later(install_hash_false);
+
+  // Just to support the code below (with no-LAP)
+  control = install_hash_true;
+#endif
+
   uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
-  rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
+  Node * store_ng2c_hash = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
 
   // Allocation has been done thus we can incr the local count for the generation
   ngen_t * alloc_counter_adr = Universe::method_bci_hashtable()->get_alloc_slot(ng2c_prof);
@@ -1745,10 +1784,23 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
      ng2c_prof, prof_mask);
 #endif // DEBUG_NG2C_PROF_C2
 
-   Node * alloc_counter = make_load(control, rawmem, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, TypeLong::LONG, T_LONG);
+   Node * alloc_counter = make_load(control, store_ng2c_hash, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, TypeLong::LONG, T_LONG);
    Node * inc_count = new (C) AddLNode(alloc_counter, longcon((jlong)1));
   transform_later(inc_count);
-  rawmem = make_store(control, rawmem, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, inc_count, T_LONG);
+  store_ng2c_hash = make_store(control, store_ng2c_hash, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, inc_count, T_LONG);
+
+#ifdef LAP
+  lap_region->init_req(install_hash_path, install_hash_true);
+  lap_region->init_req(fall_in_path, install_hash_false);
+  lap_phi_rawmem->init_req(install_hash_path, store_ng2c_hash);
+  lap_phi_rawmem->init_req(fall_in_path, rawmem);
+  transform_later(lap_region);
+  transform_later(lap_phi_rawmem);
+
+  control = lap_region;
+  rawmem = lap_phi_rawmem;
+#endif
+  
 #endif // NG2C_PROF
   
   rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);

@@ -3,6 +3,7 @@
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
 
 uint   NG2C_MergeAllocCounters::_total_update_target_gen = 0;
+volatile jlong NG2C_MergeAllocCounters::_next_gen = 1;
 
 void
 NG2C_MergeWorkerThreads::do_thread(Thread * thread)
@@ -76,9 +77,16 @@ NG2C_MergeAllocCounters::update_target_gen()
 
        // TODO - if we exceed  NG2C_GEN_ARRAY_SIZE, then we need to create a new gen
        // TODO - make this 50 a constant somewhere!
-      if (cur_tenuring_threshold > 1 && alloc_counter > 50 && promo_counter > alloc_counter * NG2CPromotionThreshold) {
+      if (/*cur_tenuring_threshold > 1 &&*/ alloc_counter > 50 && promo_counter > alloc_counter * NG2CPromotionThreshold) {
 #ifdef NG2C_PROF_ALLOC
+#ifdef LAP
+        if (*target_gen == 0) {
+          Atomic::store(_next_gen + 1 >= NG2C_GEN_ARRAY_SIZE ? NG2C_GEN_ARRAY_SIZE - 1: _next_gen++,
+                        (volatile jlong *)target_gen);
+        }
+#else
         Atomic::inc((volatile jint *)target_gen);
+#endif
 #endif
 
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)

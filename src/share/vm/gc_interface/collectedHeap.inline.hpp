@@ -51,14 +51,24 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
   assert(obj != NULL, "NULL object pointer");
   if (UseBiasedLocking && (klass() != NULL)) {
 #ifdef NG2C_PROF
-    obj->set_mark(klass->prototype_header()->set_ng2c_prof(klass.as_hash()));
+#ifdef LAP
+    if (klass()->gen_id() < 1)
+      obj->set_mark(klass->prototype_header());
+    else
+#endif // LAP <dpatricio>
+      obj->set_mark(klass->prototype_header()->set_ng2c_prof(klass.as_hash()));
 #else
     obj->set_mark(klass->prototype_header());
 #endif
   } else {
     // May be bootstrapping
 #ifdef NG2C_PROF
-    obj->set_mark(markOopDesc::prototype()->set_ng2c_prof(klass.as_hash()));
+#ifdef LAP
+    if (klass()->gen_id() < 1)
+      obj->set_mark(klass->prototype_header());
+    else
+#endif // LAP <dpatricio>
+      obj->set_mark(markOopDesc::prototype()->set_ng2c_prof(klass.as_hash()));
 #else
     obj->set_mark(markOopDesc::prototype());
 #endif

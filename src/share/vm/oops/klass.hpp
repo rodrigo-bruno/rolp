@@ -176,6 +176,10 @@ class Klass : public Metadata {
   jbyte _modified_oops;             // Card Table Equivalent (YC/CMS support)
   jbyte _accumulated_modified_oops; // Mod Union Equivalent (CMS support)
 
+  // LAP
+  // <dpatricio>
+  unsigned long _gen_id;
+
   // Constructor
   Klass();
 
@@ -298,6 +302,10 @@ class Klass : public Metadata {
   static ByteSize modifier_flags_offset()        { return in_ByteSize(offset_of(Klass, _modifier_flags)); }
   static ByteSize layout_helper_offset()         { return in_ByteSize(offset_of(Klass, _layout_helper)); }
   static ByteSize access_flags_offset()          { return in_ByteSize(offset_of(Klass, _access_flags)); }
+  // LAP
+  // <dpatricio>
+  static ByteSize gen_id_byte_offset()           { return in_ByteSize(offset_of(Klass, _gen_id)); }
+  
 
   // Unpacking layout_helper:
   enum {
@@ -547,6 +555,11 @@ class Klass : public Metadata {
   void set_has_vanilla_constructor()    { _access_flags.set_has_vanilla_constructor(); }
   bool has_miranda_methods () const     { return access_flags().has_miranda_methods(); }
   void set_has_miranda_methods()        { _access_flags.set_has_miranda_methods(); }
+
+  // LAP
+  // <dpatricio>
+  void set_gen_id(unsigned long gen_id)          { _gen_id = gen_id; }
+  unsigned long gen_id() const                   { return _gen_id; }
 
   // Biased locking support
   // Note: the prototype header is always set up to be at least the

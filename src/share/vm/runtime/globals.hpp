@@ -3838,6 +3838,10 @@ class CommandLineFlags {
   product(double, NG2CPromotionThreshold, 0.5,                              \
           "Sets the threshold between number of promotions and "            \
           "since the last update of the target generation.")                \
+                                                                            \
+  /* Locality-Aware Policy flags */                                         \
+  product(ccstr, LAClasses, "",                                             \
+          "Classes that are subject to the Locality-Aware policies")        \
 
 /*
  *  Macros for factoring of globals

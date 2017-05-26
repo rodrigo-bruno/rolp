@@ -304,6 +304,7 @@ InstanceKlass::InstanceKlass(int vtable_len,
   set_initial_method_idnum(0);
   set_minor_version(0);
   set_major_version(0);
+
   NOT_PRODUCT(_verify_count = 0;)
 
   // initialize the non-header words to zero

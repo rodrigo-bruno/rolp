@@ -61,6 +61,14 @@
 #include "utilities/array.hpp"
 #include "utilities/globalDefinitions.hpp"
 
+// <dpatricio>
+// We need to include G1CollectedHeap
+#ifdef LAP
+#include "bda/gen_map.hpp"
+#endif
+
+
+
 // We generally try to create the oops directly when parsing, rather than
 // allocating temporary data structures and copying the bytes twice. A
 // temporary area is only needed when parsing utf8 entries in the constant
@@ -4211,6 +4219,17 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       }
     }
 
+#ifdef LAP
+    bool success = Universe::gen_map()->register_entry_or_null(this_klass());
+#ifdef LAP_TRACE_CLASSES
+    if (success) {
+      gclog_or_tty->print_cr("[lap-trace] Registered class %s from GenMap with id " INT32_FORMAT,
+                             this_klass()->external_name(), this_klass()->gen_id());
+      Universe::gen_map()->print_klass_names(gclog_or_tty);
+    }
+#endif
+#endif
+    
     // preserve result across HandleMark
     preserve_this_klass = this_klass();
   }

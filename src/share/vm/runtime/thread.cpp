@@ -296,12 +296,14 @@ Thread::Thread() : _tlab(this) {
 #endif /* ASSERT */
 
   // <underscore> NG2C tlab initialization.
-  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, NG2C_GEN_ARRAY_SIZE, mtThread);
-  memset(_tlabGenArray, 0, sizeof(ThreadLocalAllocBuffer*)*NG2C_GEN_ARRAY_SIZE);
-  _tlabGenArray[0] = &_tlab;
-  for (unsigned int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+  // <dpatricio> TODO: for the future, limit the creation of TLABs 
+  const unsigned int len = NG2C_GEN_ARRAY_SIZE;
+  _tlabGenArray = NEW_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, len, mtThread);
+  memset(_tlabGenArray, 0, sizeof(ThreadLocalAllocBuffer*)*len);
+  for (unsigned int i = 1; i < len; i++) {
     _tlabGenArray[i] = new ThreadLocalAllocBuffer(this);
   }
+  _tlabGenArray[0] = &_tlab;
   // This will make old gen default for gen allocations.
   set_alloc_gen(1);
   // This will make eden tlab the 'last used tlab'.
@@ -344,7 +346,9 @@ void Thread::record_stack_base_and_size() {
 
 Thread::~Thread() {
   // <underscore> Free _tlabGenArray
-  for (unsigned int i = 1; i < NG2C_GEN_ARRAY_SIZE; i++) {
+  // <dpatricio> TODO: consider limiting the number of TLABs 
+  const unsigned int len = NG2C_GEN_ARRAY_SIZE;
+  for (unsigned int i = 1; i < len; i++) {
       delete _tlabGenArray[i];
   }
   FREE_C_HEAP_ARRAY(ThreadLocalAllocBuffer*, _tlabGenArray, mtThread);

@@ -168,6 +168,10 @@ Klass::Klass() {
   set_subklass(NULL);
   set_next_sibling(NULL);
   set_next_link(NULL);
+#ifdef LAP
+  // <dpatricio>
+  set_gen_id(0);
+#endif
   TRACE_INIT_ID(this);
 
   set_prototype_header(markOopDesc::prototype());

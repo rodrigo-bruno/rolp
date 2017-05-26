@@ -30,6 +30,9 @@
 #include "utilities/growableArray.hpp"
 
 #include "ng2c/method_bci_hashtable.hpp"
+// LAP
+// <dpatricio>
+// #include "bda/gen_map.hpp"
 
 // Universe is a name space holding known system classes and objects in the VM.
 //
@@ -41,6 +44,7 @@
 
 class CollectedHeap;
 class DeferredObjAllocEvent;
+class GenMap;
 
 
 // A helper class for caching a Method* when the user of the cache
@@ -215,6 +219,10 @@ class Universe: AllStatic {
   static size_t _heap_used_at_last_gc;
 
   static MethodBciHashtable* _method_bci_hashtable;
+  // LAP
+  // <dpatricio>
+  // The mapping for bda classes and generations
+  static GenMap *            _gen_map;
 
   static jint initialize_heap();
   static void initialize_basic_type_mirrors(TRAPS);
@@ -342,6 +350,10 @@ class Universe: AllStatic {
   static CollectedHeap* heap() { return _collectedHeap; }
 
   static MethodBciHashtable* method_bci_hashtable()   { return _method_bci_hashtable; }
+  // LAP <dpatricio>
+  static GenMap * gen_map() { return _gen_map; }
+  // Helper to avoid circular dependecies
+  static unsigned int number_lap_gens();
 
   // For UseCompressedOops
   // Narrow Oop encoding mode:

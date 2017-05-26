@@ -66,7 +66,11 @@ private:
     return n;
   }
 
-  void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen);
+  void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr,
+#ifdef LAP
+                         Node * klass_node,
+#endif
+                         int alloc_gen);
   Node* make_load( Node* ctl, Node* mem, Node* base, Node* offset,
                    const Type* value_type, BasicType bt);
   Node* make_load( Node* ctl, Node* mem, Node* base, int offset,
@@ -116,7 +120,7 @@ private:
   void extract_call_projections(CallNode *call);
 
   Node* initialize_object(AllocateNode* alloc,
-                          Node* control, Node* rawmem, Node* object,
+                          Node*& control, Node* rawmem, Node* object,
 #ifdef NG2C_PROF
                           int ng2c_prof,
 #endif

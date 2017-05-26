@@ -77,6 +77,9 @@
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
 #endif // INCLUDE_ALL_GCS
+// LAP
+// <dpatricio>
+#include "bda/gen_map.hpp"
 
 // Known objects
 Klass* Universe::_boolArrayKlassObj                 = NULL;
@@ -144,9 +147,18 @@ CollectedHeap*  Universe::_collectedHeap = NULL;
 
 #ifdef NG2C_PROF
 MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_MAX_ALLOC_SITE);
+#ifdef LAP
+GenMap * Universe::_gen_map = new GenMap();
+#else
+GenMap * Universe::_gen_map = NULL;
+#endif
 #else
 MethodBciHashtable* Universe::_method_bci_hashtable   = NULL;
+GenMap *            Universe::_gen_map = NULL;
 #endif
+
+unsigned int
+Universe::number_lap_gens()  { return (unsigned int)gen_map()->number_lap_gens(); }
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };
 NarrowPtrStruct Universe::_narrow_klass = { NULL, 0, true };
@@ -641,6 +653,11 @@ jint universe_init() {
   GC_locker::lock();  // do not allow gc during bootstrapping
   JavaClasses::compute_hard_coded_offsets();
 
+#ifdef LAP
+  // <dpatricio>
+  Universe::gen_map()->initialize();
+#endif
+  
   jint status = Universe::initialize_heap();
   if (status != JNI_OK) {
     return status;

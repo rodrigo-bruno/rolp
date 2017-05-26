@@ -25,6 +25,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
  private:
   static uint   _total_update_target_gen;
+  static volatile jlong _next_gen;
 
   // TODO - this methods should be part of closures not the operation...
   void update_promotions(NGenerationArray * global, NGenerationArray * survivors);
