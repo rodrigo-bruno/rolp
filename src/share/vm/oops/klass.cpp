@@ -170,6 +170,12 @@ Klass::Klass() {
   set_next_link(NULL);
   TRACE_INIT_ID(this);
 
+  // <dpatricio>
+#ifdef LAG1
+  set_ct_id(0);
+#endif
+  // </dpatricio>
+
   set_prototype_header(markOopDesc::prototype());
   set_biased_lock_revocation_count(0);
   set_last_biased_lock_bulk_revocation_time(0);
