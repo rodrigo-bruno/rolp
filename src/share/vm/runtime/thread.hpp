@@ -61,6 +61,12 @@
 #endif
 #endif
 
+// <dpatricio>
+#ifdef LAG1
+# include "lag1/lag1_globals.hpp"
+#endif
+// </dpatricio>
+
 class ThreadSafepointState;
 class ThreadProfiler;
 
@@ -290,6 +296,17 @@ class Thread: public ThreadShadow {
   int _alloc_gen;
   // </underscore>
 
+  // <dpatricio>
+  // Thread-local data-parent buffer (TLDAB) area:
+  //   This buffer keeps the address to the object that represents a parent of
+  //   a relevant data-structure. A relevant data-structure is such whose children
+  //   (elements of the data-structure) will survive long enough and will be subject
+  //   to several reads/updates.
+  oop * _tldab;
+  unsigned long _tldab_alloc_idx;
+  // TODO: define max?
+  // </dpatricio>
+
   ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
   
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
@@ -481,6 +498,27 @@ class Thread: public ThreadShadow {
       }
   }
 // </underscore>
+
+  // <dpatricio>
+  // Thread-local data-strucuture parent buffer (TLDAB) support
+  // get the pointer to the start of the buffer
+  oop * tldab() const { return _tldab; }
+  // set the pointer to the start of the buffer
+  void  set_tldab(oop * buffer) { _tldab = buffer; }
+  // DEBUG_ONLY clears the tldab buffer
+  debug_only(void  clear_tldab() { memset((void*)_tldab, 0, MAX_DS_PARENT_BUFFER_SIZE * sizeof(oop)); })
+  // get a parent from the thread-local ds parent buffer
+  oop   tlp_at(juint idx) {
+    if(idx < MAX_DS_PARENT_BUFFER_SIZE)
+      return tldab()[idx];
+    else
+      return NULL;
+  }
+  // set the index for the next alloc'd ds parent
+  void  set_tldab_alloc_idx(unsigned long idx) { _tldab_alloc_idx = idx; }
+  // inc the index for the next alloc'd ds parent
+  void  inc_tldab_alloc_idx()          { _tldab_alloc_idx++; }
+  // </dpatricio>
 
   // Thread-Local Allocation Buffer (TLAB) support
   ThreadLocalAllocBuffer& tlab()                 { return _tlab; }
@@ -682,6 +720,8 @@ public:
   static ByteSize stack_size_offset()            { return byte_offset_of(Thread, _stack_size ); }
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
   static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
+  static ByteSize tldab_offset()                 { return byte_offset_of(Thread, _tldab ); } // <dpatricio>
+  static ByteSize tldab_idx_offset()             { return byte_offset_of(Thread, _tldab_alloc_idx ); } // <dpatricio>
 
   // <underscore> TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \

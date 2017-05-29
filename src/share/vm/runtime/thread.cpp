@@ -225,6 +225,13 @@ Thread::Thread() : _tlab(this), _tlabOld(this) {
   // below. It would crash...
   set_gen_tlabs(new (ResourceObj::C_HEAP, mtClass) GrowableArray<ThreadLocalAllocBuffer*>(16,true));
   // </underscore>
+  // <dpatricio>
+#ifdef LAG1
+  set_tldab(NEW_C_HEAP_ARRAY2(oopDesc*, MAX_DS_PARENT_BUFFER_SIZE, mtThread, CURRENT_PC));
+  debug_only(clear_tldab();)
+  set_tldab_alloc_idx(0);
+#endif
+  // </dpatricio>
   set_active_handles(NULL);
   set_free_handle_block(NULL);
   set_last_handle_mark(NULL);

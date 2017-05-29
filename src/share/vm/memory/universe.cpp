@@ -159,6 +159,11 @@ Universe::lag1_debug_print_oop(oop o)
 {
   gclog_or_tty->print_cr("[lag1-debug-interpreter] oop " INTPTR_FORMAT " initialized with header " INTPTR_FORMAT, (intptr_t)o, (uintptr_t)*(o->mark_addr()));
 }
+void
+Universe::lag1_debug_inc_thread_buffer(JavaThread * thread, void * buffer, void * idx)
+{
+  gclog_or_tty->print_cr("[lag1-debug-interpreter] thread " INTPTR_FORMAT " with buffer at " INTPTR_FORMAT " saved oop on idx " INTPTR_FORMAT, (intptr_t)thread, (intptr_t)buffer, (intptr_t)idx);
+}
 #endif
 // </dpatricio>
 

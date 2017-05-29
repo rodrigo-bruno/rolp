@@ -3371,6 +3371,7 @@ void TemplateTable::_new() {
 
   if (UseTLAB) {
     // <underscore>
+#ifndef LAG1
     __ get_method(rax);
     __ cmpptr(Address(rax, in_bytes(Method::alloc_anno_offset())), (int32_t)NULL_WORD);
     __ jcc(Assembler::equal, young_gen);
@@ -3413,6 +3414,7 @@ void TemplateTable::_new() {
     __ jmp(post_alloc);
     __ bind(young_gen);
     // </underscore>
+#endif
 
     __ movptr(rax, Address(r15_thread, in_bytes(JavaThread::tlab_top_offset())));
     __ lea(rbx, Address(rax, rdx, Address::times_1));
@@ -3420,7 +3422,9 @@ void TemplateTable::_new() {
     __ jcc(Assembler::above, allow_shared_alloc ? allocate_shared : slow_case);
     __ movptr(Address(r15_thread, in_bytes(JavaThread::tlab_top_offset())), rbx);
 
+#ifndef LAG1
     __ bind(post_alloc); // <underscore>
+#endif
     if (ZeroTLAB) {
       // the fields have been already cleared
       __ jmp(initialize_header);
@@ -3510,11 +3514,31 @@ void TemplateTable::_new() {
     __ cmpb(Address(rsi, Klass::ct_id_offset()), 0);
     __ jcc(Assembler::zero, no_lag1_bit);
     __ orq(Address(rax, oopDesc::mark_offset_in_bytes()), (int32_t)markOopDesc::lag1_mark_mask());
+
+    // Load the values (buffer and next idx) from the thread and store the oop there
+    __ movptr(rbx, Address(r15_thread, Thread::tldab_offset()));
+    __ movptr(rcx, Address(r15_thread, Thread::tldab_idx_offset()));
+    __ movptr(Address(rbx, rcx, Address::times_8), rax);
+
+#ifdef LAG1_DEBUG_INTERPRETER
+    __ push(rax);
+    __ push(rcx);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Universe::lag1_debug_inc_thread_buffer), r15_thread, rbx, rcx);
+    __ pop(rcx);
+    __ pop(rax);
+#endif
+
+    // Increment the idx on the thread-local buffer
+    __ increment(rcx);
+    __ movptr(Address(r15_thread, Thread::tldab_idx_offset()), rcx);
+
 #ifdef LAG1_DEBUG_INTERPRETER
     __ push(rax);
     __ call_VM_leaf(CAST_FROM_FN_PTR(address, Universe::lag1_debug_print_oop), rax);
     __ pop(rax);
 #endif
+
+    // Fall-through
     __ bind(no_lag1_bit);
 #endif
 
