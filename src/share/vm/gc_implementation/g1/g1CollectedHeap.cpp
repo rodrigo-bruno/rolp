@@ -58,6 +58,11 @@
 #include "runtime/vmThread.hpp"
 #include "utilities/ticks.hpp"
 
+// LAG1
+// <dpatricio>
+# include "lag1/lag1OopClosures.inline.hpp"
+// </dpatricio>
+
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 
 // turn it on so that the contents of the young list (scan-only /
@@ -1996,7 +2001,11 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   // <underscore> added initialization.
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
+#ifndef LAG1
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
+#else
+  _gen_alloc_regions(new GenLinkedQueue<GenAllocRegion*, mtGC>()),
+#endif
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
@@ -5224,6 +5233,18 @@ public:
 
       G1ParPushHeapRSClosure          push_heap_rs_cl(_g1h, &pss);
 
+      // <dpatricio>
+#ifdef LAG1
+      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, &pss);
+      Threads::lag1_oops_do(&scan_ds_cl);
+      // TODO: We iterate the followers here or do it everything in the
+      // LAG1ParMarkDSClosure ?
+      // LAG1ParMarkDSFollowersClosure     scan_ds_followers_cl(_g1h, &pss, _queues, &_terminator);
+      // scan_ds_followers_cl.do_void();
+      
+#endif
+      // </dpatricio>
+      
       // Don't scan the scavengable methods in the code cache as part
       // of strong root scanning. The code roots that point into a
       // region in the collection set are scanned when we scan the

@@ -44,6 +44,9 @@
 
 #include <sys/mman.h> // <underscore> - needed for madvise
 
+// LAG1 <dpatricio>
+#include "lag1/gen_set.inline.hpp"
+
 // A "G1CollectedHeap" is an implementation of a java heap for HotSpot.
 // It uses the "Garbage First" heap organization and algorithm, which
 // may combine concurrent marking with parallel, incremental compaction of
@@ -189,14 +192,23 @@ public:
 
 // <underscore>
 class GenAllocRegion : public G1AllocRegion {
+
+  // Such friendliness
+  template <class GenAllocRegion, MEMFLAGS F>
+  friend class GenLinkedQueue;
+  
     /* Generation identifier. */
     int _gen;
     /* Epoch identifier. */
     int _epoch;
     /* Number of regions allocated for the current epoch. */
     int _nregions;
+    /* For support on the LinkedQueue of GenAllocRegions */
+    GenAllocRegion * _next;
 protected:
 
+  void set_next(GenAllocRegion * next) { _next = next; }
+  
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
   virtual void retire_region(HeapRegion* alloc_region, size_t allocated_bytes);
 public:
@@ -216,6 +228,8 @@ public:
       _nregions = 0;
   }
   int get_n_regions() { return _nregions; }
+
+  GenAllocRegion * next() { return _next; }
 };
 // </underscore>
 
@@ -326,7 +340,11 @@ private:
   // <underscore> By default gen allocation region.
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
+#ifndef LAG1
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
+#else
+  GenLinkedQueue<GenAllocRegion*, mtGC> * _gen_alloc_regions;
+#endif
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
@@ -1365,7 +1383,11 @@ public:
   virtual void collect(GCCause::Cause cause);
 
   // <underscore> Getter for gen alloc regions array
+#ifndef LAG1
   GrowableArray<GenAllocRegion*>* gen_alloc_regions() { return _gen_alloc_regions; }
+#else
+  GenLinkedQueue<GenAllocRegion*, mtGC> * gen_alloc_regions() { return _gen_alloc_regions; }
+#endif
   // <underscore> Creates a new epoch in a specific generation.
   virtual void rebase_alloc_gen(int gen);
   // <underscore> Creates a new generation.
