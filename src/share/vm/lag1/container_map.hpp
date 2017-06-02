@@ -2,12 +2,14 @@
 #define SHARE_VM_LAG1_CONTAINER_MAP_HPP
 
 # include "memory/resourceArea.hpp"
+# include "utilities/hashtable.inline.hpp"
 
 class ResourceMark;
-
+class G1AllocRegion;
 
 /* The actual class that manages the mapping between ct ids and Klass objects. */
-class ContainerMap : public CHeapObj<mtGC> {
+class ContainerMap : public CHeapObj<mtGC>
+{
 
  private:
 
@@ -58,5 +60,74 @@ class ContainerMap : public CHeapObj<mtGC> {
   void print_klass_names(outputStream * ostream);
 
 };
+
+
+/* AllocRegionAddr is a class that saves the address of the alloc_region for a
+ * given container generation */
+class AllocRegionAddr : public CHeapObj<mtGC>
+{
+  friend class AllocRegionHashtable;
+  
+  G1AllocRegion * _alloc_region;
+  unsigned int    _hash;
+
+ public:
+  AllocRegionAddr(G1AllocRegion * alloc_region, uint hash) :
+    _alloc_region(alloc_region), _hash(hash) { }
+
+  G1AllocRegion * alloc_region() const { return _alloc_region; }
+  
+  // placeholders
+  unsigned int new_hash (int seed) {
+    assert(false, "new_hash called for AllocRegionAddr...");
+    return (unsigned int)0;
+  }
+  
+ protected:
+  unsigned int    hash()         const { return _hash; }
+};
+
+
+class AllocRegionEntry : public HashtableEntry<AllocRegionAddr*,mtGC>
+{
+ public:
+  // Literal
+  AllocRegionAddr *  alloc_region()      { return (AllocRegionAddr*)literal(); }
+  AllocRegionAddr ** alloc_region_addr() { return (AllocRegionAddr**)literal_addr(); }
+  
+  AllocRegionEntry * next() const {
+    return (AllocRegionEntry*)HashtableEntry<AllocRegionAddr*,mtGC>::next();
+  }
+  AllocRegionEntry * next_addr() {
+    return (AllocRegionEntry*)HashtableEntry<AllocRegionAddr*,mtGC>::next_addr();
+  }
+};
+
+
+class AllocRegionHashtable : public Hashtable<AllocRegionAddr*,mtGC>
+{
+
+ private:
+
+  /* Calculates an unique hash for the oop using as seed an atomically incremented counter,
+   * which by default is the _seed value */
+  static volatile int _seed;
+  static unsigned int calculate_hash(oop p);
+  
+ public:
+  
+  AllocRegionHashtable(int table_size);
+
+  /* Adds a new entry in the hashtable, using the less-significant 32 bits of the oop
+   * as the hash. */
+  intptr_t add_alloc_region(oop p, G1AllocRegion * alloc_region);
+
+  /* Gets an entry */
+  AllocRegionEntry * get_entry(uint hash);
+
+  /* Clears a falsely created entry due to eager pre-marking */
+  void clear_alloc_region(G1AllocRegion * alloc_region);
+};
+
 
 #endif // SHARE_VM_LAG1_CONTAINER_MAP_HPP

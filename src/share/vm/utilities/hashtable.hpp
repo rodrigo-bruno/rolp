@@ -39,7 +39,8 @@
 // %note:
 //  - TableEntrys are allocated in blocks to reduce the space overhead.
 
-
+// LAG1 <dpatricio>
+class AllocRegionAddr;
 
 template <MEMFLAGS F> class BasicHashtableEntry : public CHeapObj<F> {
   friend class VMStructs;
@@ -284,6 +285,8 @@ protected:
 
   static int literal_size(Symbol *symbol);
   static int literal_size(oop oop);
+  // <dpatricio> LAG1 :: placeholder
+  static int literal_size(AllocRegionAddr * alloc) { return 0; }
 
   // The following two are currently not used, but are needed anyway because some
   // C++ compilers (MacOS and Solaris) force the instantiation of

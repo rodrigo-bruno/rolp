@@ -1,9 +1,11 @@
 # include "lag1/container_map.hpp"
+# include "classfile/altHashing.hpp"
 
 /**
  * Static members initialization
  */
-// uint
+volatile int AllocRegionHashtable::_seed = 0;
+// int
 // ContainerMap::_next_ct_id = ContainerMap::ct_zero;
 // GrowableArray<ContainerMap::ContainerEl*> *
 // ContainerMap::_bda_klass_names = new (ResourceObj::C_HEAP, mtGC) GrowableArray<ContainerEl*>(0, true);
@@ -104,4 +106,46 @@ ContainerMap::print_klass_names(outputStream * ostream)
     const ContainerEl * el = klass_names()->at(i);
     ostream->print_cr("[lap-trace-debug] klass name: %s ct_id " INT32_FORMAT, el->klass_name(), el->ct_id() );
   }
+}
+
+/* AllocRegionHashtable */
+
+AllocRegionHashtable::AllocRegionHashtable(int table_size)
+  : Hashtable<AllocRegionAddr*,mtGC>(table_size, sizeof(AllocRegionEntry)) { }
+
+// TODO: Put the counter here?
+intptr_t
+AllocRegionHashtable::add_alloc_region(oop p, G1AllocRegion * alloc_region)
+{
+  uint hash = AllocRegionHashtable::calculate_hash(p);
+  AllocRegionAddr * alloc_region_addr = new AllocRegionAddr(alloc_region, hash);
+  
+  AllocRegionEntry * entry =
+    (AllocRegionEntry*)Hashtable<AllocRegionAddr*,mtGC>::new_entry(hash, alloc_region_addr);
+
+  assert (get_entry(hash) == NULL, "should exist none so far.");
+
+  Hashtable<AllocRegionAddr*,mtGC>::add_entry(hash_to_index(hash), entry);
+
+  return (intptr_t)alloc_region;
+}
+
+AllocRegionEntry*
+AllocRegionHashtable::get_entry(uint hash)
+{
+  AllocRegionEntry* entry = (AllocRegionEntry*)BasicHashtable<mtGC>::bucket(hash_to_index(hash));
+  while (entry->next() != NULL && entry->alloc_region()->hash() != hash) {
+    entry = entry->next();
+  }
+  return entry;
+}
+
+
+unsigned int
+AllocRegionHashtable::calculate_hash(oop p)
+{
+  Atomic::inc((volatile int*)&_seed);
+  // sizeof(oop) should be a size of pointer
+  unsigned int hash = (unsigned int)AltHashing::murmur3_32(_seed, (const jbyte *)p, sizeof(oop));
+  return hash;
 }
