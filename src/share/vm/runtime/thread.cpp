@@ -849,6 +849,13 @@ void Thread::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf)
   handle_area()->oops_do(f);
 }
 
+// LAG1
+// <dpatricio>
+void Thread::ds_buffer_oops_do(OopClosure * f) {
+  ShouldNotReachHere();
+}
+// </dpatricio>
+
 void Thread::nmethods_do(CodeBlobClosure* cf) {
   // no nmethods in a generic thread...
 }
@@ -2808,6 +2815,17 @@ void JavaThread::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure*
   }
 }
 
+// LAG1
+// <dpatricio>
+void JavaThread::ds_buffer_oops_do(OopClosure * f) {
+  for (uint i = 0; i < tldab_alloc_idx(); i++) {
+    f->do_oop((oop*)tlp_at(i));
+  }
+  // Reset the index
+  set_tldab_alloc_idx(0);
+}
+// </dpatricio>
+
 void JavaThread::nmethods_do(CodeBlobClosure* cf) {
   Thread::nmethods_do(cf);  // (super method is a no-op)
 
@@ -4177,6 +4195,15 @@ bool Threads::includes(JavaThread* p) {
 // is held by some other thread. (Note: the Safepoint abstraction also
 // uses the Threads_lock to gurantee this property. It also makes sure that
 // all threads gets blocked when exiting or starting).
+
+// LAG1
+// <dpatricio>
+void Threads::lag1_oops_do(OopClosure * f) {
+  ALL_JAVA_THREADS(p) {
+    p->ds_buffer_oops_do(f);
+  }
+}
+// </dpatricio>
 
 void Threads::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf) {
   ALL_JAVA_THREADS(p) {

@@ -302,7 +302,7 @@ class Thread: public ThreadShadow {
   //   a relevant data-structure. A relevant data-structure is such whose children
   //   (elements of the data-structure) will survive long enough and will be subject
   //   to several reads/updates.
-  oop * _tldab;
+  oop *         _tldab;
   unsigned long _tldab_alloc_idx;
   // TODO: define max?
   // </dpatricio>
@@ -501,6 +501,7 @@ class Thread: public ThreadShadow {
 
   // <dpatricio>
   // Thread-local data-strucuture parent buffer (TLDAB) support
+  //   TODO: Should we specialize all this to the JavaThread?
   // get the pointer to the start of the buffer
   oop * tldab() const { return _tldab; }
   // set the pointer to the start of the buffer
@@ -508,9 +509,9 @@ class Thread: public ThreadShadow {
   // DEBUG_ONLY clears the tldab buffer
   debug_only(void  clear_tldab() { memset((void*)_tldab, 0, MAX_DS_PARENT_BUFFER_SIZE * sizeof(oop)); })
   // get a parent from the thread-local ds parent buffer
-  oop   tlp_at(juint idx) {
+  oop * tlp_at(juint idx) {
     if(idx < MAX_DS_PARENT_BUFFER_SIZE)
-      return tldab()[idx];
+      return &_tldab[idx];
     else
       return NULL;
   }
@@ -518,6 +519,16 @@ class Thread: public ThreadShadow {
   void  set_tldab_alloc_idx(unsigned long idx) { _tldab_alloc_idx = idx; }
   // inc the index for the next alloc'd ds parent
   void  inc_tldab_alloc_idx()          { _tldab_alloc_idx++; }
+  // get the current idx of next alloc'd ds parent
+  juint tldab_alloc_idx() const        { return _tldab_alloc_idx; }
+  // GC support: 
+  //   The Threads set calls the oops_do for each thread. In turn, each
+  //   thread provides the TLDAB to the GC worker to work out the closure.
+  //   The closure will mark the object with an unique id for the container gen
+  //   and will push its followers onto the queue for later processing.
+  //   This is virtual so that other specialization of threads (JavaThread, mostly)
+  //   can implement this while others don't need to.
+  virtual void ds_buffer_oops_do(OopClosure * f);
   // </dpatricio>
 
   // Thread-Local Allocation Buffer (TLAB) support
@@ -1535,6 +1546,11 @@ class JavaThread: public Thread {
   // Memory operations
   void oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf);
 
+  // LAG1
+  // <dpatricio>
+  void ds_buffer_oops_do(OopClosure * f);
+  // </dpatricio>
+
   // Sweeper operations
   void nmethods_do(CodeBlobClosure* cf);
 
@@ -2026,6 +2042,11 @@ class Threads: AllStatic {
   // Garbage collection
   static void follow_other_roots(void f(oop*));
 
+  // LAG1
+  // <dpatricio>
+  static void lag1_oops_do(OopClosure * f);
+  // </dpatricio>
+  
   // Apply "f->do_oop" to all root oops in all threads.
   // This version may only be called by sequential code.
   static void oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf);
