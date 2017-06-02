@@ -637,6 +637,18 @@ inline bool oopDesc::cas_forward_to(oop p, markOop compare) {
   return cas_set_mark(m, compare) == compare;
 }
 
+// LAG1
+// <dpatricio>
+inline bool oopDesc::cas_claim_oop() {
+  assert(mark()->is_lag1_tagged(), "claiming something that was not tagged");
+  markOop oldMark = mark();
+  markOop newMark = markOopDesc::encode_mark_as_claimed(oldMark);
+
+  if (oldMark->lag1_claimed()) return false;
+  return cas_set_mark(newMark, oldMark) == oldMark;
+}
+// </dpatricio>
+
 // Note that the forwardee is not the same thing as the displaced_mark.
 // The forwardee is used when copying during scavenge and mark-sweep.
 // It does need to clear the low two locking- and GC-related bits.

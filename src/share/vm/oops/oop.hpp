@@ -311,6 +311,10 @@ class oopDesc {
   void forward_to(oop p);
   bool cas_forward_to(oop p, markOop compare);
 
+  // LAG1
+  // <dpatricio>
+  bool cas_claim_oop();
+
 #if INCLUDE_ALL_GCS
   // Like "forward_to", but inserts the forwarding pointer atomically.
   // Exactly one thread succeeds in inserting the forwarding pointer, and

@@ -123,8 +123,10 @@ class markOopDesc: public oopDesc {
          biased_lock_shift        = lock_bits,
          age_shift                = lock_bits + biased_lock_bits,
          cms_shift                = age_shift + age_bits,
+         lag1_tag_shift           = cms_shift, // <dpatricio>
          hash_shift               = cms_shift + cms_bits,
-         epoch_shift              = hash_shift
+         epoch_shift              = hash_shift,
+         lag1_claimed_shift       = hash_shift + hash_bits // <dpatricio>
   };
 
   enum { lock_mask                = right_n_bits(lock_bits),
@@ -134,6 +136,8 @@ class markOopDesc: public oopDesc {
          biased_lock_bit_in_place = 1 << biased_lock_shift,
          age_mask                 = right_n_bits(age_bits),
          age_mask_in_place        = age_mask << age_shift,
+         lag1_tag_bit_in_place    = 1 << lag1_tag_shift, // <dpatricio>
+         lag1_claim_bit_in_place  = (address_word)1 << lag1_claimed_shift, // <dpatricio> 
          epoch_mask               = right_n_bits(epoch_bits),
          epoch_mask_in_place      = epoch_mask << epoch_shift,
          cms_mask                 = right_n_bits(cms_bits),
@@ -327,9 +331,15 @@ class markOopDesc: public oopDesc {
   }
 
   // LAP
-  // <dpatricio> TODO : put this in the enum above?
-  static int32_t lag1_mark_mask() { return 0x1 << (age_shift + age_bits); }
-
+  // <dpatricio>
+  static uintptr_t lag1_tag_bit()    { return (uintptr_t)markOopDesc::lag1_tag_bit_in_place; }
+  static uintptr_t lag1_claim_mask() { return (lag1_tag_bit() | lag1_claim_bit_in_place); }
+  static markOop  encode_mark_as_claimed(markOop m)
+    { return markOop(mask_bits((uintptr_t)m, ~lag1_tag_bit()) | lag1_claim_mask()); }
+  bool lag1_claimed() { return mask_bits_are_true(value(), lag1_claim_mask()); }
+  bool is_lag1_tagged() { return mask_bits_are_true(value(), (intptr_t)lag1_tag_bit()); }
+  // </dpatricio>
+  
   // used to encode pointers during GC
   markOop clear_lock_bits() { return markOop(value() & ~lock_mask_in_place); }
 
