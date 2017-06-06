@@ -2,6 +2,9 @@
 #define SHARE_VM_LAG1_LAG1OOPCLOSURES_INLINE_HPP
 
 # include "lag1/lag1OopClosures.hpp"
+# include "lag1/container_map.hpp"
+
+class GenAllocRegion;
 
 template <class T>
 inline void LAG1ParMarkDSClosure::do_oop_work(T * p)
@@ -31,11 +34,26 @@ inline void LAG1ParMarkDSClosure::do_oop_work(T * p)
                              (intptr_t)obj, (intptr_t)obj->mark());
 #endif
       // Create new alloc region
+      GenAllocRegion * ct_alloc_region = _g1->new_container_gen();
+      // Add the hashed address of the parent and the ct_alloc_region to the hashtable
+      _g1->ct_alloc_hashtable()->add_alloc_region(obj, ct_alloc_region);
+      // TODO: Use the mark below to install on the hashtable or let the calculate hash
+      // do its thing?
       
+      // Calculate a 32bit offset to the ct_alloc_region from the end of the reserved part
+      // of the Java heap
+      uintptr_t mark = calculate_offset(ct_alloc_region);
       
-      // Set the id of this parent (on the global table and on the header)
-      // _g1->alloc_region_hashtable()->add_alloc_region(obj);
-      // Push the contents to a queue to be subject to the same treatment  
+      // Now put the address of the alloc_region in the header.
+      // No need to cas, the object should be owned by this thread
+      obj->install_allocr(mark);
+#ifdef LAG1_DEBUG_TRACING
+      gclog_or_tty->print_cr("[lag1-debug-tracing] oop " INTPTR_FORMAT
+                             " is claimed, mark is "INTPTR_FORMAT,
+                             (intptr_t)obj, (intptr_t)obj->mark());
+#endif
+      
+      // Push the contents to a queue to be subject to the same treatment 
     }
   }
 }

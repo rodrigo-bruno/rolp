@@ -78,6 +78,8 @@ class G1OldTracer;
 class EvacuationFailedInfo;
 class nmethod;
 class Ticks;
+// <dpatricio>
+class AllocRegionHashtable;
 
 typedef OverflowTaskQueue<StarTask, mtGC>         RefToScanQueue;
 typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
@@ -218,7 +220,8 @@ public:
   : G1AllocRegion("Gen GC Alloc Region", true /* bot_updates */) , 
     _gen(gen),
     _epoch(0),
-    _nregions(0) { }
+    _nregions(0),
+    _next(NULL) { }
 
   int gen() { return _gen; }
   void set_gen(int gen) { _gen = gen; }
@@ -343,8 +346,11 @@ private:
 #ifndef LAG1
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
 #else
+  // <dpatricio>
   GenLinkedQueue<GenAllocRegion*, mtGC> * _gen_alloc_regions;
 #endif
+  // A hashtable that saves the alloc_region for new containers
+  AllocRegionHashtable * _ct_alloc_region_hashtable;
 
   // PLAB sizing policy for survivors.
   PLABStats _survivor_plab_stats;
@@ -1388,6 +1394,11 @@ public:
 #else
   GenLinkedQueue<GenAllocRegion*, mtGC> * gen_alloc_regions() { return _gen_alloc_regions; }
 #endif
+  // <dpatricio> Getter for the hashtable of container alloc regions
+  AllocRegionHashtable * ct_alloc_hashtable() const { return _ct_alloc_region_hashtable; }
+  // <dpatricio> Creates a new container gen
+  // (similar to new_alloc_gen, but returns a GenAllocRegion *) -- why virtual?
+  virtual GenAllocRegion * new_container_gen();
   // <underscore> Creates a new epoch in a specific generation.
   virtual void rebase_alloc_gen(int gen);
   // <underscore> Creates a new generation.

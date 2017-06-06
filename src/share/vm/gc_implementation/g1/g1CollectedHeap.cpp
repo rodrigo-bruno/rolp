@@ -2005,6 +2005,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
 #else
   _gen_alloc_regions(new GenLinkedQueue<GenAllocRegion*, mtGC>()),
+  _ct_alloc_region_hashtable(new AllocRegionHashtable(2048)),
 #endif
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
@@ -7191,6 +7192,23 @@ jint G1CollectedHeap::new_alloc_gen() {
   _gen_alloc_regions->push(new_gen);
   assert(new_gen == _gen_alloc_regions->at(gen), "Last gen alloc should be the new one.");
   return gen;
+}
+
+/* A variation of the G1CollectedHeap::new_alloc_gen() the returns the pointer
+ * to the alloc_gen (now termed container_gen) instead. */
+GenAllocRegion *
+G1CollectedHeap::new_container_gen() {
+  MutexLockerEx ml(HeapGen_lock);
+
+  int gen = _gen_alloc_regions->length();
+#ifdef LAG1_DEBUG_NEW_CONTAINER
+  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with id = " INT32_FORATM, gen);
+#endif
+  GenAllocRegion * new_gen = new GenAllocRegion(gen);
+  new_gen->init();
+  _gen_alloc_regions->push(new_gen);
+  assert(new_gen == _gen_alloc_regions->at(gen), "last container gen should be the new one");
+  return new_gen;
 }
 
 void G1CollectedHeap::collect_alloc_gen(jint gen) {
