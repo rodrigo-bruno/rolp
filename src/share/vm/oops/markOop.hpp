@@ -114,7 +114,8 @@ class markOopDesc: public oopDesc {
          max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits,
          hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits,
          cms_bits                 = LP64_ONLY(1) NOT_LP64(0),
-         epoch_bits               = 2
+         epoch_bits               = 2,
+         lag1_offset_bits         = 32
   };
 
   // The biased locking code currently requires that the age bits be
@@ -126,7 +127,8 @@ class markOopDesc: public oopDesc {
          lag1_tag_shift           = cms_shift, // <dpatricio>
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift,
-         lag1_claimed_shift       = hash_shift + hash_bits // <dpatricio>
+         lag1_claimed_shift       = hash_shift + hash_bits, // <dpatricio>
+         lag1_offset_shift        = lag1_offset_bits // <dpatricio>
   };
 
   enum { lock_mask                = right_n_bits(lock_bits),
@@ -136,6 +138,7 @@ class markOopDesc: public oopDesc {
          biased_lock_bit_in_place = 1 << biased_lock_shift,
          age_mask                 = right_n_bits(age_bits),
          age_mask_in_place        = age_mask << age_shift,
+         lag1_offset_mask         = right_n_bits(lag1_offset_bits),
          lag1_tag_bit_in_place    = 1 << lag1_tag_shift, // <dpatricio>
          lag1_claim_bit_in_place  = (address_word)1 << lag1_claimed_shift, // <dpatricio> 
          epoch_mask               = right_n_bits(epoch_bits),
@@ -151,6 +154,9 @@ class markOopDesc: public oopDesc {
   // Alignment of JavaThread pointers encoded in object header required by biased locking
   enum { biased_lock_alignment    = 2 << (epoch_shift + epoch_bits)
   };
+
+  const static uintptr_t lag1_offset_mask_in_place =
+                                         (address_word)lag1_offset_mask << lag1_offset_shift;
 
 #ifdef _WIN64
     // These values are too big for Win64
@@ -334,8 +340,11 @@ class markOopDesc: public oopDesc {
   // <dpatricio>
   static uintptr_t lag1_tag_bit()    { return (uintptr_t)markOopDesc::lag1_tag_bit_in_place; }
   static uintptr_t lag1_claim_mask() { return (lag1_tag_bit() | lag1_claim_bit_in_place); }
-  static markOop  encode_mark_as_claimed(markOop m)
+  static markOop encode_mark_as_claimed(markOop m)
     { return markOop(mask_bits((uintptr_t)m, ~lag1_tag_bit()) | lag1_claim_mask()); }
+  static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
+    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_mask_in_place) |
+                     (p << lag1_offset_shift)); }
   bool lag1_claimed() { return mask_bits_are_true(value(), lag1_claim_mask()); }
   bool is_lag1_tagged() { return mask_bits_are_true(value(), (intptr_t)lag1_tag_bit()); }
   // </dpatricio>

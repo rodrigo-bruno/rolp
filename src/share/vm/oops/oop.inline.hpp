@@ -647,6 +647,13 @@ inline bool oopDesc::cas_claim_oop() {
   if (oldMark->lag1_claimed()) return false;
   return cas_set_mark(newMark, oldMark) == oldMark;
 }
+inline void oopDesc::install_allocr(uintptr_t p) {
+  assert(mark()->lag1_claimed(), "oop should be singular to this thread");
+  volatile markOop oldMark = mark();
+  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, p);
+  set_mark(newMark);
+  assert(mark()->is_unlocked(), "oop should still be unlocked for promotion");
+}
 // </dpatricio>
 
 // Note that the forwardee is not the same thing as the displaced_mark.
