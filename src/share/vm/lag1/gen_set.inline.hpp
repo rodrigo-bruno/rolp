@@ -52,7 +52,7 @@ inline E
 GenLinkedQueue<E, F>::at(int pos)
 {
   GenSetIterator<E, F> it = iterator();
-  for (int i = 0; i < pos; ++it);
+  for (int i = 0; i < pos; ++it, ++i);
   return *it;
 }
 
