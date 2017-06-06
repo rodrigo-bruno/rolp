@@ -114,7 +114,7 @@ AllocRegionHashtable::AllocRegionHashtable(int table_size)
   : Hashtable<AllocRegionAddr*,mtGC>(table_size, sizeof(AllocRegionEntry)) { }
 
 // TODO: Put the counter here?
-intptr_t
+uintptr_t
 AllocRegionHashtable::add_alloc_region(oop p, G1AllocRegion * alloc_region)
 {
   uint hash = AllocRegionHashtable::calculate_hash(p);
@@ -127,15 +127,15 @@ AllocRegionHashtable::add_alloc_region(oop p, G1AllocRegion * alloc_region)
 
   Hashtable<AllocRegionAddr*,mtGC>::add_entry(hash_to_index(hash), entry);
 
-  return (intptr_t)alloc_region;
+  return (uintptr_t)alloc_region;
 }
 
 AllocRegionEntry*
 AllocRegionHashtable::get_entry(uint hash)
 {
   AllocRegionEntry* entry = (AllocRegionEntry*)BasicHashtable<mtGC>::bucket(hash_to_index(hash));
-  while (entry->next() != NULL && entry->alloc_region()->hash() != hash) {
-    entry = entry->next();
+  while (entry != NULL && entry->alloc_region()->hash() != hash) {
+      entry = entry->next();
   }
   return entry;
 }

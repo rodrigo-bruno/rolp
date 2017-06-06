@@ -120,7 +120,7 @@ class AllocRegionHashtable : public Hashtable<AllocRegionAddr*,mtGC>
 
   /* Adds a new entry in the hashtable, using the less-significant 32 bits of the oop
    * as the hash. */
-  intptr_t add_alloc_region(oop p, G1AllocRegion * alloc_region);
+  uintptr_t add_alloc_region(oop p, G1AllocRegion * alloc_region);
 
   /* Gets an entry */
   AllocRegionEntry * get_entry(uint hash);
