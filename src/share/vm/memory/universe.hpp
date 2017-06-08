@@ -295,7 +295,7 @@ class Universe: AllStatic {
   static unsigned int number_lag1_klasses();
 #ifdef LAG1_DEBUG_INTERPRETER
   static void lag1_debug_print_oop(oop p);
-  static void lag1_debug_inc_thread_buffer(JavaThread * thread, void * buffer, void * idx);
+  static void lag1_debug_inc_thread_buffer(JavaThread * thread, void * oop, int idx);
 #endif
   // </dpatricio>
 

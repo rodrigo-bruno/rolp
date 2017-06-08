@@ -3523,7 +3523,7 @@ void TemplateTable::_new() {
 #ifdef LAG1_DEBUG_INTERPRETER
     __ push(rax);
     __ push(rcx);
-    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Universe::lag1_debug_inc_thread_buffer), r15_thread, rbx, rcx);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Universe::lag1_debug_inc_thread_buffer), r15_thread, rax, rcx);
     __ pop(rcx);
     __ pop(rax);
 #endif
