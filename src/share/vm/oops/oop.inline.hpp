@@ -640,7 +640,6 @@ inline bool oopDesc::cas_forward_to(oop p, markOop compare) {
 // LAG1
 // <dpatricio>
 inline bool oopDesc::cas_claim_oop() {
-  assert(mark()->is_lag1_tagged(), "claiming something that was not tagged");
   markOop oldMark = mark();
   markOop newMark = markOopDesc::encode_mark_as_claimed(oldMark);
 

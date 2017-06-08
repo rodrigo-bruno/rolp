@@ -124,10 +124,9 @@ class markOopDesc: public oopDesc {
          biased_lock_shift        = lock_bits,
          age_shift                = lock_bits + biased_lock_bits,
          cms_shift                = age_shift + age_bits,
-         lag1_tag_shift           = cms_shift, // <dpatricio>
+         lag1_claimed_shift       = cms_shift, // <dpatricio>
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift,
-         lag1_claimed_shift       = hash_shift + hash_bits, // <dpatricio>
          lag1_offset_shift        = lag1_offset_bits // <dpatricio>
   };
 
@@ -138,9 +137,8 @@ class markOopDesc: public oopDesc {
          biased_lock_bit_in_place = 1 << biased_lock_shift,
          age_mask                 = right_n_bits(age_bits),
          age_mask_in_place        = age_mask << age_shift,
-         lag1_offset_mask         = right_n_bits(lag1_offset_bits),
-         lag1_tag_bit_in_place    = 1 << lag1_tag_shift, // <dpatricio>
-         lag1_claim_bit_in_place  = (address_word)1 << lag1_claimed_shift, // <dpatricio> 
+         lag1_offset_mask         = right_n_bits(lag1_offset_bits), // <dpatricio>
+         lag1_claim_bit_in_place  = 1 << lag1_claimed_shift, // <dpatricio> 
          epoch_mask               = right_n_bits(epoch_bits),
          epoch_mask_in_place      = epoch_mask << epoch_shift,
          cms_mask                 = right_n_bits(cms_bits),
@@ -155,6 +153,7 @@ class markOopDesc: public oopDesc {
   enum { biased_lock_alignment    = 2 << (epoch_shift + epoch_bits)
   };
 
+  // <dpatricio> This needs to be here due to overflow warnings
   const static uintptr_t lag1_offset_mask_in_place =
                                          (address_word)lag1_offset_mask << lag1_offset_shift;
 
@@ -338,16 +337,13 @@ class markOopDesc: public oopDesc {
 
   // LAP
   // <dpatricio>
-  static uintptr_t lag1_tag_bit()    { return (uintptr_t)markOopDesc::lag1_tag_bit_in_place; }
-  static uintptr_t lag1_claim_mask() { return (lag1_tag_bit() | lag1_claim_bit_in_place); }
   static markOop encode_mark_as_claimed(markOop m)
-    { return markOop(mask_bits((uintptr_t)m, ~lag1_tag_bit()) | lag1_claim_mask()); }
+    { return markOop(mask_bits((uintptr_t)m, ~lag1_claim_bit_in_place) | lag1_claim_bit_in_place); }
   static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
     { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_mask_in_place) |
                      (p << lag1_offset_shift)); }
-  bool lag1_claimed() { return mask_bits_are_true(value(), lag1_claim_mask()); }
-  bool is_lag1_tagged() { return mask_bits_are_true(value(), (intptr_t)lag1_tag_bit()); }
-  bool has_allocr_installed() { return mask_bits(value(), lag1_offset_mask_in_place) != 0; }
+  bool lag1_claimed()         { return mask_bits_are_true(value(), lag1_claim_bit_in_place); }
+  bool has_allocr_installed() { return mask_bits(value(), lag1_offset_mask_in_place) != 0;   }
   // </dpatricio>
   
   // used to encode pointers during GC

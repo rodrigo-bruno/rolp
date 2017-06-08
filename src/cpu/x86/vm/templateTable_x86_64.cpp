@@ -3513,7 +3513,6 @@ void TemplateTable::_new() {
     // Do the test for a different-than-0 value on the klass ct field
     __ cmpb(Address(rsi, Klass::ct_id_offset()), 0);
     __ jcc(Assembler::zero, no_lag1_bit);
-    __ orq(Address(rax, oopDesc::mark_offset_in_bytes()), (int32_t)markOopDesc::lag1_tag_bit());
 
     // Load the values (buffer and next idx) from the thread and store the oop there
     __ movptr(rbx, Address(r15_thread, Thread::tldab_offset()));
