@@ -43,6 +43,8 @@
 #include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
 #include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
 #include "oops/oop.pcgc.inline.hpp"
+// LAG1 <dpatricio>
+#include "lag1/lag1OopClosures.hpp"
 #endif // INCLUDE_ALL_GCS
 
 template <class T>

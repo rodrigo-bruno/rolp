@@ -61,6 +61,7 @@
 // LAG1
 // <dpatricio>
 # include "lag1/lag1OopClosures.inline.hpp"
+# include "lag1/container_map.hpp"
 // </dpatricio>
 
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
@@ -2036,6 +2037,10 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
 
   int n_queues = MAX2((int)ParallelGCThreads, 1);
   _task_queues = new RefToScanQueueSet(n_queues);
+#ifdef LAG1 // TODO: This may not need an ifdef macro
+  // <dpatricio> Create the queue set for the pre-mark phase
+  _premark_task_queues = new RefToMarkQueueSet(n_queues);
+#endif
 
   int n_rem_sets = HeapRegionRemSet::num_par_rem_sets();
   assert(n_rem_sets > 0, "Invariant.");
@@ -2049,6 +2054,13 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
     q->initialize();
     _task_queues->register_queue(i, q);
     ::new (&_evacuation_failed_info_array[i]) EvacuationFailedInfo();
+#ifdef LAG1 // TODO: This may not need an ifdef macro
+    // <dpatricio> Create the queue for the pre-mark phase for each thread, initialize and
+    // register in the queue set
+    RefToMarkQueue * mq = new RefToMarkQueue();
+    mq->initialize();
+    _premark_task_queues->register_queue(i, mq);
+#endif
   }
   clear_cset_start_regions();
 
@@ -2056,6 +2068,9 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   NOT_PRODUCT(reset_evacuation_should_fail();)
 
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
+#ifdef LAG1 // TODO: This may not need an ifdef macro
+  guarantee(_premark_task_queues != NULL, "premark_task_queues allocation failure.");
+#endif
   
   // <underscore>
   _gen_alloc_regions->push(&_gen_alloc_region);
@@ -4697,6 +4712,7 @@ G1ParGCAllocBuffer::G1ParGCAllocBuffer(size_t gclab_word_size) :
 G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
+    _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
@@ -4810,6 +4826,33 @@ void G1ParScanThreadState::trim_queue() {
     }
   } while (!refs()->is_empty());
 }
+
+// LAG1
+// <dpatricio>
+void G1ParScanThreadState::trim_mark_queue() {
+  MarkStarTask t;
+  do {
+    // Drain the overflow stack first so other threads can steal from the local
+    while (premark_refs()->pop_overflow(t)) {
+      premark_reference(t);
+    }
+
+    while (premark_refs()->pop_local(t)) {
+      premark_reference(t);
+    }
+  } while (!premark_refs()->is_empty());
+}
+
+#ifdef ASSERT
+bool G1ParScanThreadState::verify_task(MarkStarTask ref) const {
+  if (ref.is_narrow()) {
+    return verify_ref((narrowOop*) ref);
+  } else {
+    return verify_ref((oop*) ref);
+  }
+}
+#endif
+// </dpatricio>
 
 G1ParClosureSuper::G1ParClosureSuper(G1CollectedHeap* g1,
                                      G1ParScanThreadState* par_scan_state) :
@@ -5121,6 +5164,67 @@ void G1ParEvacuateFollowersClosure::do_void() {
   pss->retire_alloc_buffers();
 }
 
+/* LAG1 <dpatricio>
+ * This class needs to be implemented here due to the organization of the includes, which
+ * would break several definitions up the chain.
+ */
+class LAG1ParMarkDSFollowersClosure : public VoidClosure
+{
+ private:
+  G1CollectedHeap *        _g1h;
+  G1ParScanThreadState *   _pss;
+  RefToMarkQueueSet *      _queues;
+  ParallelTaskTerminator * _terminator;
+
+  inline bool offer_termination();
+  
+ protected:
+  RefToMarkQueueSet *      queues()         { return _queues;     }
+  G1ParScanThreadState *   par_scan_state() { return _pss;        }
+  ParallelTaskTerminator * terminator()     { return _terminator; }
+
+ public:
+  LAG1ParMarkDSFollowersClosure(G1CollectedHeap * g1h,
+                                G1ParScanThreadState * pss,
+                                RefToMarkQueueSet * queues,
+                                ParallelTaskTerminator * terminator)
+    : _g1h(g1h), _pss(pss), _queues(queues), _terminator(terminator) { }
+
+  void do_void();
+};
+
+void
+LAG1ParMarkDSFollowersClosure::do_void()
+{
+  MarkStarTask task;
+  G1ParScanThreadState * const pss = par_scan_state();
+  pss->trim_mark_queue();
+
+  do {
+    while (queues()->steal(pss->queue_num(), pss->hash_seed(), task)) {
+      assert(pss->verify_task(task), "sanity");
+      if (task.is_narrow()) {
+        pss->premark_reference((narrowOop*) task, task.mark());
+      } else {
+        pss->premark_reference((oop*) task, task.mark());
+      }
+      // We've just processed a reference and we might have made
+      // available new entries on the queues. So we have to make sure
+      // we drain the queues as necessary.
+      pss->trim_mark_queue();
+    }
+  } while (!offer_termination());
+}
+
+bool
+LAG1ParMarkDSFollowersClosure::offer_termination()
+{
+  // TODO: add time here?
+  const bool res = terminator()->offer_termination();
+  return res;
+}
+// </dpatricio>
+
 class G1KlassScanClosure : public KlassClosure {
  G1ParCopyHelper* _closure;
  bool             _process_only_dirty;
@@ -5151,6 +5255,13 @@ class G1ParTask : public AbstractGangTask {
 protected:
   G1CollectedHeap*       _g1h;
   RefToScanQueueSet      *_queues;
+  // <dpatricio>
+  // G1ParTask must also have a reference to the premark queues,
+  // since it will pass that same reference to the LAG1ParMarkFollowersClosure
+  RefToMarkQueueSet *    _premark_queues;
+  ParallelTaskTerminator _premark_term;
+  // </dpatricio>
+  
   ParallelTaskTerminator _terminator;
   uint _n_workers;
 
@@ -5164,10 +5275,13 @@ protected:
 
 public:
   G1ParTask(G1CollectedHeap* g1h,
-            RefToScanQueueSet *task_queues)
+            RefToScanQueueSet *task_queues,
+            RefToMarkQueueSet * premark_task_queues) // <dpatricio>
     : AbstractGangTask("G1 collection"),
       _g1h(g1h),
       _queues(task_queues),
+      _premark_queues(premark_task_queues), // <dpatricio>
+      _premark_term(0, _premark_queues),    // <dpatricio>
       _terminator(0, _queues),
       _stats_lock(Mutex::leaf, "parallel G1 stats lock", true)
   {}
@@ -5177,6 +5291,12 @@ public:
   RefToScanQueue *work_queue(int i) {
     return queues()->queue(i);
   }
+
+  // <dpatricio>
+  RefToMarkQueueSet * premark_queues()       { return _premark_queues; }
+  RefToMarkQueue * premark_work_queue(int i) { return premark_queues()->queue(i); }
+  ParallelTaskTerminator * premark_term()  { return &_premark_term; }
+  // </dpatricio>
 
   ParallelTaskTerminator* terminator() { return &_terminator; }
 
@@ -5189,6 +5309,11 @@ public:
     _g1h->SharedHeap::set_n_termination(active_workers);
     _g1h->set_n_termination(active_workers);
     terminator()->reset_for_reuse(active_workers);
+#ifdef LAG1
+    // <dpatricio>
+    // TODO: should this ifdef be here? Could we remove all ifdefs that do not impact the execution?
+    premark_term()->reset_for_reuse(active_workers);
+#endif
     _n_workers = active_workers;
   }
 
@@ -5208,6 +5333,14 @@ public:
       G1ParScanHeapEvacClosure        scan_evac_cl(_g1h, &pss, rp);
       G1ParScanHeapEvacFailureClosure evac_failure_cl(_g1h, &pss, rp);
       G1ParScanPartialArrayClosure    partial_scan_cl(_g1h, &pss, rp);
+
+#ifdef LAG1
+      // <dpatricio> set the closure that stamps the offset mark on data-structure children
+      LAG1ParMarkFollowerClosure      premark_cl(_g1h, &pss);
+      pss.set_premark_closure(&premark_cl);
+#else
+      pss.set_premark_closure(NULL);
+#endif
 
       pss.set_evac_closure(&scan_evac_cl);
       pss.set_evac_failure_closure(&evac_failure_cl);
@@ -5234,15 +5367,14 @@ public:
 
       G1ParPushHeapRSClosure          push_heap_rs_cl(_g1h, &pss);
 
-      // <dpatricio>
 #ifdef LAG1
-      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, &pss);
+      // <dpatricio>
+      HeapWord * const heap_end = _g1h->g1_reserved().end();
+      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, heap_end, &pss);
       Threads::lag1_oops_do(&scan_ds_cl);
-      // TODO: We iterate the followers here or do it everything in the
-      // LAG1ParMarkDSClosure ?
-      // LAG1ParMarkDSFollowersClosure     scan_ds_followers_cl(_g1h, &pss, _queues, &_terminator);
-      // scan_ds_followers_cl.do_void();
-      
+      // TODO: We iterate the followers here or do it everything in the LAG1ParMarkDSClosure ?
+      LAG1ParMarkDSFollowersClosure scan_ds_followers_cl(_g1h, &pss, _premark_queues, &_premark_term);
+      scan_ds_followers_cl.do_void();
 #endif
       // </dpatricio>
       
@@ -5939,7 +6071,11 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
     n_workers = 1;
   }
 
-  G1ParTask g1_par_task(this, _task_queues);
+#ifndef LAG1
+  G1ParTask g1_par_task(this, _task_queues, NULL);
+#else
+  G1ParTask g1_par_task(this, _task_queues, _premark_task_queues);
+#endif
 
   init_for_evac_failure(NULL);
 
@@ -7202,7 +7338,7 @@ G1CollectedHeap::new_container_gen() {
 
   int gen = _gen_alloc_regions->length();
 #ifdef LAG1_DEBUG_NEW_CONTAINER
-  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with id = " INT32_FORATM, gen);
+  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with id = " INT32_FORMAT, gen);
 #endif
   GenAllocRegion * new_gen = new GenAllocRegion(gen);
   new_gen->init();

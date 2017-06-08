@@ -652,7 +652,27 @@ inline void oopDesc::install_allocr(uintptr_t p) {
   volatile markOop oldMark = mark();
   volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, p);
   set_mark(newMark);
-  assert(mark()->is_unlocked(), "oop should still be unlocked for promotion");
+  assert(mark()->has_bias_pattern() || mark()->is_unlocked(),
+         "oop should still be unlocked for promotion");
+}
+inline bool oopDesc::cas_install_allocr(uint32_t p) {
+  // here, we should be receiving just 32bits
+  // also, we do not assert for "claimed" values since this is a normal object
+  // and we are sneaking a new header
+  // TODO: fix install_allocr and callers to use only 32bit types?
+  volatile markOop oldMark = mark();
+  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, p);
+  if (cas_set_mark(newMark, oldMark) == oldMark) {
+    assert(mark()->has_bias_pattern() || mark()->is_unlocked(),
+           "oop should still be unlocked for promotion");
+    return true;
+  } else {
+    return false;
+  }
+}
+inline bool oopDesc::has_allocr()
+{
+  return mark()->has_allocr_installed();
 }
 // </dpatricio>
 

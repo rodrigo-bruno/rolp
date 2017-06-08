@@ -314,7 +314,10 @@ class oopDesc {
   // LAG1
   // <dpatricio>
   bool cas_claim_oop();
+  bool cas_install_allocr(uint32_t p);
+  bool has_allocr();
   void install_allocr(uintptr_t p);
+  // </daptricio>
 
 #if INCLUDE_ALL_GCS
   // Like "forward_to", but inserts the forwarding pointer atomically.

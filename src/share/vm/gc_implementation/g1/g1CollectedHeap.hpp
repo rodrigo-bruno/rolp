@@ -80,9 +80,14 @@ class nmethod;
 class Ticks;
 // <dpatricio>
 class AllocRegionHashtable;
+typedef OverflowTaskQueue<MarkStarTask, mtGC>     RefToMarkQueue;
+typedef GenericTaskQueueSet<RefToMarkQueue, mtGC> RefToMarkQueueSet;
+// </dpatricio>
 
 typedef OverflowTaskQueue<StarTask, mtGC>         RefToScanQueue;
 typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
+
+
 
 typedef int RegionIdx_t;   // needs to hold [ 0..max_regions() )
 typedef int CardIdx_t;     // needs to hold [ 0..CardsPerRegion )
@@ -972,6 +977,9 @@ protected:
   // The parallel task queues
   RefToScanQueueSet *_task_queues;
 
+  // LAG1
+  RefToMarkQueueSet *_premark_task_queues;
+
   // True iff a evacuation has failed in the current collection.
   bool _evacuation_failed;
 
@@ -1396,6 +1404,8 @@ public:
 #endif
   // <dpatricio> Getter for the hashtable of container alloc regions
   AllocRegionHashtable * ct_alloc_hashtable() const { return _ct_alloc_region_hashtable; }
+  // <dpatricio> Return the queue for worker i
+  RefToMarkQueue * premark_queue(int i) const;
   // <dpatricio> Creates a new container gen
   // (similar to new_alloc_gen, but returns a GenAllocRegion *) -- why virtual?
   virtual GenAllocRegion * new_container_gen();
@@ -2094,6 +2104,11 @@ protected:
   G1SATBCardTableModRefBS* _ct_bs;
   G1RemSet* _g1_rem;
 
+  // <dpatricio>
+  RefToMarkQueue             * _premark_refs;
+  LAG1ParMarkFollowerClosure * _premark_cl;
+  // </dpatricio>
+
   G1ParGCAllocBufferContainer  _surviving_alloc_buffer;
   G1ParGCAllocBufferContainer  _tenured_alloc_buffer;
   G1ParGCAllocBufferContainer* _alloc_buffers[GCAllocPurposeCount];
@@ -2238,6 +2253,7 @@ public:
     _partial_scan_cl = partial_scan_cl;
   }
 
+
   int* hash_seed() { return &_hash_seed; }
   uint queue_num() { return _queue_num; }
 
@@ -2309,6 +2325,40 @@ public:
   }
 
   void trim_queue();
+
+  // LAG1 <dpatricio>
+  RefToMarkQueue *  premark_refs() { return _premark_refs; }
+  void set_premark_closure(LAG1ParMarkFollowerClosure * premark_cl) {
+    _premark_cl = premark_cl;
+  }
+  template <class T> void push_on_premark_queue(T* ref, uint32_t mark) {
+    assert(verify_ref(ref), "sanity");
+    premark_refs()->push(MarkStarTask(ref, mark));
+  }
+  // Process the data-structure references pushed to this thread queue calling
+  // the appropriate closure.
+  void trim_mark_queue();
+  // Applies the closure to the popped reference.
+  // Template version of the method.
+  template <class T> void premark_reference(T * ref, uint32_t mark) {
+    _premark_cl->do_oop_nv(ref, mark);
+  }
+  // Conditional one (actual called by the trim_mark_queue())
+  void premark_reference(MarkStarTask ref) {
+    assert(verify_task(ref), "sanity");
+    if (ref.is_narrow()) {
+      premark_reference((narrowOop*)ref, ref.mark());
+    } else {
+      premark_reference((oop*)ref, ref.mark());
+    }
+  }
+#ifdef ASSERT
+  bool verify_task(MarkStarTask ref) const;
+#endif // ASSERT
+  // </dpatricio>
+  
+  
+
 };
 
 #endif // SHARE_VM_GC_IMPLEMENTATION_G1_G1COLLECTEDHEAP_HPP

@@ -156,6 +156,11 @@ G1CollectedHeap::dirty_young_block(HeapWord* start, size_t word_size) {
 inline RefToScanQueue* G1CollectedHeap::task_queue(int i) const {
   return _task_queues->queue(i);
 }
+// LAG1 <dpatricio>
+inline RefToMarkQueue* G1CollectedHeap::premark_queue(int i) const {
+  return _premark_task_queues->queue(i);
+}
+// </dpatricio>
 
 inline bool G1CollectedHeap::isMarkedPrev(oop obj) const {
   return _cm->prevMarkBitMap()->isMarked((HeapWord *)obj);

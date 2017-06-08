@@ -51,6 +51,11 @@ class FilterOutOfRegionClosure;
 class G1CMOopClosure;
 class G1RootRegionScanClosure;
 
+// LAG1 <dpatricio>
+// Specialized oop closures from lag1OopClosures.hpp
+class LAG1ParMarkFollowerClosure;
+class LAG1ParScanDSClosure;
+
 // Specialized oop closures from g1RemSet.cpp
 class G1Mux2Closure;
 class G1TriggerClosure;
@@ -72,7 +77,9 @@ class G1UpdateRSOrPushRefOopClosure;
       f(G1Mux2Closure,_nv)                              \
       f(G1TriggerClosure,_nv)                           \
       f(G1InvokeIfNotTriggeredClosure,_nv)              \
-      f(G1UpdateRSOrPushRefOopClosure,_nv)
+      f(G1UpdateRSOrPushRefOopClosure,_nv)              \
+      f(LAG1ParMarkFollowerClosure,_nv) /* LAG1 <dpatricio> */  \
+      f(LAG1ParScanDSClosure,_nv)      /* LAG1 <dpatricio> */
 
 #ifdef FURTHER_SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES
 #error "FURTHER_SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES already defined."

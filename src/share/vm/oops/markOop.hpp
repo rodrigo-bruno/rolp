@@ -347,6 +347,7 @@ class markOopDesc: public oopDesc {
                      (p << lag1_offset_shift)); }
   bool lag1_claimed() { return mask_bits_are_true(value(), lag1_claim_mask()); }
   bool is_lag1_tagged() { return mask_bits_are_true(value(), (intptr_t)lag1_tag_bit()); }
+  bool has_allocr_installed() { return mask_bits(value(), lag1_offset_mask_in_place) != 0; }
   // </dpatricio>
   
   // used to encode pointers during GC

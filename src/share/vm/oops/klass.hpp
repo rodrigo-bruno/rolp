@@ -40,6 +40,8 @@
 #include "gc_implementation/concurrentMarkSweep/cmsOopClosures.hpp"
 #include "gc_implementation/g1/g1OopClosures.hpp"
 #include "gc_implementation/parNew/parOopClosures.hpp"
+// LAG1 <dpatricio>
+#include "lag1/lag1OopClosures.hpp"
 #endif // INCLUDE_ALL_GCS
 
 //

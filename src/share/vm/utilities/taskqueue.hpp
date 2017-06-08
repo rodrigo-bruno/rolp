@@ -764,6 +764,7 @@ class StarTask {
     _holder = (void*)p;
   }
   StarTask()             { _holder = NULL; }
+
   operator oop*()        { return (oop*)_holder; }
   operator narrowOop*()  {
     return (narrowOop*)((uintptr_t)_holder & ~COMPRESSED_OOP_MASK);
@@ -813,6 +814,59 @@ private:
   oop _obj;
   int _index;
 };
+
+// LAG1
+// <dpatricio>
+// TODO: Could it be implemented as a subclass of StarTask?
+// One way would be to implement a copy constructor in the StarTask, but that may require
+// rework since it would discard the qualifier for is_narrow when storing the _holder.
+// The reason for the need of a copy constructor is the volatile assignment operation which
+// requires a static cast from the derived (MarkStarTask) to the base (StarTask).
+class MarkStarTask
+{
+  enum { COMPRESSED_OOP_MASK = 1 };
+  
+  void *   _holder;
+  uint32_t _mark;
+
+ public:
+  MarkStarTask(narrowOop * p, uint32_t m) : _mark(m)
+    {
+      assert (((uintptr_t)p & COMPRESSED_OOP_MASK) == 0, "Information loss!");
+      _holder = (void*)((uintptr_t)p | COMPRESSED_OOP_MASK);
+    }
+  MarkStarTask(oop* p, uint32_t m) : _mark(m)
+    {
+      assert (((uintptr_t)p & COMPRESSED_OOP_MASK) == 0, "Information loss!");
+      _holder = (void*)p;
+    }
+  MarkStarTask() : _holder(NULL), _mark(0) { }
+  
+  operator oop*()        { return (oop*)_holder; }
+  operator narrowOop*()  {
+    return (narrowOop*)((uintptr_t)_holder & ~COMPRESSED_OOP_MASK);
+  }
+  
+  MarkStarTask& operator=(const MarkStarTask& t) {
+    _holder = t._holder;
+    _mark = t._mark;
+    return *this;
+  }
+  
+  volatile MarkStarTask& operator=(const volatile MarkStarTask& t) volatile {
+    _holder = t._holder;
+    _mark = t._mark;
+    return *this;
+  }
+
+  bool is_narrow() const {
+    return (((uintptr_t)_holder & COMPRESSED_OOP_MASK) != 0);
+  }
+  
+  uint32_t mark() const { return _mark; }
+
+};
+// </dpatricio>
 
 #ifdef _MSC_VER
 #pragma warning(pop)
