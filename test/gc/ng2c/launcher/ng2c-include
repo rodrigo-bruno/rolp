@@ -1,0 +1,89 @@
+#!/bin/bash
+
+#GC="CMS"
+GC="G1"
+
+# <Common opts>
+JVM_OPTS="$JVM_OPTS -server"
+JVM_OPTS="$JVM_OPTS -XX:-TieredCompilation"
+
+JVM_OPTS="$JVM_OPTS -XX:+PrintGCDetails"
+JVM_OPTS="$JVM_OPTS -XX:+PrintGCApplicationStoppedTime"
+JVM_OPTS="$JVM_OPTS -XX:+PrintGCDateStamps"
+JVM_OPTS="$JVM_OPTS -Xloggc:/tmp/jvm.log"
+
+# Heap sizing options
+JVM_OPTS="$JVM_OPTS -Xms6g"
+JVM_OPTS="$JVM_OPTS -Xmx6g"
+#JVM_OPTS="$JVM_OPTS -XX:NewSize=1g"
+#JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=1g"
+JVM_OPTS="$JVM_OPTS -XX:NewSize=256m"
+JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=256m"
+
+# Compressed Stuff
+JVM_OPTS="$JVM_OPTS -XX:-UseCompressedOops"
+JVM_OPTS="$JVM_OPTS -XX:-UseCompressedClassPointers"
+
+
+JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
+JVM_OPTS="$JVM_OPTS -XX:-ResizeTLAB"
+JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=16k"
+
+# JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
+# JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
+#JVM_OPTS="$JVM_OPTS -XX:InitialTenuringThreshold=15"
+#JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=4"
+
+
+if [ "$GC" == "CMS" ]
+then
+	# <CMS opts>
+	JVM_OPTS="$JVM_OPTS -XX:+UseParNewGC"
+	JVM_OPTS="$JVM_OPTS -XX:+UseConcMarkSweepGC"
+	JVM_OPTS="$JVM_OPTS -XX:+CMSParallelRemarkEnabled"
+	JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=8"
+	JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=1"
+	JVM_OPTS="$JVM_OPTS -XX:CMSInitiatingOccupancyFraction=75"
+	JVM_OPTS="$JVM_OPTS -XX:+UseCMSInitiatingOccupancyOnly"
+	JVM_OPTS="$JVM_OPTS -XX:+PerfDisableSharedMem"
+	JVM_OPTS="$JVM_OPTS -XX:CMSWaitDuration=10000"
+	JVM_OPTS="$JVM_OPTS -XX:+CMSParallelInitialMarkEnabled"
+	JVM_OPTS="$JVM_OPTS -XX:+CMSEdenChunksRecordAlways"
+	JVM_OPTS="$JVM_OPTS -XX:CMSWaitDuration=10000"
+	JVM_OPTS="$JVM_OPTS -XX:+UseCondCardMark"
+elif [ "$GC" == "G1" ]
+then
+	# <G1 opts>
+	JVM_OPTS="$JVM_OPTS -XX:MaxGCPauseMillis=100"
+	JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
+	# Note: we use 32M heap regions for graphchi
+	# JVM_OPTS="$JVM_OPTS -XX:G1HeapRegionSize=32m"
+	JVM_OPTS="$JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=10"
+	JVM_OPTS="$JVM_OPTS -XX:InitiatingHeapOccupancyPercent=50"
+	JVM_OPTS="$JVM_OPTS -XX:G1HeapWastePercent=25"
+	JVM_OPTS="$JVM_OPTS -XX:ConcGCThreads=8"
+	JVM_OPTS="$JVM_OPTS -XX:ParallelGCThreads=8"
+else
+	echo "No suitable GC..."
+	exit 1
+fi
+
+# <NG2C options>
+JVM_OPTS="$JVM_OPTS -XX:NG2CUpdateThreshold=2"
+
+# <Optional>
+# JVM_OPTS="$JVM_OPTS -XX:+G1TraceHeapRegionRememberedSet"
+# JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
+JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
+#-XX:+PrintCompilation
+#-XX:+G1SummarizeRSetStats
+#-XX:G1SummarizeRSetStatsPeriod=1
+#JVM_OPTS="$JVM_OPTS -XX:+SafepointALot -XX:GuaranteedSafepointInterval=100"
+#JVM_OPTS="$JVM_OPTS -XX:+PrintSafepointStatistics  -XX:PrintSafepointStatisticsCount=1"
+
+# YourKit Java Profiler
+#JVM_OPTS="$JVM_OPTS -agentpath:/home/rbruno/software/yjp-2016.02/bin/linux-x86-64/libyjpagent.so"
+
+# DEBUG C2
+#JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:+PrintCompilation -XX:+PrintAssembly"
+#JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly -XX:+PrintCompilation -XX:MaxInlineSize=0 -XX:+PrintInlining -XX:CompileCommand=compileonly,*ByteBuffer.allocate*"
