@@ -183,7 +183,7 @@ HeapRegion* G1AllocRegion::release() {
   trace("releasing");
   HeapRegion* alloc_region = _alloc_region;
   // <underscore> This was previously just false.
-  retire(alloc_region->gen() > 0 /* fill_up */);
+  retire(alloc_region->is_gen_alloc_region() > 0 /* fill_up */);
   assert(_alloc_region == _dummy_region,
          ar_ext_msg(this, "post-condition of retire()"));
   _alloc_region = NULL;
