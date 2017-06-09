@@ -117,12 +117,18 @@ inline HeapWord* G1CollectedHeap::old_attempt_allocation(size_t word_size) {
 inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_size) {
   assert(!isHumongous(word_size), "attempt_allocation() should not "
          "be called for humongous allocation requests");
+  assert(gen > 0 && _gen_alloc_regions->length() > gen, "invalid gen");
 
   HeapWord* result = _gen_alloc_regions->at(gen)->attempt_allocation(word_size, true /* bot_updates */);
   if (result == NULL) {
     // <underscore> I think this is the correct lock because it is used for young allocations.
     MutexLocker ml(Heap_lock);
     result = _gen_alloc_regions->at(gen)->attempt_allocation_locked(word_size, true /* bot_updates */);
+  }
+
+  if (result != NULL) {
+    MemRegion mr(result, word_size);
+    g1_barrier_set()->g1_mark_as_dirty(mr);
   }
   return result;
 }

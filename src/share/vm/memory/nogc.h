@@ -27,6 +27,9 @@
 
 #define ASM_ANNOTATIONS 1
 
+#define NG2C_PROF_BOT_UPDATES 1
+#define FORCE_NG2C_HR_VERIFY 0
+
 #define DUMP_IDENTITY 1
 #define DUMP_IDENTITY_DEBUG 1
 #endif	/* NOGC_H */

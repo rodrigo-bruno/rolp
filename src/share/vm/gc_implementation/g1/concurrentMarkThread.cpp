@@ -93,8 +93,6 @@ void ConcurrentMarkThread::run() {
       ResourceMark rm;
       HandleMark   hm;
       
-      SvcGCMarker sgcm(SvcGCMarker::OTHER); // <underscore>
-      
       double cycle_start = os::elapsedVTime();
 
       // We have to ensure that we finish scanning the root regions
