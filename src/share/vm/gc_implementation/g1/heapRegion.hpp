@@ -376,7 +376,7 @@ class HeapRegion: public G1OffsetTableContigSpace {
   }
   void del_active_tlab() {
       Atomic::dec(&_active_tlabs);
-      if (_gen > 0 && !_active_tlabs && !_is_gen_alloc_region) { enqueue_gen_cards(); }
+      if (_gen >= 0 && !_active_tlabs && !_is_gen_alloc_region) { enqueue_gen_cards(); }
   }
 
   void enqueue_gen_cards();

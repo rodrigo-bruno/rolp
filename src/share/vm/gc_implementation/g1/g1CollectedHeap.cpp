@@ -6780,7 +6780,7 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
   alloc_region->set_gen_alloc_region(false);
-  if (alloc_region->is_gen_alloc_region() && !alloc_region->get_active_tlabs()) {
+  if (!alloc_region->get_active_tlabs()) {
 #if NG2C_PROF_BOT_UPDATES
     alloc_region->bot_update_all();
 #endif
