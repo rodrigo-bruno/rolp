@@ -1588,7 +1588,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
       clear_cset_fast_test();
 
       init_mutator_alloc_region();
-      init_gen_alloc_regions(); // <underscore>
+      // init_gen_alloc_regions(); // <underscore> <dpatricio> commented for now
 
       double end = os::elapsedTime();
       g1_policy()->record_full_collection_end();
@@ -4296,7 +4296,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         init_mutator_alloc_region();
 
         // <underscore> Now its time to initialize gen alloc regions.
-        init_gen_alloc_regions();
+        // init_gen_alloc_regions(); <dpatricio> commented for now
 
         {
           size_t expand_bytes = g1_policy()->expansion_amount();
