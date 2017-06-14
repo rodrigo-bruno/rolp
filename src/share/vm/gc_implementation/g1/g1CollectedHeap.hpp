@@ -420,6 +420,13 @@ private:
   void release_gen_alloc_regions();
   // </underscore>
 
+  // LAG1
+  // <dpatricio>
+  // Both serve the same function as the *_gc_alloc_regions(..) counterpart.
+  void init_lag1_gc_alloc_regions();
+  void release_lag1_gc_alloc_regions();
+  // </dpatricio>
+
   // Helper for monitoring and management support.
   G1MonitoringSupport* _g1mm;
 

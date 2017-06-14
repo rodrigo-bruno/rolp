@@ -1421,7 +1421,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
       // Make sure we'll choose a new allocation region afterwards.
       release_mutator_alloc_region();
       abandon_gc_alloc_regions();
-      release_gen_alloc_regions(); // <underscore>
+      release_gen_alloc_regions(); // <underscore> <dpatricio> serves the same purpose
 
       g1_rem_set()->cleanupHRRS();
 
@@ -2073,7 +2073,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
 #endif
   
   // <underscore>
-  _gen_alloc_regions->push(&_gen_alloc_region);
+  // _gen_alloc_regions->push(&_gen_alloc_region); <dpatricio> don't push a default gen_alloc_region (for now)
 }
 
 jint G1CollectedHeap::initialize() {
@@ -4107,7 +4107,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         release_mutator_alloc_region();
         // <underscore> This is just conservative measure. In future, if we
         // realize that this is not necessary, we can relax this.
-        release_gen_alloc_regions();
+        // release_gen_alloc_regions(); // <dpatricio Don't do this, now these are for GC
 
         // We should call this after we retire the mutator alloc
         // region(s) so that all the ALLOC / RETIRE events are generated
@@ -4213,6 +4213,12 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
         // Initialize the GC alloc regions.
         init_gc_alloc_regions(evacuation_info);
+
+#ifdef LAG1
+        // <dpatricio>
+        // Initialize the LAG1 alloc regions
+        init_lag1_gc_alloc_regions();
+#endif
 
         // Actually do the work...
         evacuate_collection_set(evacuation_info);
@@ -4542,6 +4548,21 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 #endif
 }
 // </undersore>
+
+// <dpatricio>
+void G1CollectedHeap::init_lag1_gc_alloc_regions() {
+  for (int i = 0; i < gen_alloc_regions()->length(); i++) {
+    assert (gen_alloc_regions()->at(i)->get() == NULL, "pre-condition");
+    gen_alloc_regions()->at(i)->init();
+  }
+}
+void G1CollectedHeap::release_lag1_gc_alloc_regions() {
+  for (int i = 0; i < gen_alloc_regions()->length(); i++) {
+    gen_alloc_regions()->at(i)->release();
+    assert(gen_alloc_regions()->at(i)->get() == NULL, "post-condition");
+  }
+}
+// </dpatricio>
 
 void G1CollectedHeap::init_for_evac_failure(OopsInHeapRegionClosure* cl) {
   _drain_in_progress = false;
@@ -4918,6 +4939,7 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   old->print_on(gclog_or_tty);
 #endif
   // </underscore>
+
   int age = m->has_displaced_mark_helper() ? m->displaced_mark_helper()->age()
                                            : m->age();
   // <underscore> AHAHHH! This is where it decides where the object is copied.
@@ -6133,6 +6155,13 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
   }
 
   release_gc_alloc_regions(n_workers, evacuation_info);
+
+#ifdef LAG1
+  // <dpatricio>
+  // Release the LAG1 alloc regions
+  release_lag1_gc_alloc_regions();
+#endif
+
   g1_rem_set()->cleanup_after_oops_into_collection_set_do();
 
   // Reset and re-enable the hot card cache.
