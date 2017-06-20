@@ -96,6 +96,9 @@ enum GCAllocPurpose {
   GCAllocForTenured,
   GCAllocForSurvived,
   GCAllocPurposeCount
+#ifdef LAG1 // <dpatricio> The count must be above for correctness in constructing the PLABArray
+  ,GCAllocForContainer
+#endif
 };
 
 class YoungList : public CHeapObj<mtGC> {
@@ -2114,6 +2117,8 @@ protected:
   // <dpatricio>
   RefToMarkQueue             * _premark_refs;
   LAG1ParMarkFollowerClosure * _premark_cl;
+  double _start_lag1_roots;
+  double _lag1_roots_time;
   // </dpatricio>
 
   G1ParGCAllocBufferContainer  _surviving_alloc_buffer;
@@ -2334,6 +2339,13 @@ public:
   void trim_queue();
 
   // LAG1 <dpatricio>
+  void start_lag1_roots() {
+    _start_lag1_roots = os::elapsedTime();
+  }
+  void end_lag1_roots() {
+    _lag1_roots_time += (os::elapsedTime() - _start_lag1_roots);
+  }
+  double lag1_roots_time() const { return _lag1_roots_time; }
   RefToMarkQueue *  premark_refs() { return _premark_refs; }
   void set_premark_closure(LAG1ParMarkFollowerClosure * premark_cl) {
     _premark_cl = premark_cl;
@@ -2359,13 +2371,13 @@ public:
       premark_reference((oop*)ref, ref.mark());
     }
   }
+  // Allocate methods -- allocate based on the offset-mark
+  HeapWord * allocate_on_container(markOop m, size_t word_sz) {
+  }
 #ifdef ASSERT
   bool verify_task(MarkStarTask ref) const;
 #endif // ASSERT
   // </dpatricio>
-  
-  
-
 };
 
 #endif // SHARE_VM_GC_IMPLEMENTATION_G1_G1COLLECTEDHEAP_HPP

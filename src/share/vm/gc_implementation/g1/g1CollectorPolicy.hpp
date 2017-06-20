@@ -888,11 +888,20 @@ public:
   uint tenuring_threshold() const { return _tenuring_threshold; }
 
   inline GCAllocPurpose
-    evacuation_destination(HeapRegion* src_region, uint age, size_t word_sz) {
+    evacuation_destination(HeapRegion* src_region, uint age,
+#ifdef LAG1
+                           markOop m,
+#endif
+                           size_t word_sz) {
       if (age < _tenuring_threshold && src_region->is_young()) {
         return GCAllocForSurvived;
       } else {
-        return GCAllocForTenured;
+#ifdef LAG1
+        if (m->lag1_claimed()) {
+          return GCAllocForContainer;
+        } else
+#endif
+          return GCAllocForTenured;
       }
   }
 

@@ -4942,10 +4942,37 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
 
   int age = m->has_displaced_mark_helper() ? m->displaced_mark_helper()->age()
                                            : m->age();
+
+#ifdef LAG1_DEBUG_SURVIVOR
+  if (m->lag1_claimed()) {
+    gclog_or_tty->print_cr("[lag1-debug-survivor] oop " INTPTR_FORMAT " mark " INTPTR_FORMAT  " from region ["INTPTR_FORMAT", " INTPTR_FORMAT ", " INTPTR_FORMAT")",
+                           old, m, from_region->bottom(), from_region->top(),  from_region->end());
+  }
+#endif
+
   // <underscore> AHAHHH! This is where it decides where the object is copied.
+  // <dpatricio> Check the destination of this oop using the age and the tag-bit in the mark
   GCAllocPurpose alloc_purpose = g1p->evacuation_destination(from_region, age,
+#ifdef LAG1
+                                                             m,
+#endif
                                                              word_sz);
-  HeapWord* obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz);
+
+  // <dpatricio> Allocate based on the return of the previous statement
+  HeapWord * obj_ptr;
+  // TODO: For now, the commented pieces of code are only to provide correctness for the rest
+  // of the allocation procedure. Delete those pieces when it is time to allocate on containers
+#ifdef LAG1
+  if (alloc_purpose == GCAllocForContainer) {
+    alloc_purpose = GCAllocForTenured; // to delete
+    obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz); // to delete
+    // obj_ptr = _par_scan_state->allocate_on_container(m, word_sz); // to uncomment
+  } else
+#endif
+    obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz);
+  // </dpatricio> Below is the old code
+  // HeapWord * obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz);
+
 #ifndef PRODUCT
   // Should this evacuation fail?
   if (_g1->evacuation_should_fail()) {
@@ -5393,10 +5420,12 @@ public:
       // <dpatricio>
       HeapWord * const heap_end = _g1h->g1_reserved().end();
       LAG1ParMarkDSClosure            scan_ds_cl(_g1h, heap_end, &pss);
+      pss.start_lag1_roots();
       Threads::lag1_oops_do(&scan_ds_cl);
       // TODO: We iterate the followers here or do it everything in the LAG1ParMarkDSClosure ?
       LAG1ParMarkDSFollowersClosure scan_ds_followers_cl(_g1h, &pss, _premark_queues, &_premark_term);
       scan_ds_followers_cl.do_void();
+      pss.end_lag1_roots();
 #endif
       // </dpatricio>
       
@@ -5421,6 +5450,9 @@ public:
         evac.do_void();
         double elapsed_ms = (os::elapsedTime()-start)*1000.0;
         double term_ms = pss.term_time()*1000.0;
+#ifdef LAG1
+        _g1h->g1_policy()->phase_times()->record_lag1_premark_time(worker_id, pss.lag1_roots_time() * 1000);
+#endif
         _g1h->g1_policy()->phase_times()->add_obj_copy_time(worker_id, elapsed_ms-term_ms);
         _g1h->g1_policy()->phase_times()->record_termination(worker_id, term_ms, pss.term_attempts());
       }
