@@ -340,10 +340,11 @@ class markOopDesc: public oopDesc {
   static markOop encode_mark_as_claimed(markOop m)
     { return markOop(mask_bits((uintptr_t)m, ~lag1_claim_bit_in_place) | lag1_claim_bit_in_place); }
   static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
-    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_mask_in_place) |
-                     (p << lag1_offset_shift)); }
-  bool lag1_claimed()         { return !has_monitor() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
-  bool has_allocr_installed() { return mask_bits(value(), lag1_offset_mask_in_place) != 0;   }
+    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_mask_in_place) | (p << lag1_offset_shift) | lag1_claim_bit_in_place); }
+  bool lag1_claimed()
+    { return !has_monitor() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
+  bool has_allocr_installed()
+    { return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_offset_mask_in_place) != 0; }
   // </dpatricio>
   
   // used to encode pointers during GC
