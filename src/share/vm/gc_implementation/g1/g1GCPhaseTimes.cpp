@@ -168,7 +168,9 @@ G1GCPhaseTimes::G1GCPhaseTimes(uint max_gc_threads) :
   _last_termination_attempts(_max_gc_threads, SIZE_FORMAT),
   _last_gc_worker_end_times_ms(_max_gc_threads, "%.1lf", false),
   _last_gc_worker_times_ms(_max_gc_threads, "%.1lf"),
-  _last_gc_worker_other_times_ms(_max_gc_threads, "%.1lf")
+  _last_gc_worker_other_times_ms(_max_gc_threads, "%.1lf"),
+  // LAG1 (no ifdef needed)
+  _last_premark_times_ms(_max_gc_threads, "%.1lf")
 {
   assert(max_gc_threads > 0, "Must have some GC threads");
 }
@@ -192,6 +194,8 @@ void G1GCPhaseTimes::note_gc_start(uint active_gc_threads) {
   _last_gc_worker_end_times_ms.reset();
   _last_gc_worker_times_ms.reset();
   _last_gc_worker_other_times_ms.reset();
+  // LAG1 (no ifdef needed)
+  _last_premark_times_ms.reset();
 }
 
 void G1GCPhaseTimes::note_gc_end() {
@@ -207,6 +211,8 @@ void G1GCPhaseTimes::note_gc_end() {
   _last_termination_times_ms.verify();
   _last_termination_attempts.verify();
   _last_gc_worker_end_times_ms.verify();
+  // LAG1 (no ifdef needed)
+  _last_premark_times_ms.verify();
 
   for (uint i = 0; i < _active_gc_threads; i++) {
     double worker_time = _last_gc_worker_end_times_ms.get(i) - _last_gc_worker_start_times_ms.get(i);
@@ -219,7 +225,8 @@ void G1GCPhaseTimes::note_gc_end() {
                                _last_strong_code_root_scan_times_ms.get(i) +
                                _last_strong_code_root_mark_times_ms.get(i) +
                                _last_obj_copy_times_ms.get(i) +
-                               _last_termination_times_ms.get(i);
+                               _last_termination_times_ms.get(i) +
+                               _last_premark_times_ms.get(i); // <dpatricio>
 
     double worker_other_time = worker_time - worker_known_time;
     _last_gc_worker_other_times_ms.set(i, worker_other_time);
@@ -265,6 +272,14 @@ void G1GCPhaseTimes::print(double pause_time_sec) {
     print_stats(1, "Parallel Time", _cur_collection_par_time_ms, _active_gc_threads);
     _last_gc_worker_start_times_ms.print(2, "GC Worker Start (ms)");
     _last_ext_root_scan_times_ms.print(2, "Ext Root Scanning (ms)");
+#ifdef LAG1
+    // <dpatricio> An ifdef is here because we do not want to show 0 values with no LAG1,
+    // because there is no call record_lag1_premark_times().
+    if (_last_premark_times_ms.sum() > 0.0) {
+      _last_premark_times_ms.print(2, "LAG1 Premark (ms)");
+    }
+#endif
+
     if (_last_satb_filtering_times_ms.sum() > 0.0) {
       _last_satb_filtering_times_ms.print(2, "SATB Filtering (ms)");
     }
@@ -285,6 +300,13 @@ void G1GCPhaseTimes::print(double pause_time_sec) {
     _last_gc_worker_end_times_ms.print(2, "GC Worker End (ms)");
   } else {
     _last_ext_root_scan_times_ms.print(1, "Ext Root Scanning (ms)");
+#ifdef LAG1
+    // <dpatricio> An ifdef is here because we do not want to show 0 values with no LAG1,
+    // because there is no call record_lag1_premark_times().
+    if (_last_premark_times_ms.sum() > 0.0) {
+      _last_premark_times_ms.print(1, "LAG1 Premark (ms)");
+    }
+#endif
     if (_last_satb_filtering_times_ms.sum() > 0.0) {
       _last_satb_filtering_times_ms.print(1, "SATB Filtering (ms)");
     }

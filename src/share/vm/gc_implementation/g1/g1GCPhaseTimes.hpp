@@ -148,6 +148,11 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
   double _cur_verify_before_time_ms;
   double _cur_verify_after_time_ms;
 
+  // LAG1
+  // <dpatricio> lag1 times for each worker (keeping the nomenclature)
+  WorkerDataArray<double> _last_premark_times_ms;
+  // </dpatricio>
+
   // Helper methods for detailed logging
   void print_stats(int level, const char* str, double value);
   void print_stats(int level, const char* str, double value, int workers);
@@ -262,6 +267,15 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
   void record_verify_after_time_ms(double time_ms) {
     _cur_verify_after_time_ms = time_ms;
   }
+
+  // LAG1
+  // <dpatricio> Setters and getters for the lag1 times
+  // Large TODO: should _last_premark_times_ms be implemented on TraceGen0Times and
+  // on the G1CollectorPolicy also?
+  void record_lag1_premark_time(uint worker_id, double time_ms) {
+    _last_premark_times_ms.set(worker_id, time_ms);
+  }
+  // </dpatricio>
 
   double accounted_time_ms();
 
