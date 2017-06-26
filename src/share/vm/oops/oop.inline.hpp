@@ -673,6 +673,12 @@ inline bool oopDesc::has_allocr()
 {
   return mark()->has_allocr_installed();
 }
+// See the markOop.hpp comment about the return types for the offset
+inline uint32_t oopDesc::allocr()
+{
+  assert(has_allocr(), "getting lag1 alloc region without installing");
+  return mark()->decode_allocr();
+}
 // </dpatricio>
 
 // Note that the forwardee is not the same thing as the displaced_mark.

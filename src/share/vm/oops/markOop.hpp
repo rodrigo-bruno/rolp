@@ -337,6 +337,10 @@ class markOopDesc: public oopDesc {
 
   // LAP
   // <dpatricio>
+  // TODO: Which option would be better:
+  //       (1) Still use uint32_t?
+  //       (2) do typedef of this type?
+  //       (3) or use uint?
   static markOop encode_mark_as_claimed(markOop m)
     { return markOop(mask_bits((uintptr_t)m, ~lag1_claim_bit_in_place) | lag1_claim_bit_in_place); }
   static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
@@ -345,6 +349,8 @@ class markOopDesc: public oopDesc {
     { return !has_monitor() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
   bool has_allocr_installed()
     { return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_offset_mask_in_place) != 0; }
+  uint32_t decode_allocr()
+    { return (uint32_t)mask_bits(value(), lag1_offset_mask_in_place) >> lag1_offset_shift; }
   // </dpatricio>
   
   // used to encode pointers during GC
