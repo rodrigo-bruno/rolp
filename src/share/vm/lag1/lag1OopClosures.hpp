@@ -13,13 +13,6 @@ class LAG1ParScanDSClosure : public G1ParClosureSuper
   friend class LAG1ParMarkDSClosure;
   friend class LAG1ParMarkFollowerClosure;
   
-  // The offset of the target alloc_region ptr for the parent to be promoted in due time
-  uint32_t _offset_mark;
-
- protected:
-  void set_offset_mark(uint32_t m) { _offset_mark = m; }
-  uint32_t offset_mark()           { return _offset_mark; }
-  
  public:
   LAG1ParScanDSClosure(G1CollectedHeap * g1, G1ParScanThreadState * par_scan_state) :
     G1ParClosureSuper(g1, par_scan_state) { }

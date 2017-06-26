@@ -67,6 +67,20 @@ class OopClosure : public Closure {
 // This is needed by the GC and is extracted to a separate type to not
 // pollute the OopClosure interface.
 class ExtendedOopClosure : public OopClosure {
+  // <dpatricio>
+  // This is protected because closures are instantiated on the stack.
+  // The reason it is implemented this far (of G1 source tree) is because this
+  // class is common to a lot of G1 closures for updating/scan the RS.
+#ifdef LAG1
+ private:
+  // The offset of the target alloc_region ptr for the parent to be promoted in due time
+  uint32_t _offset_mark;
+ protected:
+  void set_offset_mark(uint32_t m) { _offset_mark = m; }
+  uint32_t offset_mark()           { return _offset_mark; }
+#endif
+    // </dpatricio>
+  
  public:
   ReferenceProcessor* _ref_processor;
   ExtendedOopClosure(ReferenceProcessor* rp) : _ref_processor(rp) { }
