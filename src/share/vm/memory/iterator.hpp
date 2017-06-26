@@ -75,7 +75,7 @@ class ExtendedOopClosure : public OopClosure {
  private:
   // The offset of the target alloc_region ptr for the parent to be promoted in due time
   uint32_t _offset_mark;
- protected:
+ public:
   void set_offset_mark(uint32_t m) { _offset_mark = m; }
   uint32_t offset_mark()           { return _offset_mark; }
 #endif
