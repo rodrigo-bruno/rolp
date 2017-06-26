@@ -61,6 +61,13 @@ HeapWord* walk_mem_region_loop(ClosureType* cl, G1CollectedHeap* g1h,
   while (next_obj < top) {
     // Keep filtering the remembered set.
     if (!g1h->is_obj_dead(cur_oop, hr)) {
+#ifdef LAG1_DEBUG_RS
+      const oop obj = cur_oop;
+      if (obj->has_allocr()) {
+        gclog_or_tty->print_cr("[lag1-debug-scan-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
+                               (intptr_t)obj, (intptr_t)obj->mark());
+      }
+#endif
       // Bottom lies entirely below top, so we can call the
       // non-memRegion version of oop_iterate below.
       cur_oop->oop_iterate(cl);
@@ -96,6 +103,13 @@ void HeapRegionDCTOC::walk_mem_region_with_cl(MemRegion mr,
   // or it was allocated after marking finished, then we add it. Otherwise
   // we can safely ignore the object.
   if (!g1h->is_obj_dead(oop(bottom), _hr)) {
+#ifdef LAG1_DEBUG_RS
+    const oop obj = oop(bottom);
+    if (obj->has_allocr()) {
+      gclog_or_tty->print_cr("[lag1-debug-scan-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
+                             (intptr_t)obj, (intptr_t)obj->mark());
+    }
+#endif
     oop_size = oop(bottom)->oop_iterate(cl2, mr);
   } else {
     oop_size = oop(bottom)->size();
@@ -128,6 +142,13 @@ void HeapRegionDCTOC::walk_mem_region_with_cl(MemRegion mr,
 
     // Last object. Need to do dead-obj filtering here too.
     if (!g1h->is_obj_dead(oop(bottom), _hr)) {
+#ifdef LAG1_DEBUG_RS
+      const oop obj = oop(bottom);
+      if (obj->has_allocr()) {
+        gclog_or_tty->print_cr("[lag1-debug-scan-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
+                               (intptr_t)obj, (intptr_t)obj->mark());
+      }
+#endif
       oop(bottom)->oop_iterate(cl2, mr);
     }
   }
@@ -597,7 +618,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   if (!g1h->is_obj_dead(obj)) {
 #ifdef LAG1_DEBUG_RS
     if (obj->has_allocr()) {
-      gclog_or_tty->print_cr("[lag1-debug-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
+      gclog_or_tty->print_cr("[lag1-debug-update-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
                              (intptr_t)obj, (intptr_t)obj->mark());
     }
 #endif
@@ -621,7 +642,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
         // Apply closure to whole object.
 #ifdef LAG1_DEBUG_RS
         if (obj->has_allocr()) {
-          gclog_or_tty->print_cr("[lag1-debug-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
+          gclog_or_tty->print_cr("[lag1-debug-update-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
                                  (intptr_t)obj, (intptr_t)obj->mark());
         }
 #endif
@@ -631,7 +652,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
         // Stop at the boundary.
 #ifdef LAG1_DEBUG_RS
         if (obj->has_allocr()) {
-          gclog_or_tty->print_cr("[lag1-debug-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
+          gclog_or_tty->print_cr("[lag1-debug-update-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
                                  (intptr_t)obj, (intptr_t)obj->mark());
         }
 #endif
