@@ -350,7 +350,7 @@ class markOopDesc: public oopDesc {
   bool has_allocr_installed()
     { return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_offset_mask_in_place) != 0; }
   uint32_t decode_allocr()
-    { return (uint32_t)mask_bits(value(), lag1_offset_mask_in_place) >> lag1_offset_shift; }
+    { return (uint32_t)(mask_bits(value(), lag1_offset_mask_in_place) >> lag1_offset_shift); }
   // </dpatricio>
   
   // used to encode pointers during GC

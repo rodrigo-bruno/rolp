@@ -314,9 +314,11 @@ class oopDesc {
   // LAG1
   // <dpatricio>
   bool cas_claim_oop();
-  bool cas_install_allocr(uint32_t p);
-  bool has_allocr();
+  bool cas_install_allocr(uintptr_t p);
   void install_allocr(uintptr_t p);
+  void install_allocr_no_verify(uintptr_t p);
+  bool has_allocr();
+  uint32_t allocr();
   // </daptricio>
 
 #if INCLUDE_ALL_GCS
