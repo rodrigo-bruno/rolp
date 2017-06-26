@@ -616,10 +616,16 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
          "Loop postcondition");
 
   if (!g1h->is_obj_dead(obj)) {
-#ifdef LAG1_DEBUG_RS
+#ifdef LAG1
     if (obj->has_allocr()) {
+#ifdef LAG1_DEBUG_RS
       gclog_or_tty->print_cr("[lag1-debug-update-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
                              (intptr_t)obj, (intptr_t)obj->mark());
+#endif
+      cl->set_offset_mark(obj->allocr());
+    } else {
+      // We must reset it everytime, for the case of a non lag1 object showing up
+      cl->set_offset_mark(0);
     }
 #endif
     obj->oop_iterate(cl, mr);
@@ -640,20 +646,32 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
         // This object either does not span the MemRegion
         // boundary, or if it does it's not an array.
         // Apply closure to whole object.
-#ifdef LAG1_DEBUG_RS
+#ifdef LAG1
         if (obj->has_allocr()) {
+#ifdef LAG1_DEBUG_RS
           gclog_or_tty->print_cr("[lag1-debug-update-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
                                  (intptr_t)obj, (intptr_t)obj->mark());
+#endif
+          cl->set_offset_mark(obj->allocr());
+        } else {
+          // We must reset it everytime, for the case of a non lag1 object showing up
+          cl->set_offset_mark(0);
         }
 #endif
         obj->oop_iterate(cl);
       } else {
         // This obj is an array that spans the boundary.
         // Stop at the boundary.
-#ifdef LAG1_DEBUG_RS
+#ifdef LAG1
         if (obj->has_allocr()) {
+#ifdef LAG1_DEBUG_RS
           gclog_or_tty->print_cr("[lag1-debug-update-rs] found oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT,
                                  (intptr_t)obj, (intptr_t)obj->mark());
+#endif
+          cl->set_offset_mark(obj->allocr());
+        } else {
+          // We must reset it everytime, for the case of a non lag1 object showing up
+          cl->set_offset_mark(0);
         }
 #endif
         obj->oop_iterate(cl, mr);

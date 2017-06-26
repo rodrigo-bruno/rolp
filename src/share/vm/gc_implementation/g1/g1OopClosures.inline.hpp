@@ -51,6 +51,9 @@ inline void FilterOutOfRegionClosure::do_oop_nv(T* p) {
   if (!oopDesc::is_null(heap_oop)) {
     HeapWord* obj_hw = (HeapWord*)oopDesc::decode_heap_oop_not_null(heap_oop);
     if (obj_hw < _r_bottom || obj_hw >= _r_end) {
+#ifdef LAG1
+      ((ExtendedOopClosure*)_oc)->set_offset_mark(offset_mark());
+#endif
       _oc->do_oop(p);
     }
   }
@@ -134,6 +137,9 @@ template <class T>
 inline void G1Mux2Closure::do_oop_nv(T* p) {
   // Apply first closure; then apply the second.
   _c1->do_oop(p);
+#ifdef LAG1
+  ((ExtendedOopClosure*)_c2)->set_offset_mark(offset_mark());
+#endif
   _c2->do_oop(p);
 }
 
@@ -192,6 +198,25 @@ inline void G1UpdateRSOrPushRefOopClosure::do_oop_nv(T* p) {
       // there is no need to retry.
       if (!self_forwarded(obj)) {
         assert(_push_ref_cl != NULL, "should not be null");
+#ifdef LAG1
+        // We are processing a reference of a lag1 marked object. Mark the reference.
+        // No need to CAS since this object is already claimed by this thread.
+        if (offset_mark() != 0) {
+          oop forwardee = obj;
+          if (obj->is_forwarded()) {
+            // We could reuse the obj field, but the CPU has enough registers to save the locals
+            // stack :-).
+            forwardee = obj->forwardee();
+          }
+#ifdef LAG1_DEBUG_RS
+          // This calls with 2 marks to figure if there are cases where a referenced object
+          // has a different mark already installed.
+          gclog_or_tty->print_cr("[lag1-debug-mark-propag-rs] referenced oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT " is installing mark " INTPTR_FORMAT,
+                                 (intptr_t)forwardee, (intptr_t)forwardee->mark(), (intptr_t)offset_mark());
+#endif
+          forwardee->install_allocr_no_verify(offset_mark());
+        }
+#endif
         // Push the reference in the refs queue of the G1ParScanThreadState
         // instance for this worker thread.
         _push_ref_cl->do_oop(p);
