@@ -29,7 +29,7 @@ class LAG1ParMarkDSClosure : public G1ParClosureSuper
   LAG1ParScanDSClosure _ds_scanner;
 
   template <class T> void do_oop_work(T * p);
-  
+
   /* Encodes the offset of the ptr to the alloc region using the reserved_end of the heap
    * as base */
   uintptr_t calculate_offset(void * region)
@@ -60,7 +60,7 @@ class LAG1ParMarkFollowerClosure : public G1ParClosureSuper
   LAG1ParScanDSClosure _ds_scanner;
 
   template <class T> void do_oop_work(T * p, uint32_t m);
-  
+
  public:
   LAG1ParMarkFollowerClosure(G1CollectedHeap * g1h,
                              G1ParScanThreadState * pss)
