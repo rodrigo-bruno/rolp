@@ -3832,7 +3832,10 @@ class CommandLineFlags {
                                                                             \
   product(ccstr, LAG1Classes, "",                                           \
           "List of classes (comma-separated) to trace with locality-aware " \
-          "policies on the G1 GC.")
+          "policies on the G1 GC.")                                         \
+                                                                            \
+  product(bool, LAG1PrintHeapRegions, false,                                \
+          "Print the heap-regions used as containers.")
 
 /*
  *  Macros for factoring of globals
