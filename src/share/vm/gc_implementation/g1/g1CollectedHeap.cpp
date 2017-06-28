@@ -3809,6 +3809,12 @@ void G1CollectedHeap::gc_epilogue(bool full /* Ignored */) {
   // We have just completed a GC. Update the soft reference
   // policy with the new heap occupancy
   Universe::update_heap_info_at_gc();
+
+  // <dpatricio>
+  if (LAG1PrintHeapRegions) {
+    print_extended_on(gclog_or_tty);
+  }
+  // </dpatricio>
 }
 
 // <underscore> Normal way of scheduling a minor GC (this is called from allocate
@@ -4996,7 +5002,11 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   // Should this evacuation fail?
   if (_g1->evacuation_should_fail()) {
     if (obj_ptr != NULL) {
-      _par_scan_state->undo_allocation(alloc_purpose, obj_ptr, word_sz);
+      // <dpatricio> Also undo the allocation here - although this portion being debug-only
+      if (alloc_purpose == GCAllocForContainer)
+        _par_scan_state->undo_allocation(m, obj_ptr, word_sz);
+      else
+        _par_scan_state->undo_allocation(alloc_purpose, obj_ptr, word_sz);
       obj_ptr = NULL;
     }
   }
@@ -5060,7 +5070,11 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       obj->oop_iterate_backwards(&_scanner);
     }
   } else {
-    _par_scan_state->undo_allocation(alloc_purpose, obj_ptr, word_sz);
+    // <dpatricio> Undo the allocation here
+    if (alloc_purpose == GCAllocForContainer)
+      _par_scan_state->undo_allocation(m, obj_ptr, word_sz);
+    else
+      _par_scan_state->undo_allocation(alloc_purpose, obj_ptr, word_sz);
     obj = forward_ptr;
   }
   return obj;
@@ -7009,6 +7023,9 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
   region->set_epoch(this->_epoch);
+  // <dpatricio>
+  region->set_container_type();
+  // </dpatricio>
   _nregions++;
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [GenAllocRegion::allocate_new_region] gen=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",

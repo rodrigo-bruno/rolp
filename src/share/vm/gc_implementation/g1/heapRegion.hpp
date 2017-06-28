@@ -307,6 +307,14 @@ class HeapRegion: public G1OffsetTableContigSpace {
   bool _is_gen_alloc_region;
   // <underscore> number of active TLABs in region.
   int _active_tlabs;
+  // <dpatricio> Identification for the HR
+  enum ContainerType {
+    NotContainer,
+    Container
+  };
+  volatile ContainerType _container_type;
+  // TODO: I'm using _gen as the container_id. Should I use another field instead?
+  // </dpatricio>
 
   // The start of the unmarked area. The unmarked area extends from this
   // word until the top and/or end of the region, and is the part
@@ -374,6 +382,11 @@ class HeapRegion: public G1OffsetTableContigSpace {
   void add_active_tlab() { Atomic::inc(&_active_tlabs); }
   void del_active_tlab() { Atomic::dec(&_active_tlabs); }
   // </underscore>
+  // <dpatricio>
+  void set_container_type(ContainerType type) { _container_type = type; }
+  void set_container_type()                   { _container_type = Container; }
+  bool is_container_type() const              { return _container_type == Container; }
+  // </dpatricio>
 
   static size_t align_up_to_region_byte_size(size_t sz) {
     return (sz + (size_t) GrainBytes - 1) &

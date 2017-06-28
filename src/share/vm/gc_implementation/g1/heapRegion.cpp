@@ -245,6 +245,8 @@ void HeapRegion::hr_clear(bool par, bool clear_space) {
   _epoch = -1;
   _gen = -1;
   _is_gen_alloc_region = false;
+  // <dpatricio> Also doing the cleaning
+  set_container_type(NotContainer);
 
   if (!par) {
     // If this is parallel, this will be done later.
@@ -854,9 +856,9 @@ void HeapRegion::print_on(outputStream* st) const {
     st->print("   ");
   if (is_young())
     st->print(is_survivor() ? "   SU" : "  Y  ");
-  // <underscore>
-  else if (gen() != -1) {
-      st->print("%02d %02d", gen(), epoch());
+  // <underscore> <dpatricio> added one more condition and commented the epoch
+  else if (gen() != -1 && is_container_type()) {
+    st->print("%02d CT", gen() /*, epoch() */);
   }
   // </underscore>
   else

@@ -2439,6 +2439,17 @@ public:
     if (obj != NULL) return obj;
     return allocate_slow(purpose, m, word_sz);
   }
+  // Undo allocation from the correct plab
+  void undo_allocation(markOop m, HeapWord* obj, size_t word_sz) {
+    if (alloc_buffer(m)->contains(obj)) {
+      assert(alloc_buffer(m)->contains(obj + word_sz - 1),
+             "should contain whole object");
+      alloc_buffer(m)->undo_allocation(obj, word_sz);
+    } else {
+      CollectedHeap::fill_with_object(obj, word_sz);
+      add_to_undo_waste(word_sz);
+    }
+  }
 
   /* End of allocation methods and helpers */
   
