@@ -276,7 +276,7 @@ void G1GCPhaseTimes::print(double pause_time_sec) {
     // <dpatricio> An ifdef is here because we do not want to show 0 values with no LAG1,
     // because there is no call record_lag1_premark_times().
     if (_last_premark_times_ms.sum() > 0.0) {
-      _last_premark_times_ms.print(2, "LAG1 Premark (ms)");
+      _last_premark_times_ms.print(2, "LAG1 Premark Roots (ms)");
     }
 #endif
 
