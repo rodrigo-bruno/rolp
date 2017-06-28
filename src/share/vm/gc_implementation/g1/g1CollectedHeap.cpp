@@ -4437,6 +4437,7 @@ size_t G1CollectedHeap::desired_plab_sz(GCAllocPurpose purpose)
     case GCAllocForSurvived:
       gclab_word_size = _survivor_plab_stats.desired_plab_sz();
       break;
+    case GCAllocForContainer: // <dpatricio> fall through
     case GCAllocForTenured:
       gclab_word_size = _old_plab_stats.desired_plab_sz();
       break;
@@ -4558,7 +4559,9 @@ void G1CollectedHeap::init_lag1_gc_alloc_regions() {
 }
 void G1CollectedHeap::release_lag1_gc_alloc_regions() {
   for (int i = 0; i < gen_alloc_regions()->length(); i++) {
-    gen_alloc_regions()->at(i)->release();
+    GenAllocRegion * allocr = gen_alloc_regions()->at(i);
+    allocr->release();
+    allocr->retire_gc_alloc_buffers();
     assert(gen_alloc_regions()->at(i)->get() == NULL, "post-condition");
   }
 }
@@ -4699,7 +4702,11 @@ void G1CollectedHeap::preserve_mark_if_necessary(oop obj, markOop m) {
   }
 }
 
+// <dpatricio> adapted to be able to receive a container allocr
 HeapWord* G1CollectedHeap::par_allocate_during_gc(GCAllocPurpose purpose,
+#ifdef LAG1
+                                                  GenAllocRegion * alloc_region,
+#endif
                                                   size_t word_size) {
   if (purpose == GCAllocForSurvived) {
     HeapWord* result = survivor_attempt_allocation(word_size);
@@ -4710,8 +4717,23 @@ HeapWord* G1CollectedHeap::par_allocate_during_gc(GCAllocPurpose purpose,
       // object there.
       return old_attempt_allocation(word_size);
     }
-  } else {
-    assert(purpose ==  GCAllocForTenured, "sanity");
+  }
+#ifdef LAG1
+  else if (purpose == GCAllocForContainer) {
+    assert (alloc_region != NULL, "Alloc-Region cannot be null for container promotion.");
+    HeapWord * result = container_attempt_allocation(alloc_region, word_size);
+    if (result != NULL) {
+      return result;
+    } else {
+      // Let's try to allocate in the old gen in case we can fit the
+      // object there.
+      // TODO: Should we also try the survivor alloc-region?
+      return old_attempt_allocation(word_size);
+    }
+  }
+#endif
+  else {
+    assert(purpose == GCAllocForTenured, "sanity");
     HeapWord* result = old_attempt_allocation(word_size);
     if (result != NULL) {
       return result;
@@ -4734,6 +4756,7 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
     _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
+    _offset_base(g1h->g1_reserved().end()), // <dpatricio>
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
@@ -4952,6 +4975,9 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
 
   // <underscore> AHAHHH! This is where it decides where the object is copied.
   // <dpatricio> Check the destination of this oop using the age and the tag-bit in the mark
+  // TODO: I'm not feeling like putting another method to handle the mark, thus I'm
+  // including this in old call signature. If need be (ease the confusion), create another
+  // method to handle the mark "m" in the signature.
   GCAllocPurpose alloc_purpose = g1p->evacuation_destination(from_region, age,
 #ifdef LAG1
                                                              m,
@@ -4960,18 +4986,11 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
 
   // <dpatricio> Allocate based on the return of the previous statement
   HeapWord * obj_ptr;
-  // TODO: For now, the commented pieces of code are only to provide correctness for the rest
-  // of the allocation procedure. Delete those pieces when it is time to allocate on containers
-#ifdef LAG1
   if (alloc_purpose == GCAllocForContainer) {
-    alloc_purpose = GCAllocForTenured; // to delete
-    obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz); // to delete
-    // obj_ptr = _par_scan_state->allocate_on_container(m, word_sz); // to uncomment
-  } else
-#endif
+    obj_ptr = _par_scan_state->allocate(alloc_purpose, m, word_sz);
+  } else {
     obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz);
-  // </dpatricio> Below is the old code
-  // HeapWord * obj_ptr = _par_scan_state->allocate(alloc_purpose, word_sz);
+  }
 
 #ifndef PRODUCT
   // Should this evacuation fail?
@@ -5418,12 +5437,15 @@ public:
 
 #ifdef LAG1
       // <dpatricio>
-      HeapWord * const heap_end = _g1h->g1_reserved().end();
-      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, heap_end, &pss);
+      // Create the closure that will iterate the lag1 roots and then the one for the followers
+      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, pss.offset_base(), &pss);
+      LAG1ParMarkDSFollowersClosure   scan_ds_followers_cl(_g1h,
+                                                           &pss,
+                                                           _premark_queues,
+                                                           &_premark_term);
+      // Start the clock and the work
       pss.start_lag1_roots();
       Threads::lag1_oops_do(&scan_ds_cl);
-      // TODO: We iterate the followers here or do it everything in the LAG1ParMarkDSClosure ?
-      LAG1ParMarkDSFollowersClosure scan_ds_followers_cl(_g1h, &pss, _premark_queues, &_premark_term);
       scan_ds_followers_cl.do_void();
       pss.end_lag1_roots();
 #endif
@@ -6920,7 +6942,7 @@ void G1CollectedHeap::retire_gc_alloc_region(HeapRegion* alloc_region,
 // Methods for the Gen alloc regions
 HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
                                                  uint count) {
-  assert(Heap_lock->owned_by_self(), "pre-condition");
+  assert(Heap_lock->owned_by_self() || FreeList_lock->owned_by_self(), "pre-condition");
 
   // <underscore> using 'GCAllocForTenured' forces unlimited max regions
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
@@ -7004,6 +7026,36 @@ void GenAllocRegion::retire_region(HeapRegion* alloc_region,
     this->gen(), alloc_region->retired_gc_count(), this, alloc_region->bottom());
 #endif
 }
+// <dpatricio>
+// TODO:
+// (a) Is this suffering from a bit too much of mem-walking?
+// (b) Could we use the G1ParGCAllocBuffer only, instead of those priority_buffers?
+void
+GenAllocRegion::init_gc_alloc_buffers()
+{
+  _gcthread_alloc_buffers = NEW_C_HEAP_ARRAY(G1ParGCAllocBufferContainer, ParallelGCThreads, mtGC);
+  G1CollectedHeap * g1h = G1CollectedHeap::heap();
+  for (uint i = 0; i < ParallelGCThreads; i++) {
+    G1ParGCAllocBufferContainer * buf = new (&_gcthread_alloc_buffers[i]) G1ParGCAllocBufferContainer(g1h->desired_plab_sz(GCAllocForTenured));
+  }
+}
+// TODO: Find a way to add the waste of these buffers to the GCThread G1ParScanThreadState
+void
+GenAllocRegion::retire_gc_alloc_buffers()
+{
+  G1CollectedHeap * g1h = G1CollectedHeap::heap();
+  for (uint i = 0; i < ParallelGCThreads; i++) {
+    _gcthread_alloc_buffers[i].flush_stats_and_retire(g1h->stats_for_purpose((GCAllocForTenured)),
+                                                       true /* end of gc */,
+                                                       false /* don't retain the buffer */);
+  }
+}
+G1ParGCAllocBufferContainer *
+GenAllocRegion::gc_alloc_buffer_for(uint thread_id)
+{
+  return &_gcthread_alloc_buffers[thread_id];
+}
+// </dpatricio>
 // </underscore>
 
 // Heap region set verification
@@ -7403,6 +7455,7 @@ G1CollectedHeap::new_container_gen() {
 #endif
   GenAllocRegion * new_gen = new GenAllocRegion(gen);
   new_gen->init();
+  new_gen->init_gc_alloc_buffers();
   _gen_alloc_regions->push(new_gen);
   assert(new_gen == _gen_alloc_regions->at(gen), "last container gen should be the new one");
   return new_gen;

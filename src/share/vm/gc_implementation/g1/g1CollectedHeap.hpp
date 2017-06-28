@@ -201,20 +201,24 @@ public:
 };
 
 // <underscore>
+class G1ParGCAllocBufferContainer;
 class GenAllocRegion : public G1AllocRegion {
 
   // Such friendliness
   template <class GenAllocRegion, MEMFLAGS F>
   friend class GenLinkedQueue;
   
-    /* Generation identifier. */
-    int _gen;
-    /* Epoch identifier. */
-    int _epoch;
-    /* Number of regions allocated for the current epoch. */
-    int _nregions;
-    /* For support on the LinkedQueue of GenAllocRegions */
-    GenAllocRegion * _next;
+  /* Generation identifier. */
+  int _gen;
+  /* Epoch identifier. */
+  int _epoch;
+  /* Number of regions allocated for the current epoch. */
+  int _nregions;
+  /* For support on the LinkedQueue of GenAllocRegions */
+  GenAllocRegion * _next;
+  /* Array of PLABs for the promotion of each individual thread */
+  G1ParGCAllocBufferContainer * _gcthread_alloc_buffers;
+
 protected:
 
   void set_next(GenAllocRegion * next) { _next = next; }
@@ -240,6 +244,9 @@ public:
   }
   int get_n_regions() { return _nregions; }
 
+  void init_gc_alloc_buffers();
+  void retire_gc_alloc_buffers();
+  G1ParGCAllocBufferContainer * gc_alloc_buffer_for(uint thread_id);
   GenAllocRegion * next() { return _next; }
 };
 // </underscore>
@@ -701,7 +708,12 @@ protected:
   // allocation region, either by picking one or expanding the
   // heap, and then allocate a block of the given size. The block
   // may not be a humongous - it must fit into a single heap region.
-  HeapWord* par_allocate_during_gc(GCAllocPurpose purpose, size_t word_size);
+  HeapWord* par_allocate_during_gc(GCAllocPurpose purpose,
+#ifdef LAG1
+                                   // <dpatricio> adapted to be able to receive a container allocr
+                                   GenAllocRegion * alloc_region,
+#endif
+                                   size_t word_size);
 
   // Ensure that no further allocations can happen in "r", bearing in mind
   // that parallel threads might be attempting allocations.
@@ -713,8 +725,11 @@ protected:
   // Allocation attempt during GC for an old object / PLAB.
   inline HeapWord* old_attempt_allocation(size_t word_size);
 
-// <underscore> Allocation attempt for specific generation.
+  // <underscore> Allocation attempt for specific generation.
   inline HeapWord* gen_attempt_allocation(int gen, size_t word_size);
+
+  // <dpatricio> LAG1 - Allocation attempt for a specific container
+  inline HeapWord* container_attempt_allocation(GenAllocRegion * alloc_region, size_t word_size);
 
   // These methods are the "callbacks" from the G1AllocRegion class.
 
@@ -2117,6 +2132,7 @@ protected:
   // <dpatricio>
   RefToMarkQueue             * _premark_refs;
   LAG1ParMarkFollowerClosure * _premark_cl;
+  HeapWord                   * _offset_base;
   double _start_lag1_roots;
   double _lag1_roots_time;
   // </dpatricio>
@@ -2219,7 +2235,7 @@ public:
     if (word_sz * 100 < gclab_word_size * ParallelGCBufferWastePct) {
       G1ParGCAllocBufferContainer* alloc_buf = alloc_buffer(purpose);
 
-      HeapWord* buf = _g1h->par_allocate_during_gc(purpose, gclab_word_size);
+      HeapWord* buf = _g1h->par_allocate_during_gc(purpose, NULL, gclab_word_size);
       if (buf == NULL) return NULL; // Let caller handle allocation failure.
 
       add_to_alloc_buffer_waste(alloc_buf->words_remaining_in_retired_buffer());
@@ -2228,7 +2244,7 @@ public:
       obj = alloc_buf->allocate(word_sz);
       assert(obj != NULL, "buffer was definitely big enough...");
     } else {
-      obj = _g1h->par_allocate_during_gc(purpose, word_sz);
+      obj = _g1h->par_allocate_during_gc(purpose, NULL, word_sz);
     }
     return obj;
   }
@@ -2346,10 +2362,12 @@ public:
     _lag1_roots_time += (os::elapsedTime() - _start_lag1_roots);
   }
   double lag1_roots_time() const { return _lag1_roots_time; }
-  RefToMarkQueue *  premark_refs() { return _premark_refs; }
+  HeapWord * offset_base() const { return _offset_base; }
+  RefToMarkQueue * premark_refs() { return _premark_refs; }
   void set_premark_closure(LAG1ParMarkFollowerClosure * premark_cl) {
     _premark_cl = premark_cl;
   }
+
   template <class T> void push_on_premark_queue(T* ref, uint32_t mark) {
     assert(verify_ref(ref), "sanity");
     premark_refs()->push(MarkStarTask(ref, mark));
@@ -2371,9 +2389,59 @@ public:
       premark_reference((oop*)ref, ref.mark());
     }
   }
-  // Allocate methods -- allocate based on the offset-mark
-  HeapWord * allocate_on_container(markOop m, size_t word_sz) {
+
+  /* Allocation methods and helpers */
+
+  // Decode the offset-mark and return the computed alloc-region
+  GenAllocRegion * alloc_region_for_mark(markOop m) {
+    // Decode the mark
+    uintptr_t        const offset = (uintptr_t)m->decode_allocr();
+    // Compute the alloc-region
+    return (GenAllocRegion*)((uintptr_t)_offset_base + offset);
   }
+  // Return the correct PLAB for this thread
+  G1ParGCAllocBufferContainer* alloc_buffer(markOop m) {
+    GenAllocRegion * allocr = alloc_region_for_mark(m);
+    return allocr->gc_alloc_buffer_for(_queue_num);
+  }
+  // Allocate a new plab on the alloc-region. If the alloc-region has no more room, allocate
+  // a new one.
+  HeapWord* allocate_slow(GCAllocPurpose purpose, markOop m, size_t word_sz) {
+    HeapWord* obj = NULL;
+    size_t gclab_word_size = _g1h->desired_plab_sz(purpose);
+    GenAllocRegion * const allocr = alloc_region_for_mark(m);
+
+    if (word_sz * 100 < gclab_word_size * ParallelGCBufferWastePct) {
+      G1ParGCAllocBufferContainer * const alloc_buf = alloc_buffer(m);
+
+      HeapWord* buf = _g1h->par_allocate_during_gc(purpose, allocr, gclab_word_size);
+      if (buf == NULL) return NULL; // Let caller handle allocation failure.
+
+      add_to_alloc_buffer_waste(alloc_buf->words_remaining_in_retired_buffer());
+      alloc_buf->update(false /* end_of_gc */, false /* retain */, buf, gclab_word_size);
+
+      obj = alloc_buf->allocate(word_sz);
+      assert(obj != NULL, "buffer was definitely big enough...");
+    } else {
+      obj = _g1h->par_allocate_during_gc(purpose, allocr, word_sz);
+    }
+#ifdef LAG1_DEBUG_PROMOTION
+    if (obj != NULL) gclog_or_tty->print_cr("[lag1-debug-promotion] Slow promotion - new oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT, (intptr_t)obj, (intptr_t)m);
+#endif
+    return obj;
+  }
+  // Fast allocate on the correct plab
+  HeapWord* allocate(GCAllocPurpose purpose, markOop m, size_t word_sz) {
+    HeapWord* obj = alloc_buffer(m)->allocate(word_sz);
+#ifdef LAG1_DEBUG_PROMOTION
+    if (obj != NULL) gclog_or_tty->print_cr("[lag1-debug-promotion] Fast promotion - new oop " INTPTR_FORMAT " with mark " INTPTR_FORMAT, (intptr_t)obj, (intptr_t)m);
+#endif
+    if (obj != NULL) return obj;
+    return allocate_slow(purpose, m, word_sz);
+  }
+
+  /* End of allocation methods and helpers */
+  
 #ifdef ASSERT
   bool verify_task(MarkStarTask ref) const;
 #endif // ASSERT

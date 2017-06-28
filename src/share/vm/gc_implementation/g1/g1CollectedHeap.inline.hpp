@@ -128,6 +128,22 @@ inline HeapWord* G1CollectedHeap::gen_attempt_allocation(int gen, size_t word_si
 }
 // </underscore>
 
+// <dpatricio> LAG1
+inline HeapWord* G1CollectedHeap::container_attempt_allocation(GenAllocRegion * alloc_region,
+                                                               size_t word_size)
+{
+  assert(!isHumongous(word_size), "should not attempt to allocate humongous-size objects.");
+
+  HeapWord* result = ((GenAllocRegion*)alloc_region)->attempt_allocation(word_size, true);
+
+  if (result == NULL) {
+    MutexLockerEx ml(FreeList_lock, Mutex::_no_safepoint_check_flag);
+    result = ((GenAllocRegion*)alloc_region)->attempt_allocation_locked(word_size, true);
+  }
+  return result;
+}
+// </dpatricio>
+
 // It dirties the cards that cover the block so that so that the post
 // write barrier never queues anything when updating objects on this
 // block. It is assumed (and in fact we assert) that the block
