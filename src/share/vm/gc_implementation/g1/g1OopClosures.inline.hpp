@@ -204,7 +204,7 @@ inline void G1UpdateRSOrPushRefOopClosure::do_oop_nv(T* p) {
         if (offset_mark() != 0) {
           oop forwardee = obj;
           if (obj->is_forwarded()) {
-            // We could reuse the obj field, but the CPU has enough registers to save the locals
+            // The obj field could be reused, but the CPU has enough registers to save the locals
             // stack :-).
             forwardee = obj->forwardee();
           }
