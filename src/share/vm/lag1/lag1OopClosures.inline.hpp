@@ -57,24 +57,24 @@ LAG1ParMarkDSClosure::do_oop_work(T * p)
   }
 }
 
-template <class T>
-inline void
-LAG1ParMarkFollowerClosure::do_oop_work(T * p, uint32_t m)
-{
-  oop obj = oopDesc::load_decode_heap_oop(p);
-  assert (_worker_id == _par_scan_state->queue_num(), "sanity");
-  // install the offset mark in the oop p
-  if(!obj->has_allocr() && obj->cas_install_allocr((uintptr_t)m)) {
-#ifdef LAG1_DEBUG_TRACING
-    gclog_or_tty->print_cr("[lag1-debug-tracing] children oop " INTPTR_FORMAT " is marked, mark is "INTPTR_FORMAT,
-                           (intptr_t)obj, (intptr_t)obj->mark());
-#endif
-    // push its references to the stacks using a scanner
-    // saving the mark first in the scanner object
-    _ds_scanner.set_offset_mark(m);
-    obj->oop_iterate_backwards(&_ds_scanner);
-  }
-}
+// template <class T>
+// inline void
+// LAG1ParMarkFollowerClosure::do_oop_work(T * p, uint32_t m)
+// {
+//   oop obj = oopDesc::load_decode_heap_oop(p);
+//   assert (_worker_id == _par_scan_state->queue_num(), "sanity");
+//   // install the offset mark in the oop p
+//   if(!obj->has_allocr() && obj->cas_install_allocr((uintptr_t)m)) {
+// #ifdef LAG1_DEBUG_TRACING
+//     gclog_or_tty->print_cr("[lag1-debug-tracing] children oop " INTPTR_FORMAT " is marked, mark is "INTPTR_FORMAT,
+//                            (intptr_t)obj, (intptr_t)obj->mark());
+// #endif
+//     // push its references to the stacks using a scanner
+//     // saving the mark first in the scanner object
+//     _ds_scanner.set_offset_mark(m);
+//     obj->oop_iterate_backwards(&_ds_scanner);
+//   }
+// }
 
 template <class T>
 inline void
