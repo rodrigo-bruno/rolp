@@ -10,7 +10,7 @@ JVM_OPTS="$JVM_OPTS -XX:-TieredCompilation"
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCDetails"
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCApplicationStoppedTime"
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCDateStamps"
-JVM_OPTS="$JVM_OPTS -Xloggc:/tmp/jvm.log"
+JVM_OPTS="$JVM_OPTS -Xloggc:jvm.log"
 
 # Heap sizing options
 JVM_OPTS="$JVM_OPTS -Xms6g"
@@ -69,12 +69,12 @@ else
 fi
 
 # <NG2C options>
-JVM_OPTS="$JVM_OPTS -XX:NG2CUpdateThreshold=2"
+#JVM_OPTS="$JVM_OPTS -XX:NG2CUpdateThreshold=2"
 
 # <Optional>
 # JVM_OPTS="$JVM_OPTS -XX:+G1TraceHeapRegionRememberedSet"
 # JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
-JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
+# JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
 #-XX:+PrintCompilation
 #-XX:+G1SummarizeRSetStats
 #-XX:G1SummarizeRSetStatsPeriod=1

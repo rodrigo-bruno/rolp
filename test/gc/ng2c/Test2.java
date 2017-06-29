@@ -8,6 +8,7 @@ import java.util.Date;
 public class Test2 {
     // TODO - read args to prepare all these arguments!
     private static final boolean debug = false;
+    private static final boolean ng2c = false;
     //private static final int buf_size = 1024; // 1KB
     private static final int buf_size = 64*1024; // 64KB
     //private static final int buf_size = 1024*1024; // 1MB
@@ -21,7 +22,7 @@ public class Test2 {
     static class T2Runnable implements Runnable {
 
         private final int tid;
-        private final List<List<ByteBuffer>> lists = new ArrayList<>();
+        private final List<List<ByteBuffer>> lists = ng2c ? new @Gen ArrayList<>() : new ArrayList<>();
         private final Random randGen = new Random();
 
         public T2Runnable(int tid) {
@@ -39,7 +40,7 @@ public class Test2 {
             for (;;) {
                 // Get a random
                 int rand = randGen.nextInt(n_lists);
-                lists.get(rand).add(ByteBuffer.allocate(buf_size));
+                lists.get(rand).add(ng2c ? ByteBuffer.allocateGen(buf_size) : ByteBuffer.allocate(buf_size));
                 if (debug) { System.out.println(String.format("T%d: Added buffer to %d th list.", tid, rand)); }
                 if (lists.get(rand).size() == max_lists_size) {
                     lists.get(rand).clear();
