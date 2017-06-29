@@ -1,2 +1,4 @@
 *.swp
 *.class
+cscope.*
+tags

@@ -27,8 +27,9 @@
 
 #define ASM_ANNOTATIONS 0
 
-#define NG2C_PROF_BOT_UPDATES 1
-#define FORCE_NG2C_HR_VERIFY 1
+// TODO - if this flag is on, using Test2 throws a segfault (use run-gdb).
+#define NG2C_PROF_BOT_UPDATES 0
+#define FORCE_NG2C_HR_VERIFY 0
 
 #define DUMP_IDENTITY 0
 #define DUMP_IDENTITY_DEBUG 0
