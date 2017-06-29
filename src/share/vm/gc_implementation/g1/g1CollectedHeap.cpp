@@ -7019,6 +7019,9 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
                                                   bool force) {
   assert(!force, "not supported for Gen alloc regions");
   HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
+#ifdef LAG1_DEBUG_HR
+  gclog_or_tty->print_cr("[lag1-debug-hr] created heap-region " INTPTR_FORMAT " for alloc-region with gen " INT32_FORMAT, (intptr_t)region, this->_gen);
+#endif
   assert(region != NULL, "New gen alloc regions shouldn't return NULL.");
   region->set_gen(this->_gen);
   region->set_gen_alloc_region(true);
