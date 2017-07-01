@@ -5077,6 +5077,14 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       _par_scan_state->undo_allocation(alloc_purpose, obj_ptr, word_sz);
     obj = forward_ptr;
   }
+
+#ifdef LAG1_DEBUG_SURVIVOR
+  if (m->lag1_claimed()) {
+    gclog_or_tty->print_cr("[lag1-debug-survivor-finish] old-oop " INTPTR_FORMAT " old-mark " INTPTR_FORMAT  " new-oop " INTPTR_FORMAT" new-mark " INTPTR_FORMAT, old, m, obj, obj->mark());
+  }
+#endif
+
+
   return obj;
 }
 
@@ -7467,13 +7475,14 @@ G1CollectedHeap::new_container_gen() {
   MutexLockerEx ml(HeapGen_lock);
 
   int gen = _gen_alloc_regions->length();
-#ifdef LAG1_DEBUG_NEW_CONTAINER
-  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with id = " INT32_FORMAT, gen);
-#endif
   GenAllocRegion * new_gen = new GenAllocRegion(gen);
   new_gen->init();
   new_gen->init_gc_alloc_buffers();
   _gen_alloc_regions->push(new_gen);
+#ifdef LAG1_DEBUG_NEW_CONTAINER
+  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with ptr="INTPTR_FORMAT" id = " INT32_FORMAT, new_gen, gen);
+#endif
+
   assert(new_gen == _gen_alloc_regions->at(gen), "last container gen should be the new one");
   return new_gen;
 }

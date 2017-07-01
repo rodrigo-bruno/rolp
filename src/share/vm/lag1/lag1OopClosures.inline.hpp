@@ -37,9 +37,13 @@ LAG1ParMarkDSClosure::do_oop_work(T * p)
       obj->install_allocr(mark);
 #ifdef LAG1_DEBUG_TRACING
       gclog_or_tty->print_cr("[lag1-debug-tracing] oop " INTPTR_FORMAT
-                             " claimed and installed mark "INTPTR_FORMAT,
-                             (intptr_t)obj, (intptr_t)obj->mark());
+                             " claimed and installed mark "INTPTR_FORMAT
+                             " offset_base "INTPTR_FORMAT,
+                             (intptr_t)obj, (intptr_t)obj->mark(), _par_scan_state->offset_base());
 #endif
+
+      assert(((void*)ct_alloc_region) ==  (_par_scan_state->offset_base() - mark/sizeof(HeapWord)), "pointer to gc alloc region do not match mark");
+
       // Push the contents to a queue to be subject to the same treatment
       // TODO:
       // There are two ways of doing this:
