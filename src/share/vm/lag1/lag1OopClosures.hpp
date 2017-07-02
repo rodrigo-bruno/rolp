@@ -24,7 +24,7 @@ class LAG1ParScanDSClosure : public G1ParClosureSuper
 class LAG1ParMarkDSClosure : public G1ParClosureSuper
 {
   // For offset calculation
-  HeapWord * _g1h_reserved_end;
+  HeapWord * _offset_base;
   // Scanner of data-structure fields
   LAG1ParScanDSClosure _ds_scanner;
 
@@ -33,7 +33,8 @@ class LAG1ParMarkDSClosure : public G1ParClosureSuper
   /* Encodes the offset of the ptr to the alloc region using the reserved_end of the heap
    * as base */
   uintptr_t calculate_offset(void * region)
-    { return pointer_delta(region, _g1h_reserved_end, 1); }
+    { return (_offset_base < region) ?
+        pointer_delta(region, _offset_base, 1) : pointer_delta(_offset_base, region, 1); }
 
  protected:
   // FIXME: Unused
@@ -44,10 +45,12 @@ class LAG1ParMarkDSClosure : public G1ParClosureSuper
  public:
   
   LAG1ParMarkDSClosure(G1CollectedHeap * g1,
-                       HeapWord * g1h_reserved_end,
+                       HeapWord * offset_base,
                        G1ParScanThreadState * par_scan_state) :
     G1ParClosureSuper(g1, par_scan_state),
-    _ds_scanner(g1, par_scan_state), _g1h_reserved_end(g1h_reserved_end)
+    _ds_scanner(g1, par_scan_state), _offset_base(offset_base)
+
+
     { }
   
   virtual void do_oop(oop * p)       { do_oop_work(p); }

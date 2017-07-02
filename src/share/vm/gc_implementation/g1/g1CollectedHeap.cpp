@@ -4762,7 +4762,6 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
     _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
-    _offset_base(g1h->g1_reserved().end()), // <dpatricio>
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
@@ -4791,6 +4790,15 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
 
   _alloc_buffers[GCAllocForSurvived] = &_surviving_alloc_buffer;
   _alloc_buffers[GCAllocForTenured]  = &_tenured_alloc_buffer;
+
+  // <dpatricio>
+  // Set the offset-base to use. This is so because different compiler versions
+  // may put the C-heap after or before the Java heap.
+  if ((void*)g1h < (void*)g1h->g1_reserved().start()) {
+    _offset_base = g1h->g1_reserved().start();
+  } else {
+    _offset_base = g1h->g1_reserved().end();
+  }
 
   _start = os::elapsedTime();
 }
