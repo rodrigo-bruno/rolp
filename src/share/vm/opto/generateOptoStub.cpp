@@ -38,6 +38,7 @@
 #include "opto/runtime.hpp"
 #include "opto/type.hpp"
 
+// <underscore> Is this where the compilation of a method starts?
 //--------------------gen_stub-------------------------------
 void GraphKit::gen_stub(address C_function,
                         const char *name,
