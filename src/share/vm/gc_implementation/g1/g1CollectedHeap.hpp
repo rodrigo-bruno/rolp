@@ -435,6 +435,7 @@ private:
   // Both serve the same function as the *_gc_alloc_regions(..) counterpart.
   void init_lag1_gc_alloc_regions();
   void release_lag1_gc_alloc_regions();
+  void abandon_lag1_gc_alloc_regions();
   // </dpatricio>
 
   // Helper for monitoring and management support.
@@ -2034,6 +2035,9 @@ public:
   bool is_retired() {
     return _retired;
   }
+
+  // <dpatricio> Changes the state of the _retired field for proper initialization
+  void set_retired(bool b) { _retired = b; }
 };
 
 class G1ParGCAllocBufferContainer {
@@ -2104,9 +2108,20 @@ public:
   void update(bool end_of_gc, bool retain, HeapWord* buf, size_t word_sz) {
     G1ParGCAllocBuffer* retired_and_set = _priority_buffer[0];
     retired_and_set->retire(end_of_gc, retain);
-    retired_and_set->set_buf(buf);
     retired_and_set->set_word_size(word_sz);
+    retired_and_set->set_buf(buf);
     adjust_priority_order();
+  }
+
+  // <dpatricio> This method is required because I allocate the GC-LAB Container
+  // on the alloc-regions and never de-allocate. This is contrary to what G1ParScanThreadState
+  // does, which allocates new GC-LAB Containers every instantiation of the object (i.e., at
+  // the start of a GC-thread's work). Therefore, the field _retired must be reset at the
+  // start of every gc, or the LAB filler will fail.
+  void reset_buffer_retired_state() {
+    for (int pr = 0; pr < _priority_max; ++pr) {
+      _priority_buffer[pr]->set_retired(false);
+    }
   }
 
 private:

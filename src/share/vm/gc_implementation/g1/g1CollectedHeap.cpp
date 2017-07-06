@@ -1421,7 +1421,10 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
       // Make sure we'll choose a new allocation region afterwards.
       release_mutator_alloc_region();
       abandon_gc_alloc_regions();
-      release_gen_alloc_regions(); // <underscore> <dpatricio> serves the same purpose
+      // release_gen_alloc_regions(); // <dpatricio> This cannot happen. They are not
+      // mutator-alloc-regions, but instead gc-alloc-regions.
+      abandon_lag1_gc_alloc_regions();
+      // <underscore> <dpatricio> serves the same purpose
 
       g1_rem_set()->cleanupHRRS();
 
@@ -4558,18 +4561,30 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 
 // <dpatricio>
 void G1CollectedHeap::init_lag1_gc_alloc_regions() {
+  // TODO: Consider using a retained_region here to prevent filling up these gc-alloc regions
+  // constantly after gc. More details of the procedure in init_gc_alloc_regions()
   for (int i = 0; i < gen_alloc_regions()->length(); i++) {
     assert (gen_alloc_regions()->at(i)->get() == NULL, "pre-condition");
-    gen_alloc_regions()->at(i)->init();
+    GenAllocRegion * allocr = gen_alloc_regions()->at(i);
+    allocr->init();
   }
 }
 void G1CollectedHeap::release_lag1_gc_alloc_regions() {
   for (int i = 0; i < gen_alloc_regions()->length(); i++) {
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
-    allocr->release();
     allocr->retire_gc_alloc_buffers();
+    allocr->release();
     assert(gen_alloc_regions()->at(i)->get() == NULL, "post-condition");
   }
+}
+void G1CollectedHeap::abandon_lag1_gc_alloc_regions() {
+  // just for asserts
+#ifdef ASSERT
+  for (int i = 0; i < gen_alloc_regions()->length(); i++) {
+    GenAllocRegion * allocr = gen_alloc_regions()->at(i);
+    assert(allocr->get() == NULL, "pre-condition");
+  }
+#endif
 }
 // </dpatricio>
 
@@ -6738,10 +6753,10 @@ public:
       // We ignore humongous regions, we're not tearing down the
       // humongous region set
     }
-    // <underscore>
-    else if (_g1h->is_gen_alloc_region(r)) {
-      //The current gen alloc region does not belong to any set.
-    }
+    // <underscore> <dpatricio> -- commented
+    // else if (_g1h->is_gen_alloc_region(r)) {
+    //   //The current gen alloc region does not belong to any set.
+    // }
     // </underscore>
     else {
       // <underscore> Reset the gens and epochs.
@@ -6808,10 +6823,10 @@ public:
       if (r->isHumongous()) {
         // We ignore humongous regions, we left the humongous set unchanged
       }
-      // <underscore>
-      else if (_g1h->is_gen_alloc_region(r)) {
-        // Ignore, we do not want it to be added to the old gen.
-      }
+      // <underscore> <dpatricio> -- comment: yes we do
+      // else if (_g1h->is_gen_alloc_region(r)) {
+      //   // Ignore, we do not want it to be added to the old gen.
+      // }
       // </underscore>
       else {
         // The rest should be old, add them to the old set
@@ -6969,19 +6984,28 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
   // <underscore> using 'GCAllocForTenured' forces unlimited max regions
   if (count < g1_policy()->max_regions(GCAllocForTenured)) {
     HeapRegion* new_alloc_region = new_region(word_size, true /* do_expand */);
-    assert(new_alloc_region != NULL, "New gen alloc regions should always succeed.");
-    // <underscore> TODO - if we fail to expand. We might want to try a GC?
+
+    // <dpatricio> Isn't this assert a bit too aggressive?
+    // assert(new_alloc_region != NULL, "New gen alloc regions should always succeed.");
+
+    // <underscore> TODO: - if we fail to expand. We might want to try a GC?
     if (new_alloc_region != NULL) {
       // We really only need to do this for old regions given that we
       // should never scan survivors. But it doesn't hurt to do it
       // for survivors too.
       new_alloc_region->set_saved_mark();
+      // <dpatricio> This is important because objects will be copied here, and we don't
+      // know if a started initial concurrent mark will scan this region. Therefore, we must
+      // deem that everything is alive and well.
+      bool during_im = g1_policy()->during_initial_mark_pause();
+      new_alloc_region->note_start_of_copying(during_im);
+
       _hr_printer.alloc(new_alloc_region, G1HRPrinter::Old);
       return new_alloc_region;
     } else {
       // <underscore> Note: we will always be allowed more regions
-      // g1_policy()->note_alloc_region_limit_reached(ap);
-      ;
+      // <dpatricio> Comment: Will we?
+      g1_policy()->note_alloc_region_limit_reached(GCAllocForTenured);
     }
   }
   return NULL;
@@ -6989,10 +7013,17 @@ HeapRegion* G1CollectedHeap::new_gen_alloc_region(size_t word_size,
 
 void G1CollectedHeap::retire_gen_alloc_region(HeapRegion* alloc_region,
                                              size_t allocated_bytes) {
+  // <dpatricio>
+  // TODO: Consider using "_summary_bytes_used += allocated_bytes" because we should
+  // make these alloc-region behave as normal old ones.
+  bool during_im = g1_policy()->during_initial_mark_pause();
+  alloc_region->note_end_of_copying(during_im);
+
   //_summary_bytes_used += allocated_bytes;
   // <underscore> TODO - check if this is correct. Check if mutator alloc region
   // retirement calls fill before.
-  _summary_bytes_used += alloc_region->used();
+  // _summary_bytes_used += alloc_region->used();
+  g1_policy()->record_bytes_copied_during_gc(allocated_bytes);
   _old_set.add(alloc_region);
   _hr_printer.retire(alloc_region);
 }
@@ -7027,21 +7058,23 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
                                                   bool force) {
   assert(!force, "not supported for Gen alloc regions");
   HeapRegion* region = _g1h->new_gen_alloc_region(word_size, count());
+  // <dpatricio> I think new_gen_alloc_region must return NULL regions or we'll be stuck
+  if (region != NULL) {
 #ifdef LAG1_DEBUG_HR
-  gclog_or_tty->print_cr("[lag1-debug-hr] created heap-region " INTPTR_FORMAT " for alloc-region with gen " INT32_FORMAT, (intptr_t)region, this->_gen);
+    gclog_or_tty->print_cr("[lag1-debug-hr] created heap-region " INTPTR_FORMAT " for alloc-region with gen " INT32_FORMAT, (intptr_t)region, this->_gen);
 #endif
-  assert(region != NULL, "New gen alloc regions shouldn't return NULL.");
-  region->set_gen(this->_gen);
-  region->set_gen_alloc_region(true);
-  region->set_epoch(this->_epoch);
-  // <dpatricio>
-  region->set_container_type();
-  // </dpatricio>
-  _nregions++;
+    region->set_gen(this->_gen);
+    region->set_gen_alloc_region(true);
+    region->set_epoch(this->_epoch);
+    // <dpatricio>
+    region->set_container_type();
+    // </dpatricio>
+    _nregions++;
 #if DEBUG_ALLOC_REGION
-  gclog_or_tty->print_cr("<underscore> [GenAllocRegion::allocate_new_region] gen=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
-    this->gen(), this, region->bottom());
+    gclog_or_tty->print_cr("<underscore> [GenAllocRegion::allocate_new_region] gen=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
+                           this->gen(), this, region->bottom());
 #endif
+  }
   return region;
 }
 
@@ -7076,11 +7109,13 @@ GenAllocRegion::retire_gc_alloc_buffers()
     _gcthread_alloc_buffers[i].flush_stats_and_retire(g1h->stats_for_purpose((GCAllocForTenured)),
                                                        true /* end of gc */,
                                                        false /* don't retain the buffer */);
+    _gcthread_alloc_buffers[i].reset_buffer_retired_state();
   }
 }
 G1ParGCAllocBufferContainer *
 GenAllocRegion::gc_alloc_buffer_for(uint thread_id)
 {
+  assert(thread_id >= 0 && thread_id < ParallelGCThreads, "sanity");
   return &_gcthread_alloc_buffers[thread_id];
 }
 // </dpatricio>
