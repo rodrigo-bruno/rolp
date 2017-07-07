@@ -42,7 +42,7 @@ LAG1ParMarkDSClosure::do_oop_work(T * p)
                              (intptr_t)obj, (intptr_t)obj->mark(), _par_scan_state->offset_base());
 #endif
 
-      assert(((void*)ct_alloc_region) ==  (_par_scan_state->offset_base() - mark/sizeof(HeapWord)), "pointer to gc alloc region do not match mark");
+      assert(((void*)ct_alloc_region) ==  (_par_scan_state->offset_base() + mark/sizeof(HeapWord)), "pointer to gc alloc region do not match mark");
 
       // Push the contents to a queue to be subject to the same treatment
       // TODO:

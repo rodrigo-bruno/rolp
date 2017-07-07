@@ -33,8 +33,7 @@ class LAG1ParMarkDSClosure : public G1ParClosureSuper
   /* Encodes the offset of the ptr to the alloc region using the reserved_end of the heap
    * as base */
   uintptr_t calculate_offset(void * region)
-//    { return pointer_delta(region, _g1h_reserved_end, 1); }
-    { return pointer_delta(_g1h_reserved_end, region, 1); }
+    { return pointer_delta(region, _g1h_reserved_end, 1); }
 
  protected:
   // FIXME: Unused

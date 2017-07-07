@@ -4762,7 +4762,7 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
     _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
-    _offset_base(g1h->g1_reserved().end()), // <dpatricio>
+    _offset_base((HeapWord*)Universe::heap()), // <dpatricio>
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
