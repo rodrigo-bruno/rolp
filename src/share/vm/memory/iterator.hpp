@@ -68,18 +68,15 @@ class OopClosure : public Closure {
 // pollute the OopClosure interface.
 class ExtendedOopClosure : public OopClosure {
   // <dpatricio>
-  // This is protected because closures are instantiated on the stack.
   // The reason it is implemented this far (of G1 source tree) is because this
   // class is common to a lot of G1 closures for updating/scan the RS.
-#ifdef LAG1
  private:
   // The offset of the target alloc_region ptr for the parent to be promoted in due time
   uint32_t _offset_mark;
  public:
   void set_offset_mark(uint32_t m) { _offset_mark = m; }
   uint32_t offset_mark()           { return _offset_mark; }
-#endif
-    // </dpatricio>
+  // </dpatricio>
   
  public:
   ReferenceProcessor* _ref_processor;

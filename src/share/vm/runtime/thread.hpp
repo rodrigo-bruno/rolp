@@ -62,9 +62,7 @@
 #endif
 
 // <dpatricio>
-#ifdef LAG1
 # include "lag1/lag1_globals.hpp"
-#endif
 // </dpatricio>
 
 class ThreadSafepointState;

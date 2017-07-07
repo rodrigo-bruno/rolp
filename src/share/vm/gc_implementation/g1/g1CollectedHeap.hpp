@@ -96,9 +96,8 @@ enum GCAllocPurpose {
   GCAllocForTenured,
   GCAllocForSurvived,
   GCAllocPurposeCount
-#ifdef LAG1 // <dpatricio> The count must be above for correctness in constructing the PLABArray
+// <dpatricio> The count must be above for correctness in constructing the PLABArray
   ,GCAllocForContainer
-#endif
 };
 
 class YoungList : public CHeapObj<mtGC> {
@@ -710,10 +709,8 @@ protected:
   // heap, and then allocate a block of the given size. The block
   // may not be a humongous - it must fit into a single heap region.
   HeapWord* par_allocate_during_gc(GCAllocPurpose purpose,
-#ifdef LAG1
                                    // <dpatricio> adapted to be able to receive a container allocr
                                    GenAllocRegion * alloc_region,
-#endif
                                    size_t word_size);
 
   // Ensure that no further allocations can happen in "r", bearing in mind

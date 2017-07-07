@@ -4725,9 +4725,7 @@ void G1CollectedHeap::preserve_mark_if_necessary(oop obj, markOop m) {
 
 // <dpatricio> adapted to be able to receive a container allocr
 HeapWord* G1CollectedHeap::par_allocate_during_gc(GCAllocPurpose purpose,
-#ifdef LAG1
-                                                  GenAllocRegion * alloc_region,
-#endif
+                                                  GenAllocRegion * alloc_region /* LAG1 */,
                                                   size_t word_size) {
   if (purpose == GCAllocForSurvived) {
     HeapWord* result = survivor_attempt_allocation(word_size);
