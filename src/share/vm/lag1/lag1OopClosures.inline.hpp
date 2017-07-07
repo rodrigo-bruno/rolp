@@ -30,11 +30,12 @@ LAG1ParMarkDSClosure::do_oop_work(T * p)
       
       // Calculate a 32bit offset to the ct_alloc_region from the end of the reserved part
       // of the Java heap
-      uintptr_t mark = calculate_offset(ct_alloc_region);
+      uintptr_t offset = calculate_offset(ct_alloc_region);
+      assert (mask_bits_are_true(right_n_bits(markOopDesc::lag1_offset_bits), offset), "sanity");
       
       // Now put the address of the alloc_region in the header.
       // No need to cas, the object should be owned by this thread
-      obj->install_allocr(mark);
+      obj->install_allocr(offset, _offset_base < (HeapWord*)offset ? true : false);
 #ifdef LAG1_DEBUG_TRACING
       gclog_or_tty->print_cr("[lag1-debug-tracing] oop " INTPTR_FORMAT
                              " claimed and installed mark "INTPTR_FORMAT
@@ -42,7 +43,8 @@ LAG1ParMarkDSClosure::do_oop_work(T * p)
                              (intptr_t)obj, (intptr_t)obj->mark(), _par_scan_state->offset_base());
 #endif
 
-      assert(((void*)ct_alloc_region) ==  (_par_scan_state->offset_base() + mark/sizeof(HeapWord)), "pointer to gc alloc region do not match mark");
+      // TODO:
+      // assert(((void*)ct_alloc_region) ==  _offset_base + mark) "pointer to gc alloc region do not match mark");
 
       // Push the contents to a queue to be subject to the same treatment
       // TODO:
@@ -55,7 +57,7 @@ LAG1ParMarkDSClosure::do_oop_work(T * p)
       //    parent oop.
       // Here we are using option (a) but option (b) has a strong case, because it avoids
       // several memory accesses for every Java object over the scanner VM object.
-      _ds_scanner.set_offset_mark((uint32_t)mark);
+      _ds_scanner.set_offset_mark((uint32_t)obj->allocr());
       obj->oop_iterate_backwards(&_ds_scanner);
     }
   }

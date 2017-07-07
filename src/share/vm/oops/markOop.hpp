@@ -115,7 +115,8 @@ class markOopDesc: public oopDesc {
          hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits,
          cms_bits                 = LP64_ONLY(1) NOT_LP64(0),
          epoch_bits               = 2,
-         lag1_offset_bits         = 32
+         lag1_sign_bits           = 1, // <dpatricio>
+         lag1_offset_bits         = 31 // <dpatricio>
   };
 
   // The biased locking code currently requires that the age bits be
@@ -127,7 +128,8 @@ class markOopDesc: public oopDesc {
          lag1_claimed_shift       = cms_shift, // <dpatricio>
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift,
-         lag1_offset_shift        = lag1_offset_bits // <dpatricio>
+         lag1_offset_shift        = lag1_offset_bits + lag1_sign_bits, // <dpatricio>
+         lag1_sign_shift          = lag1_offset_shift + lag1_offset_bits // <dpatricio>
   };
 
   enum { lock_mask                = right_n_bits(lock_bits),
@@ -138,6 +140,7 @@ class markOopDesc: public oopDesc {
          age_mask                 = right_n_bits(age_bits),
          age_mask_in_place        = age_mask << age_shift,
          lag1_offset_mask         = right_n_bits(lag1_offset_bits), // <dpatricio>
+         lag1_offset_sign_mask    = right_n_bits(lag1_offset_bits + lag1_sign_bits), // <dpatricio>
          lag1_claim_bit_in_place  = 1 << lag1_claimed_shift, // <dpatricio> 
          epoch_mask               = right_n_bits(epoch_bits),
          epoch_mask_in_place      = epoch_mask << epoch_shift,
@@ -155,7 +158,11 @@ class markOopDesc: public oopDesc {
 
   // <dpatricio> This needs to be here due to overflow warnings
   const static uintptr_t lag1_offset_mask_in_place =
-                                         (address_word)lag1_offset_mask << lag1_offset_shift;
+                          (address_word)lag1_offset_mask << lag1_offset_shift;
+  const static uintptr_t lag1_offset_sign_mask_in_place =
+                          (address_word)lag1_offset_sign_mask << lag1_offset_shift;
+  const static uintptr_t lag1_sign_mask_in_place =
+                          (address_word)lag1_sign_bits << lag1_sign_shift;
 
 #ifdef _WIN64
     // These values are too big for Win64
@@ -343,14 +350,19 @@ class markOopDesc: public oopDesc {
   //       (3) or use uint?
   static markOop encode_mark_as_claimed(markOop m)
     { return markOop(mask_bits((uintptr_t)m, ~lag1_claim_bit_in_place) | lag1_claim_bit_in_place); }
+  static markOop encode_mark_with_allocr_sign(markOop m, uintptr_t p, uintptr_t s)
+    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_sign_mask_in_place) | (p << lag1_offset_shift) | (s << lag1_sign_shift) | lag1_claim_bit_in_place); }
   static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
-    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_mask_in_place) | (p << lag1_offset_shift) | lag1_claim_bit_in_place); }
+    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_sign_mask_in_place) | (p << lag1_offset_shift) | lag1_claim_bit_in_place); }
   bool lag1_claimed()
     { return !has_monitor() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
   bool has_allocr_installed()
     { return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_offset_mask_in_place) != 0; }
   uint32_t decode_allocr()
-    { return (uint32_t)(mask_bits(value(), lag1_offset_mask_in_place) >> lag1_offset_shift); }
+    { return (uint32_t)(mask_bits(value(), lag1_offset_sign_mask_in_place) >> lag1_offset_shift); }
+  void decode_allocr_with_sign(uint32_t& offset, uint8_t& sign)
+    { offset = (uint32_t)(mask_bits(value(), lag1_offset_mask_in_place) >> lag1_offset_shift);
+      sign   = (uint8_t)(mask_bits(value(), lag1_sign_mask_in_place) >> lag1_sign_shift); }
   // </dpatricio>
   
   // used to encode pointers during GC

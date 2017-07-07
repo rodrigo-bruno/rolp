@@ -2406,10 +2406,19 @@ public:
 
   // Decode the offset-mark and return the computed alloc-region
   GenAllocRegion * alloc_region_for_mark(markOop m) {
-    // Decode the mark
-    uintptr_t        const offset = (uintptr_t)m->decode_allocr();
+    // Decode the mark with the sign
+    uint32_t offset;
+    uint8_t  sign;
+    m->decode_allocr_with_sign(offset, sign);
+
     // Compute the alloc-region
-    GenAllocRegion* gar = (GenAllocRegion*)(_offset_base + (offset/sizeof(HeapWord)));
+    GenAllocRegion * gar;
+    if (!sign)
+      gar = (GenAllocRegion*)(_offset_base + offset);
+    else
+      gar = (GenAllocRegion*)(_offset_base - offset);
+
+    // Assert the correct value and return
     assert(!strncmp(gar->name(), "Gen GC Alloc Region", strlen("Gen GC Alloc Region")), "failed to find alloc region from mark"); 
 #ifdef LAG1_DEBUG_PROMOTION
     gclog_or_tty->print_cr("[lag1-debug-alloc-from-mark] mark " INTPTR_FORMAT "  and gar " INTPTR_FORMAT, (intptr_t)m, (intptr_t)gar);

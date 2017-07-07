@@ -646,31 +646,32 @@ inline bool oopDesc::cas_claim_oop() {
   if (oldMark->lag1_claimed()) return false;
   return cas_set_mark(newMark, oldMark) == oldMark;
 }
-inline void oopDesc::install_allocr(uintptr_t p) {
+inline void oopDesc::install_allocr(uintptr_t delta, bool positive) {
   assert(mark()->lag1_claimed(), "oop should be singular to this thread");
+  uintptr_t sign = positive ? 0 : 1;
   volatile markOop oldMark = mark();
-  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, p);
+  volatile markOop newMark = markOopDesc::encode_mark_with_allocr_sign(oldMark, delta, sign);
   set_mark(newMark);
   assert(mark()->has_bias_pattern() || mark()->is_unlocked(),
          "oop should still be unlocked for promotion");
 }
 // Maybe, in the future, this method can be merge with the one above
-inline void oopDesc::install_allocr_no_verify(uintptr_t p) {
+inline void oopDesc::install_allocr_no_verify(uintptr_t delta) {
   assert(mark()->has_bias_pattern() || mark()->is_unlocked(),
          "oop should still be unlocked for promotion");
   volatile markOop oldMark = mark();
-  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, p);
+  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, delta);
   set_mark(newMark);
   assert(mark()->has_bias_pattern() || mark()->is_unlocked(),
          "oop should still be unlocked for promotion");
 }
-inline bool oopDesc::cas_install_allocr(uintptr_t p) {
+inline bool oopDesc::cas_install_allocr(uintptr_t delta) {
   // here, we should be receiving just 32bits
   // also, we do not assert for "claimed" values since this is a normal object
   // and we are sneaking a new header
   // TODO: fix install_allocr and callers to use only 32bit types?
   volatile markOop oldMark = mark();
-  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, p);
+  volatile markOop newMark = markOopDesc::encode_mark_with_allocr(oldMark, delta);
   if (cas_set_mark(newMark, oldMark) == oldMark) {
     assert(mark()->has_bias_pattern() || mark()->is_unlocked(),
            "oop should still be unlocked for promotion");

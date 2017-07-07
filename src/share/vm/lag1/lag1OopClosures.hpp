@@ -34,7 +34,8 @@ class LAG1ParMarkDSClosure : public G1ParClosureSuper
    * as base */
   uintptr_t calculate_offset(void * region)
     { return (_offset_base < region) ?
-        pointer_delta(region, _offset_base, 1) : pointer_delta(_offset_base, region, 1); }
+        pointer_delta(region, _offset_base, sizeof(HeapWord*)) :
+        pointer_delta(_offset_base, region, sizeof(HeapWord*)); }
 
  protected:
   // FIXME: Unused
