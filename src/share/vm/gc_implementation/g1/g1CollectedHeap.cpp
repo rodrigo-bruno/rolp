@@ -4775,6 +4775,7 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
     _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
+    _offset_base((HeapWord*)Universe::heap()), // <dpatricio>
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
@@ -4803,15 +4804,6 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
 
   _alloc_buffers[GCAllocForSurvived] = &_surviving_alloc_buffer;
   _alloc_buffers[GCAllocForTenured]  = &_tenured_alloc_buffer;
-
-  // <dpatricio>
-  // Set the offset-base to use. This is so because different compiler versions
-  // may put the C-heap after or before the Java heap.
-  if ((void*)g1h < (void*)g1h->g1_reserved().start()) {
-    _offset_base = g1h->g1_reserved().start();
-  } else {
-    _offset_base = g1h->g1_reserved().end();
-  }
 
   _start = os::elapsedTime();
 }
@@ -5098,6 +5090,14 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       _par_scan_state->undo_allocation(alloc_purpose, obj_ptr, word_sz);
     obj = forward_ptr;
   }
+
+#ifdef LAG1_DEBUG_SURVIVOR
+  if (m->lag1_claimed()) {
+    gclog_or_tty->print_cr("[lag1-debug-survivor-finish] old-oop " INTPTR_FORMAT " old-mark " INTPTR_FORMAT  " new-oop " INTPTR_FORMAT" new-mark " INTPTR_FORMAT, old, m, obj, obj->mark());
+  }
+#endif
+
+
   return obj;
 }
 
@@ -7511,13 +7511,14 @@ G1CollectedHeap::new_container_gen() {
   MutexLockerEx ml(HeapGen_lock);
 
   int gen = _gen_alloc_regions->length();
-#ifdef LAG1_DEBUG_NEW_CONTAINER
-  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with id = " INT32_FORMAT, gen);
-#endif
   GenAllocRegion * new_gen = new GenAllocRegion(gen);
   new_gen->init();
   new_gen->init_gc_alloc_buffers();
   _gen_alloc_regions->push(new_gen);
+#ifdef LAG1_DEBUG_NEW_CONTAINER
+  gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with ptr="INTPTR_FORMAT" id = " INT32_FORMAT, new_gen, gen);
+#endif
+
   assert(new_gen == _gen_alloc_regions->at(gen), "last container gen should be the new one");
   return new_gen;
 }

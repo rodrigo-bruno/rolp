@@ -144,6 +144,7 @@ public:
   }
 
   uint count() { return _count; }
+  const char* name() { return _name; }
 
   // The following two are the building blocks for the allocation method.
 
