@@ -355,7 +355,7 @@ class markOopDesc: public oopDesc {
   static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
     { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_sign_mask_in_place) | (p << lag1_offset_shift) | lag1_claim_bit_in_place); }
   bool lag1_claimed()
-    { return !has_monitor() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
+    { return is_unlocked() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
   bool has_allocr_installed()
     { return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_offset_mask_in_place) != 0; }
   uint32_t decode_allocr()
