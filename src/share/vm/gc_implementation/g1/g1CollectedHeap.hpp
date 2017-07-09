@@ -2410,6 +2410,8 @@ public:
     uint32_t offset;
     uint8_t  sign;
     m->decode_allocr_with_sign(offset, sign);
+    // FIXME: The sign is returning 0xff instead of 0x1. See why this is happening and
+    // if in the future could give wrong results.
 
     // Compute the alloc-region
     GenAllocRegion * gar;
