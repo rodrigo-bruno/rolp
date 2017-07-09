@@ -3642,6 +3642,14 @@ jint Arguments::apply_ergo() {
   // Set heap size based on available physical memory
   set_heap_size();
 
+  // <dpatricio> For now we require that G1GC with lag1 modifications has
+  // no compressed-oops nor compressed-class-pointers (after all, it's big data)
+#ifdef LAG1
+  FLAG_SET_DEFAULT(UseCompressedOops, false);
+  FLAG_SET_DEFAULT(UseCompressedClassPointers, false);
+#endif
+  // </dpatricio>
+
 #if INCLUDE_ALL_GCS
   // Set per-collector flags
   if (UseParallelGC || UseParallelOldGC) {
