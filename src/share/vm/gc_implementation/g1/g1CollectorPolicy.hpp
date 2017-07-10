@@ -898,7 +898,29 @@ public:
       } else {
 #ifdef LAG1
         if (m->lag1_claimed()) {
+          // <dpatricio> Paranoid code assures that what the offset is pointing to
+          // is a valid GenAllocRegion.
+#ifdef LAG1_PARANOID
+          // Decode the mark with the sign
+          uint32_t offset;
+          uint8_t  sign;
+          m->decode_allocr_with_sign(offset, sign);
+          GenAllocRegion * gar;
+          HeapWord * offset_base = (HeapWord*)Universe::heap();
+          if (!sign) {
+            gar = (GenAllocRegion*)(offset_base + offset);
+          } else {
+            gar = (GenAllocRegion*)(offset_base - offset);
+          }
+          // Assert the correct value and return
+          if(!strncmp(gar->name(), "Gen GC Alloc Region", strlen("Gen GC Alloc Region"))) {
+            return GCAllocForContainer;
+          } else {
+            return GCAllocForTenured;
+          }
+#else
           return GCAllocForContainer;
+#endif
         } else
 #endif
           return GCAllocForTenured;
