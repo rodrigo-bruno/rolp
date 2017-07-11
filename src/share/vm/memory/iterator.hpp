@@ -75,7 +75,7 @@ class ExtendedOopClosure : public OopClosure {
   uint32_t _offset_mark;
  public:
   void set_offset_mark(uint32_t m) { _offset_mark = m; }
-  uint32_t offset_mark()           { return _offset_mark; }
+  uint32_t offset_mark()     const { return _offset_mark; }
   // </dpatricio>
   
  public:

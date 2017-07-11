@@ -115,8 +115,7 @@ class markOopDesc: public oopDesc {
          hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits,
          cms_bits                 = LP64_ONLY(1) NOT_LP64(0),
          epoch_bits               = 2,
-         lag1_sign_bits           = 1, // <dpatricio>
-         lag1_offset_bits         = 31 // <dpatricio>
+         lag1_index_bits          = 25 // <dpatricio>
   };
 
   // The biased locking code currently requires that the age bits be
@@ -128,8 +127,7 @@ class markOopDesc: public oopDesc {
          lag1_claimed_shift       = cms_shift, // <dpatricio>
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift,
-         lag1_offset_shift        = lag1_offset_bits + lag1_sign_bits, // <dpatricio>
-         lag1_sign_shift          = lag1_offset_shift + lag1_offset_bits // <dpatricio>
+         lag1_index_shift         = hash_shift + hash_bits, // <dpatricio>
   };
 
   enum { lock_mask                = right_n_bits(lock_bits),
@@ -139,8 +137,7 @@ class markOopDesc: public oopDesc {
          biased_lock_bit_in_place = 1 << biased_lock_shift,
          age_mask                 = right_n_bits(age_bits),
          age_mask_in_place        = age_mask << age_shift,
-         lag1_offset_mask         = right_n_bits(lag1_offset_bits), // <dpatricio>
-         lag1_offset_sign_mask    = right_n_bits(lag1_offset_bits + lag1_sign_bits), // <dpatricio>
+         lag1_index_mask          = right_n_bits(lag1_index_bits), // <dpatricio>
          lag1_claim_bit_in_place  = 1 << lag1_claimed_shift, // <dpatricio> 
          epoch_mask               = right_n_bits(epoch_bits),
          epoch_mask_in_place      = epoch_mask << epoch_shift,
@@ -157,12 +154,8 @@ class markOopDesc: public oopDesc {
   };
 
   // <dpatricio> This needs to be here due to overflow warnings
-  const static uintptr_t lag1_offset_mask_in_place =
-                          (address_word)lag1_offset_mask << lag1_offset_shift;
-  const static uintptr_t lag1_offset_sign_mask_in_place =
-                          (address_word)lag1_offset_sign_mask << lag1_offset_shift;
-  const static uintptr_t lag1_sign_mask_in_place =
-                          (address_word)lag1_sign_bits << lag1_sign_shift;
+  const static uintptr_t lag1_index_mask_in_place =
+                          (address_word)lag1_index_mask << lag1_index_shift;
 
 #ifdef _WIN64
     // These values are too big for Win64
@@ -348,21 +341,27 @@ class markOopDesc: public oopDesc {
   //       (1) Still use uint32_t?
   //       (2) do typedef of this type?
   //       (3) or use uint?
-  static markOop encode_mark_as_claimed(markOop m)
-    { return markOop(mask_bits((uintptr_t)m, ~lag1_claim_bit_in_place) | lag1_claim_bit_in_place); }
-  static markOop encode_mark_with_allocr_sign(markOop m, uintptr_t p, uintptr_t s)
-    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_sign_mask_in_place) | (p << lag1_offset_shift) | (s << lag1_sign_shift) | lag1_claim_bit_in_place); }
-  static markOop encode_mark_with_allocr(markOop m, uintptr_t p)
-    { return markOop(mask_bits((uintptr_t)m, ~lag1_offset_sign_mask_in_place) | (p << lag1_offset_shift) | lag1_claim_bit_in_place); }
-  bool lag1_claimed()
-    { return is_unlocked() && mask_bits_are_true(value(), lag1_claim_bit_in_place); }
-  bool has_allocr_installed()
-    { return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_offset_mask_in_place) != 0; }
-  uint32_t decode_allocr()
-    { return (uint32_t)(mask_bits(value(), lag1_offset_sign_mask_in_place) >> lag1_offset_shift); }
-  void decode_allocr_with_sign(uint32_t& offset, uint8_t& sign)
-    { offset = (uint32_t)(mask_bits(value(), lag1_offset_mask_in_place) >> lag1_offset_shift);
-      sign   = (uint8_t)(mask_bits(value(), lag1_sign_mask_in_place) >> lag1_sign_shift); }
+  static markOop encode_mark_as_claimed(markOop m) {
+    return markOop(mask_bits((uintptr_t)m, ~lag1_claim_bit_in_place) | lag1_claim_bit_in_place);
+  }
+  static markOop encode_mark_allocr_index(markOop m, uint32_t idx) {
+    return markOop(mask_bits((uintptr_t)m, ~lag1_index_mask_in_place) |
+                   ((address_word)idx << lag1_index_shift) |
+                   lag1_claim_bit_in_place);
+  }
+  /* This version of is_unlocked only accounts the bits in the lock part */
+  bool is_unlocked_no_bias() const {
+    return (mask_bits(value(), lock_mask_in_place) == unlocked_value);
+  }
+  bool lag1_claimed() const {
+    return is_unlocked_no_bias() && mask_bits_are_true(value(), lag1_claim_bit_in_place);
+  }
+  bool has_allocr_installed() const {
+      return mask_bits_are_true(value(), lag1_claim_bit_in_place) && mask_bits(value(), lag1_index_mask_in_place) != 0;
+  }
+  uint32_t decode_allocr() const {
+    return (uint32_t)(mask_bits(value(), lag1_index_mask_in_place) >> lag1_index_shift);
+  }
   // </dpatricio>
   
   // used to encode pointers during GC

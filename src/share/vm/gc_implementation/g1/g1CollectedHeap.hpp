@@ -357,13 +357,9 @@ private:
   // <underscore> By default gen allocation region.
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
-#ifndef LAG1
   GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
-#else
-  // <dpatricio>
-  GenLinkedQueue<GenAllocRegion*, mtGC> * _gen_alloc_regions;
-#endif
   // A hashtable that saves the alloc_region for new containers
+  // TODO: Deprecate this
   AllocRegionHashtable * _ct_alloc_region_hashtable;
 
   // PLAB sizing policy for survivors.
@@ -1420,11 +1416,7 @@ public:
   virtual void collect(GCCause::Cause cause);
 
   // <underscore> Getter for gen alloc regions array
-#ifndef LAG1
   GrowableArray<GenAllocRegion*>* gen_alloc_regions() { return _gen_alloc_regions; }
-#else
-  GenLinkedQueue<GenAllocRegion*, mtGC> * gen_alloc_regions() { return _gen_alloc_regions; }
-#endif
   // <dpatricio> Getter for the hashtable of container alloc regions
   AllocRegionHashtable * ct_alloc_hashtable() const { return _ct_alloc_region_hashtable; }
   // <dpatricio> Return the queue for worker i
@@ -2142,9 +2134,9 @@ protected:
   G1RemSet* _g1_rem;
 
   // <dpatricio>
-  RefToMarkQueue             * _premark_refs;
-  LAG1ParMarkFollowerClosure * _premark_cl;
-  HeapWord                   * _offset_base;
+  RefToMarkQueue*                 _premark_refs;
+  LAG1ParMarkFollowerClosure*     _premark_cl;
+  GrowableArray<GenAllocRegion*>* _alloc_region_array;
   double _start_lag1_roots;
   double _lag1_roots_time;
   // </dpatricio>
@@ -2374,31 +2366,30 @@ public:
     _lag1_roots_time += (os::elapsedTime() - _start_lag1_roots);
   }
   double lag1_roots_time() const { return _lag1_roots_time; }
-  HeapWord * offset_base() const { return _offset_base; }
   RefToMarkQueue * premark_refs() { return _premark_refs; }
   void set_premark_closure(LAG1ParMarkFollowerClosure * premark_cl) {
     _premark_cl = premark_cl;
   }
 
-  template <class T> void push_on_premark_queue(T* ref, uint32_t mark) {
+  template <class T> void push_on_premark_queue(T* ref, uint32_t index) {
     assert(verify_ref(ref), "sanity");
-    premark_refs()->push(MarkStarTask(ref, mark));
+    premark_refs()->push(MarkStarTask(ref, index));
   }
   // Process the data-structure references pushed to this thread queue calling
   // the appropriate closure.
   void trim_mark_queue();
   // Applies the closure to the popped reference.
   // Template version of the method.
-  template <class T> void premark_reference(T * ref, uint32_t mark) {
-    _premark_cl->do_oop_nv(ref, mark);
+  template <class T> void premark_reference(T * ref, uint32_t index) {
+    _premark_cl->do_oop_nv(ref, index);
   }
   // Conditional one (actual called by the trim_mark_queue())
   void premark_reference(MarkStarTask ref) {
     assert(verify_task(ref), "sanity");
     if (ref.is_narrow()) {
-      premark_reference((narrowOop*)ref, ref.mark());
+      premark_reference((narrowOop*)ref, ref.index());
     } else {
-      premark_reference((oop*)ref, ref.mark());
+      premark_reference((oop*)ref, ref.index());
     }
   }
 
@@ -2406,19 +2397,11 @@ public:
 
   // Decode the offset-mark and return the computed alloc-region
   GenAllocRegion * alloc_region_for_mark(markOop m) {
-    // Decode the mark with the sign
-    uint32_t offset;
-    uint8_t  sign;
-    m->decode_allocr_with_sign(offset, sign);
-    // FIXME: The sign is returning 0xff instead of 0x1. See why this is happening and
-    // if in the future could give wrong results.
-
+    // Decode the mark
+    uint32_t index = m->decode_allocr();
+    
     // Compute the alloc-region
-    GenAllocRegion * gar;
-    if (!sign)
-      gar = (GenAllocRegion*)(_offset_base + offset);
-    else
-      gar = (GenAllocRegion*)(_offset_base - offset);
+    GenAllocRegion * gar = _alloc_region_array->at(index);
 
     // Assert the correct value and return
     assert(!strncmp(gar->name(), "Gen GC Alloc Region", strlen("Gen GC Alloc Region")), "failed to find alloc region from mark"); 

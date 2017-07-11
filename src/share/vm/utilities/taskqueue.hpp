@@ -827,20 +827,20 @@ class MarkStarTask
   enum { COMPRESSED_OOP_MASK = 1 };
   
   void *   _holder;
-  uint32_t _mark;
+  uint32_t  _index;
 
  public:
-  MarkStarTask(narrowOop * p, uint32_t m) : _mark(m)
+  MarkStarTask(narrowOop * p, uint32_t m) : _index(m)
     {
       assert (((uintptr_t)p & COMPRESSED_OOP_MASK) == 0, "Information loss!");
       _holder = (void*)((uintptr_t)p | COMPRESSED_OOP_MASK);
     }
-  MarkStarTask(oop* p, uint32_t m) : _mark(m)
+  MarkStarTask(oop* p, uint32_t m) : _index(m)
     {
       assert (((uintptr_t)p & COMPRESSED_OOP_MASK) == 0, "Information loss!");
       _holder = (void*)p;
     }
-  MarkStarTask() : _holder(NULL), _mark(0) { }
+  MarkStarTask() : _holder(NULL), _index(0) { }
   
   operator oop*()        { return (oop*)_holder; }
   operator narrowOop*()  {
@@ -849,13 +849,13 @@ class MarkStarTask
   
   MarkStarTask& operator=(const MarkStarTask& t) {
     _holder = t._holder;
-    _mark = t._mark;
+    _index = t._index;
     return *this;
   }
   
   volatile MarkStarTask& operator=(const volatile MarkStarTask& t) volatile {
     _holder = t._holder;
-    _mark = t._mark;
+    _index = t._index;
     return *this;
   }
 
@@ -863,7 +863,7 @@ class MarkStarTask
     return (((uintptr_t)_holder & COMPRESSED_OOP_MASK) != 0);
   }
   
-  uint32_t mark() const { return _mark; }
+  uint32_t index() const { return _index; }
 
 };
 // </dpatricio>

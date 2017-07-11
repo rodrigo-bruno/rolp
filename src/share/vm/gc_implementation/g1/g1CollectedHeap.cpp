@@ -61,6 +61,7 @@
 // LAG1
 // <dpatricio>
 # include "lag1/lag1OopClosures.inline.hpp"
+# include "lag1/lag1_globals.hpp"
 # include "lag1/container_map.hpp"
 // </dpatricio>
 
@@ -2005,12 +2006,9 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   // <underscore> added initialization.
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
-#ifndef LAG1
-  _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(16,true)),
-#else
-  _gen_alloc_regions(new GenLinkedQueue<GenAllocRegion*, mtGC>()),
+  _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(INITIAL_ALLOC_REGION_ARRAY_SIZE,true)),
+  // <dpatricio> added initialization
   _ct_alloc_region_hashtable(new AllocRegionHashtable(2048)),
-#endif
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
   _retained_old_gc_alloc_region(NULL),
@@ -2272,7 +2270,11 @@ jint G1CollectedHeap::initialize() {
   G1AllocRegion::setup(this, dummy_region);
 
   init_mutator_alloc_region();
-  init_gen_alloc_regions(); // <underscore>
+  // init_gen_alloc_regions(); // <underscore> <dpatricio> no need to run this
+  // <dpatricio> We create this dummy alloc-region so that the container alloc-regions
+  // get gen id's > 0, thus making the mark in the header easier to debug and for tests.
+  GenAllocRegion * dummy_gen_allocr = new GenAllocRegion();
+  gen_alloc_regions()->push(dummy_gen_allocr);
 
   // Do create of the monitoring and management support so that
   // values in the heap have been properly initialized.
@@ -4563,14 +4565,14 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 void G1CollectedHeap::init_lag1_gc_alloc_regions() {
   // TODO: Consider using a retained_region here to prevent filling up these gc-alloc regions
   // constantly after gc. More details of the procedure in init_gc_alloc_regions()
-  for (int i = 0; i < gen_alloc_regions()->length(); i++) {
+  for (int i = 1; i < gen_alloc_regions()->length(); i++) {
     assert (gen_alloc_regions()->at(i)->get() == NULL, "pre-condition");
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
     allocr->init();
   }
 }
 void G1CollectedHeap::release_lag1_gc_alloc_regions() {
-  for (int i = 0; i < gen_alloc_regions()->length(); i++) {
+  for (int i = 1; i < gen_alloc_regions()->length(); i++) {
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
     allocr->retire_gc_alloc_buffers();
     allocr->release();
@@ -4580,7 +4582,7 @@ void G1CollectedHeap::release_lag1_gc_alloc_regions() {
 void G1CollectedHeap::abandon_lag1_gc_alloc_regions() {
   // just for asserts
 #ifdef ASSERT
-  for (int i = 0; i < gen_alloc_regions()->length(); i++) {
+  for (int i = 1; i < gen_alloc_regions()->length(); i++) {
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
     assert(allocr->get() == NULL, "pre-condition");
   }
@@ -4775,7 +4777,7 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
     _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
-    _offset_base((HeapWord*)Universe::heap()), // <dpatricio>
+    _alloc_region_array(g1h->gen_alloc_regions()), // <dpatricio>
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
@@ -5307,9 +5309,9 @@ LAG1ParMarkDSFollowersClosure::do_void()
     while (queues()->steal(pss->queue_num(), pss->hash_seed(), task)) {
       assert(pss->verify_task(task), "sanity");
       if (task.is_narrow()) {
-        pss->premark_reference((narrowOop*) task, task.mark());
+        pss->premark_reference((narrowOop*) task, task.index());
       } else {
-        pss->premark_reference((oop*) task, task.mark());
+        pss->premark_reference((oop*) task, task.index());
       }
       // We've just processed a reference and we might have made
       // available new entries on the queues. So we have to make sure
@@ -5473,7 +5475,7 @@ public:
 #ifdef LAG1
       // <dpatricio>
       // Create the closure that will iterate the lag1 roots and then the one for the followers
-      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, pss.offset_base(), &pss);
+      LAG1ParMarkDSClosure            scan_ds_cl(_g1h, &pss);
       LAG1ParMarkDSFollowersClosure   scan_ds_followers_cl(_g1h,
                                                            &pss,
                                                            _premark_queues,

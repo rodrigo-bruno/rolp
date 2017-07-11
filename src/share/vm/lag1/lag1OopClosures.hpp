@@ -24,6 +24,7 @@ class LAG1ParScanDSClosure : public G1ParClosureSuper
 class LAG1ParMarkDSClosure : public G1ParClosureSuper
 {
   // For offset calculation
+  // TODO: Deprecated (remove this with calculate_offset if no longer needed)
   HeapWord * _offset_base;
   // Scanner of data-structure fields
   LAG1ParScanDSClosure _ds_scanner;
@@ -46,13 +47,9 @@ class LAG1ParMarkDSClosure : public G1ParClosureSuper
  public:
   
   LAG1ParMarkDSClosure(G1CollectedHeap * g1,
-                       HeapWord * offset_base,
                        G1ParScanThreadState * par_scan_state) :
     G1ParClosureSuper(g1, par_scan_state),
-    _ds_scanner(g1, par_scan_state), _offset_base(offset_base)
-
-
-    { }
+    _ds_scanner(g1, par_scan_state) { }
   
   virtual void do_oop(oop * p)       { do_oop_work(p); }
   virtual void do_oop(narrowOop * p) { do_oop_work(p); }
@@ -63,14 +60,14 @@ class LAG1ParMarkFollowerClosure : public G1ParClosureSuper
   // Scanner of data-structure fields
   LAG1ParScanDSClosure _ds_scanner;
 
-  template <class T> void do_oop_work(T * p, uint32_t m);
+  template <class T> void do_oop_work(T * p, int32_t m);
 
  public:
   LAG1ParMarkFollowerClosure(G1CollectedHeap * g1h,
                              G1ParScanThreadState * pss)
     : G1ParClosureSuper(g1h, pss), _ds_scanner(g1h, pss) { }
 
-  template <class T> void do_oop_nv(T * p, uint32_t m) { do_oop_work(p, m); }
+  template <class T> void do_oop_nv(T * p, int32_t m)  { do_oop_work(p, m); }
   template <class T> void do_oop_nv(T * p)             { do_oop_work(p, 0); }
   virtual void do_oop(oop * p)                         { do_oop_work(p, 0); }
   virtual void do_oop(narrowOop * p)                   { do_oop_work(p, 0); }
