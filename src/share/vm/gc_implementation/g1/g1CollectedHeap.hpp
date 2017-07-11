@@ -2405,8 +2405,8 @@ public:
 
     // Assert the correct value and return
     assert(!strncmp(gar->name(), "Gen GC Alloc Region", strlen("Gen GC Alloc Region")), "failed to find alloc region from mark"); 
-#ifdef LAG1_DEBUG_PROMOTION
-    gclog_or_tty->print_cr("[lag1-debug-alloc-from-mark] mark " INTPTR_FORMAT "  and gar " INTPTR_FORMAT, (intptr_t)m, (intptr_t)gar);
+#ifdef LAG1_PARANOID_DEBUG_PROMOTION
+    gclog_or_tty->print_cr("[lag1-debug-alloc-from-mark] mark " INTPTR_FORMAT " and gar " INTPTR_FORMAT, (intptr_t)m, (intptr_t)gar);
 #endif
 
     return gar;
