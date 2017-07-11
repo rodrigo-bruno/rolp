@@ -909,6 +909,7 @@ public:
           if(!strncmp(gar->name(), "Gen GC Alloc Region", strlen("Gen GC Alloc Region"))) {
             return GCAllocForContainer;
           } else {
+            gclog_or_tty->print_cr("[lag1-paranoid] Corrected promotion of obj with mark " INTPTR_FORMAT " to correct alloc-region", (intptr_t)m);
             return GCAllocForTenured;
           }
 #else
