@@ -2007,7 +2007,9 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _min_migration_bandwidth(0),
   // <underscore> added initialization.
   _gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<GenAllocRegion*>(INITIAL_ALLOC_REGION_ARRAY_SIZE,true)),
-  // <dpatricio> added initialization
+  // <dpatricio> initialization of retired_gen_alloc_regions array
+  _retained_gen_alloc_regions(new (ResourceObj::C_HEAP, mtGC) GrowableArray<HeapRegion*>(INITIAL_ALLOC_REGION_ARRAY_SIZE,true)),
+  // <dpatricio> initialization of alloc_region_hashtable (deprecated)
   _ct_alloc_region_hashtable(new AllocRegionHashtable(2048)),
   _young_list(new YoungList(this)),
   _gc_time_stamp(0),
@@ -4228,7 +4230,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 #ifdef LAG1
         // <dpatricio>
         // Initialize the LAG1 alloc regions
-        init_lag1_gc_alloc_regions();
+        init_lag1_gc_alloc_regions(evacuation_info);
 #endif
 
         // Actually do the work...
@@ -4562,31 +4564,54 @@ void G1CollectedHeap::release_gen_alloc_regions() {
 // </undersore>
 
 // <dpatricio>
-void G1CollectedHeap::init_lag1_gc_alloc_regions() {
-  // TODO: Consider using a retained_region here to prevent filling up these gc-alloc regions
-  // constantly after gc. More details of the procedure in init_gc_alloc_regions()
+void G1CollectedHeap::init_lag1_gc_alloc_regions(EvacuationInfo& evacuation_info) {
   for (int i = 1; i < gen_alloc_regions()->length(); i++) {
     assert (gen_alloc_regions()->at(i)->get() == NULL, "pre-condition");
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
+    /* the index is i-1 because for the gen_alloc_regions we have a dummy but not for retained */
+    HeapRegion ** const retained_region_ptr = retained_gen_alloc_regions()->adr_at(i-1);
+    HeapRegion *  const retained_region = *retained_region_ptr;
+    *retained_region_ptr = NULL;
+
+    /* Initiate the gen-alloc-region */
     allocr->init();
+
+    /* The reason we might reuse the retained_region is explained on init_gc_alloc_regions() */
+    if (retained_region != NULL &&
+        !retained_region->in_collection_set() &&
+        !(retained_region->top() == retained_region->end()) &&
+        !retained_region->is_empty() &&
+        !retained_region->isHumongous()) {
+      retained_region->set_saved_mark();
+      _old_set.remove(retained_region);
+      bool during_im = g1_policy()->during_initial_mark_pause();
+      retained_region->note_start_of_copying(during_im);
+      retained_region->set_gen_alloc_region(true);
+      allocr->set(retained_region);
+      evacuation_info.inc_alloc_regions_used_before(retained_region->used());
+    }
   }
 }
-void G1CollectedHeap::release_lag1_gc_alloc_regions() {
+void G1CollectedHeap::release_lag1_gc_alloc_regions(EvacuationInfo& evacuation_info) {
   for (int i = 1; i < gen_alloc_regions()->length(); i++) {
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
+    /* the index is i-1 because for the gen_alloc_regions we have a dummy but not for retained */
+    HeapRegion ** retained_allocr_ptr = retained_gen_alloc_regions()->adr_at(i-1);
     allocr->retire_gc_alloc_buffers();
-    allocr->release();
+    *retained_allocr_ptr = allocr->release();
+    evacuation_info.inc_allocation_regions(allocr->count());
     assert(gen_alloc_regions()->at(i)->get() == NULL, "post-condition");
   }
 }
 void G1CollectedHeap::abandon_lag1_gc_alloc_regions() {
-  // just for asserts
-#ifdef ASSERT
   for (int i = 1; i < gen_alloc_regions()->length(); i++) {
+#ifdef ASSERT
+    // just for asserts
     GenAllocRegion * allocr = gen_alloc_regions()->at(i);
     assert(allocr->get() == NULL, "pre-condition");
-  }
 #endif
+    retained_gen_alloc_regions()->at_put(i-1, (HeapRegion*)NULL);
+  }
 }
 // </dpatricio>
 
@@ -4776,8 +4801,10 @@ G1ParGCAllocBuffer::G1ParGCAllocBuffer(size_t gclab_word_size) :
 G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint queue_num)
   : _g1h(g1h),
     _refs(g1h->task_queue(queue_num)),
+#ifdef LAG1 /* <dpatricio> premark_queues are not init'ed for non-lag1 build */
     _premark_refs(g1h->premark_queue(queue_num)), // <dpatricio>
     _alloc_region_array(g1h->gen_alloc_regions()), // <dpatricio>
+#endif
     _dcq(&g1h->dirty_card_queue_set()),
     _ct_bs(g1h->g1_barrier_set()),
     _g1_rem(g1h->g1_rem_set()),
@@ -6250,7 +6277,7 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
 #ifdef LAG1
   // <dpatricio>
   // Release the LAG1 alloc regions
-  release_lag1_gc_alloc_regions();
+  release_lag1_gc_alloc_regions(evacuation_info);
 #endif
 
   g1_rem_set()->cleanup_after_oops_into_collection_set_do();
@@ -7081,7 +7108,6 @@ HeapRegion* GenAllocRegion::allocate_new_region(size_t word_size,
 void GenAllocRegion::retire_region(HeapRegion* alloc_region,
                                      size_t allocated_bytes) {
   _g1h->retire_gen_alloc_region(alloc_region, allocated_bytes);
-  alloc_region->set_gen_alloc_region(false);
 #if DEBUG_ALLOC_REGION
   gclog_or_tty->print_cr("<underscore> [GenAllocRegion::retire_region] gen=%d, ttgc=%d, this=["INTPTR_FORMAT"], bottom=["INTPTR_FORMAT"]",
     this->gen(), alloc_region->retired_gc_count(), this, alloc_region->bottom());
@@ -7161,10 +7187,10 @@ public:
     } else if (hr->is_empty()) {
       _free_list->verify_next_region(hr);
     }
-    // <underscore>
-    else if (_g1h->is_gen_alloc_region(hr)) {
-      // The current gen alloc region does not belong to any set.
-    }
+    // <underscore> <dpatricio> now it does because a retained is still a gen_alloc_region
+    // else if (_g1h->is_gen_alloc_region(hr)) {
+    //   // The current gen alloc region does not belong to any set.
+    // }
     // </underscore>
     else {
       _old_set->verify_next_region(hr);
@@ -7517,6 +7543,7 @@ G1CollectedHeap::new_container_gen() {
   new_gen->init();
   new_gen->init_gc_alloc_buffers();
   _gen_alloc_regions->push(new_gen);
+  _retained_gen_alloc_regions->push((HeapRegion*)NULL);
 #ifdef LAG1_DEBUG_NEW_CONTAINER
   gclog_or_tty->print_cr("[lag1-debug-new-container] Creating new container with ptr="INTPTR_FORMAT" id = " INT32_FORMAT, new_gen, gen);
 #endif

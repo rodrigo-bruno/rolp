@@ -519,6 +519,8 @@ class Thread: public ThreadShadow {
   void  inc_tldab_alloc_idx()          { _tldab_alloc_idx++; }
   // get the current idx of next alloc'd ds parent
   juint tldab_alloc_idx() const        { return _tldab_alloc_idx; }
+  // insert the given oop on the tldab
+  void  push_oop(oop o)                { tldab()[_tldab_alloc_idx++] = o; }
   // GC support: 
   //   The Threads set calls the oops_do for each thread. In turn, each
   //   thread provides the TLDAB to the GC worker to work out the closure.

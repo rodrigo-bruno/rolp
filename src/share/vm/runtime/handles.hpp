@@ -182,6 +182,8 @@ class KlassHandle : public StackObj {
   // should be allocated. For now, > 0 means that the object should be allocated
   // in a special generation (not eden).
   int _alloc_gen;
+  /* <dpatricio> the ctor with the thread args should hold it */
+  Thread * _the_thread;
 
  protected:
    Klass* obj() const          { return _value; }
@@ -190,7 +192,8 @@ class KlassHandle : public StackObj {
  public:
    KlassHandle()                                 : _value(NULL),_alloc_gen(0) {}
    KlassHandle(const Klass* obj)                 : _value(const_cast<Klass *>(obj)),_alloc_gen(0) {};
-   KlassHandle(Thread* thread, const Klass* obj) : _value(const_cast<Klass *>(obj)),_alloc_gen(0) {};
+   KlassHandle(Thread* thread, const Klass* obj) : _value(const_cast<Klass *>(obj)),
+                                                   _alloc_gen(0), _the_thread(thread) {};
 
    Klass* operator () () const { return obj(); }
    Klass* operator -> () const { return non_null_obj(); }
@@ -203,6 +206,9 @@ class KlassHandle : public StackObj {
 
    int  alloc_gen() { return _alloc_gen; }
    void set_alloc_gen(int alloc_gen) { _alloc_gen = alloc_gen; }
+
+  /* <dpatricio> Getter for _the_thread */
+  Thread * thread() { return _the_thread; }
 };
 
 class instanceKlassHandle : public KlassHandle {

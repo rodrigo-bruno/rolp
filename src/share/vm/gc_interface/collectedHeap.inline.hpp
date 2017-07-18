@@ -42,6 +42,18 @@ void CollectedHeap::post_allocation_setup_common(KlassHandle klass,
                                                  HeapWord* obj) {
   post_allocation_setup_no_klass_install(klass, obj);
   post_allocation_install_obj_klass(klass, oop(obj));
+#ifdef LAG1
+  // Install the oop on the running thread if the klass is to be tracked
+  if (klass()->ct_id() != 0) {
+    Thread * the_thread = klass.thread();
+    the_thread->push_oop((oop)obj);
+#ifdef LAG1_DEBUG_INTERPRETER
+    Universe::lag1_debug_inc_thread_buffer((JavaThread*)the_thread, obj,
+                                           the_thread->tldab_alloc_idx());
+    Universe::lag1_debug_print_oop((oop)obj);
+#endif
+  }
+#endif
 }
 
 void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,

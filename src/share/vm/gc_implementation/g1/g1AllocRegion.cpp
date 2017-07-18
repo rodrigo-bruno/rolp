@@ -106,6 +106,9 @@ void G1AllocRegion::retire(bool fill_up) {
 
     if (fill_up) {
       fill_up_remaining_space(alloc_region, _bot_updates);
+      /* <dpatricio> is_gen_alloc_region should be reset here because a region may still
+       * be a gen_alloc_region while not filled, meaning still being used as retained */
+      if (alloc_region->is_gen_alloc_region()) { alloc_region->set_gen_alloc_region(false); }
     }
 
     assert(alloc_region->used() >= _used_bytes_before,
@@ -182,8 +185,8 @@ void G1AllocRegion::set(HeapRegion* alloc_region) {
 HeapRegion* G1AllocRegion::release() {
   trace("releasing");
   HeapRegion* alloc_region = _alloc_region;
-  // <underscore> This was previously just false.
-  retire(alloc_region->is_gen_alloc_region() /* fill_up */);
+  // <underscore> This was previously just false. <dpatricio> Not anymore, guess it's better
+  retire(false);
 
   assert(_alloc_region == _dummy_region,
          ar_ext_msg(this, "post-condition of retire()"));

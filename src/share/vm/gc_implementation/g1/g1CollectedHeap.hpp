@@ -357,7 +357,10 @@ private:
   // <underscore> By default gen allocation region.
   GenAllocRegion _gen_alloc_region;
   // <underscore> Array of gen allocation regions.
-  GrowableArray<GenAllocRegion*>* _gen_alloc_regions;
+  GrowableArray<GenAllocRegion*> * _gen_alloc_regions;
+  // <dpatricio> Array of retained container allocations regions
+  // (named as "gen" for the sake of singularity of names).
+  GrowableArray<HeapRegion*> * _retained_gen_alloc_regions;
   // A hashtable that saves the alloc_region for new containers
   // TODO: Deprecate this
   AllocRegionHashtable * _ct_alloc_region_hashtable;
@@ -428,8 +431,8 @@ private:
   // LAG1
   // <dpatricio>
   // Both serve the same function as the *_gc_alloc_regions(..) counterpart.
-  void init_lag1_gc_alloc_regions();
-  void release_lag1_gc_alloc_regions();
+  void init_lag1_gc_alloc_regions(EvacuationInfo& evacuation_info);
+  void release_lag1_gc_alloc_regions(EvacuationInfo& evacuation_info);
   void abandon_lag1_gc_alloc_regions();
   // </dpatricio>
 
@@ -1416,7 +1419,9 @@ public:
   virtual void collect(GCCause::Cause cause);
 
   // <underscore> Getter for gen alloc regions array
-  GrowableArray<GenAllocRegion*>* gen_alloc_regions() { return _gen_alloc_regions; }
+  GrowableArray<GenAllocRegion*>* gen_alloc_regions() const { return _gen_alloc_regions; }
+  // <dpatricio> Getter for the retired gen alloc regions array
+  GrowableArray<HeapRegion*>* retained_gen_alloc_regions() const { return _retained_gen_alloc_regions; }
   // <dpatricio> Getter for the hashtable of container alloc regions
   AllocRegionHashtable * ct_alloc_hashtable() const { return _ct_alloc_region_hashtable; }
   // <dpatricio> Return the queue for worker i

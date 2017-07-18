@@ -49,6 +49,11 @@ public:
     _allocation_regions = allocation_regions;
   }
 
+  /* <dpatricio> This is needed because EvacuationInfo is supporting only two kinds of gc regions */
+  void inc_allocation_regions(uint allocation_regions) {
+    _allocation_regions += allocation_regions;
+  }
+
   void set_collectionset_used_before(size_t used) {
     _collectionset_used_before = used;
   }
@@ -59,6 +64,11 @@ public:
 
   void set_alloc_regions_used_before(size_t used) {
     _alloc_regions_used_before = used;
+  }
+
+  /* <dpatricio> This is needed because EvacuationInfo is supporting only one retained region */
+  void inc_alloc_regions_used_before(size_t used) {
+    _alloc_regions_used_before += used;
   }
 
   void set_bytes_copied(size_t copied) {
