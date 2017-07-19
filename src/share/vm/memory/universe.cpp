@@ -147,6 +147,7 @@ MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(N
 #else
 MethodBciHashtable* Universe::_method_bci_hashtable   = NULL;
 #endif
+StaticAnalysis* Universe::_static_analysis = NULL;
 
 NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };
 NarrowPtrStruct Universe::_narrow_klass = { NULL, 0, true };
@@ -640,6 +641,10 @@ jint universe_init() {
   TraceTime timer("Genesis", TraceStartupTime);
   GC_locker::lock();  // do not allow gc during bootstrapping
   JavaClasses::compute_hard_coded_offsets();
+
+  if (NG2CStaticAnalysis != NULL) {
+    Universe::_static_analysis   = new StaticAnalysis(NG2CStaticAnalysis);
+  }
 
   jint status = Universe::initialize_heap();
   if (status != JNI_OK) {

@@ -15,6 +15,23 @@ typedef unsigned long ngen_t;
 const static unsigned int NG2C_GEN_ARRAY_SIZE = 16; // TODO FIXME: Why does it crash with 4?
 const static unsigned int NG2C_MAX_ALLOC_SITE = 1024*1024;
 
+class ContextIndex : public CHeapObj<mtGC>
+{
+ private:
+  uint _index;
+
+ public:
+  ContextIndex(uint index) : _index(index) { }
+  int index() { return _index; }
+  // Necessary to used in hashtables.
+  unsigned int new_hash (int seed) {
+    assert(false, "new_hash called for ContextIndex...");
+    return (unsigned int)0;
+  }
+
+};
+
+
 class NGenerationArray : public CHeapObj<mtGC>
 {
  private:

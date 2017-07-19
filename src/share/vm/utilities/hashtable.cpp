@@ -372,4 +372,6 @@ template class BasicHashtable<mtInternal>;
 template class Hashtable<NGenerationArray*, mtGC>;
 template class HashtableEntry<NGenerationArray*, mtGC>;
 template class BasicHashtable<mtGC>;
+template class Hashtable<ContextIndex*, mtInternal>;
+template class HashtableEntry<ContextIndex*, mtInternal>;
 

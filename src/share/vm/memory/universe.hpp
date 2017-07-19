@@ -30,6 +30,7 @@
 #include "utilities/growableArray.hpp"
 
 #include "ng2c/method_bci_hashtable.hpp"
+#include "ng2c/ng2c_static_analysis.hpp"
 
 // Universe is a name space holding known system classes and objects in the VM.
 //
@@ -214,7 +215,9 @@ class Universe: AllStatic {
   static size_t _heap_capacity_at_last_gc;
   static size_t _heap_used_at_last_gc;
 
+  // TODO - should I remove this?
   static MethodBciHashtable* _method_bci_hashtable;
+  static StaticAnalysis* _static_analysis;
 
   static jint initialize_heap();
   static void initialize_basic_type_mirrors(TRAPS);

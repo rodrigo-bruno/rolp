@@ -3838,6 +3838,10 @@ class CommandLineFlags {
   product(double, NG2CPromotionThreshold, 0.5,                              \
           "Sets the threshold between number of promotions and "            \
           "since the last update of the target generation.")                \
+                                                                            \
+  product(ccstrlist, NG2CStaticAnalysis, NULL,                              \
+          "Path to file with static analysis.")                             \
+
 
 /*
  *  Macros for factoring of globals

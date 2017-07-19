@@ -266,13 +266,6 @@ protected:
     return this->hash_to_index(compute_hash(name));
   }
 
-  // Table entry management
-  HashtableEntry<T, F>* new_entry(unsigned int hashValue, T obj);
-
-  // The following method is MT-safe and may be used with caution.
-  HashtableEntry<T, F>* bucket(int i) {
-    return (HashtableEntry<T, F>*)BasicHashtable<F>::bucket(i);
-  }
 
   // The following method is not MT-safe and must be done under lock.
   HashtableEntry<T, F>** bucket_addr(int i) {
@@ -287,6 +280,7 @@ protected:
   static int literal_size(Symbol *symbol);
   static int literal_size(oop oop);
   static int literal_size(NGenerationArray * v ) { return v->size(); }
+  static int literal_size(ContextIndex * v ) { return sizeof(ContextIndex); }
 
   // The following two are currently not used, but are needed anyway because some
   // C++ compilers (MacOS and Solaris) force the instantiation of
@@ -296,6 +290,17 @@ protected:
   static int literal_size(Klass *k)         {Unimplemented(); return 0;}
 
 public:
+  // <rbruno> Made this method public so it can be used by anyone...
+  // Table entry management
+  HashtableEntry<T, F>* new_entry(unsigned int hashValue, T obj);
+
+  // <rbruno> Made this method public so it can be used by anyone...
+  // The following method is MT-safe and may be used with caution.
+  HashtableEntry<T, F>* bucket(int i) {
+    return (HashtableEntry<T, F>*)BasicHashtable<F>::bucket(i);
+  }
+
+
   void dump_table(outputStream* st, const char *table_name);
 
  private:
