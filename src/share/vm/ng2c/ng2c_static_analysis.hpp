@@ -8,27 +8,31 @@ class StaticAnalysis : public CHeapObj<mtInternal>
 {
 
  private:
+  // File that contains context information. The file is expected to follow 
+  // this syntax:
+  // MID:<mid>:<class name>.<method name>(<args>)
+  // NID:<nid>:<class name>.<method name>(<args>):bci
+  // Note: <mid> and <nid> are 16bit (represented as text) unique ids.
   const char* _input_file;
-  Hashtable<ContextIndex*, mtInternal> * _invoke2index;
-  Hashtable<ContextIndex*, mtInternal> * _alloc2index;
+
+  // These maps take an hash and return a 16bit unique id.
+  Hashtable<ContextIndex*, mtInternal> * _invoke2Context;
+  Hashtable<ContextIndex*, mtInternal> * _alloc2Context;
 
   bool parse_from_file();
   uint add_index(Hashtable<ContextIndex*, mtInternal> * hashtable, char* method, char* bci, char* index);
   uint get_value(Hashtable<ContextIndex*, mtInternal> * hashtable, uint key);
   uint hash(Method * m, int bci);
+  uint hash(Method * m);
   uint hash(char * m, char * bci);
+  uint hash(char * m);;
 
  public:
 
   StaticAnalysis (const char* input_file);
 
-  // This method returns the index of the bit that should be set/unset by the
-  // method call at 'm' and at 'bci'.
-  uint       get_invoke_index (Method * m, int bci);
-
-  // This method returns the intex of the first bit of the slot/window that
-  // characterizes the context for the alloc site at 'm' and at 'bci'.
-  uint       get_alloc_slot (Method * m, int bci);
+  uint       get_invoke_context(Method * m);
+  uint       get_alloc_context(Method * m, int bci);
 };
 
 #endif // SHARE_VM_NG2C_STATIC_ANALYSIS_HPP

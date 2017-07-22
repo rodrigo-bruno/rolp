@@ -14,15 +14,29 @@ StaticAnalysis::hash(char * m, char * bci)
 }
 
 uint
+StaticAnalysis::hash(char * m)
+{
+  // 41 is just a random prime number being used as a seed.
+  return AltHashing::murmur3_32(41, (const jchar*)m, strlen(m));
+}
+
+uint
 StaticAnalysis::hash(Method * m, int bci)
 {
   return AltHashing::murmur3_32(bci, (const jbyte*)m->constMethod(), sizeof(ConstMethod));
 }
 
 uint
+StaticAnalysis::hash(Method * m)
+{
+  // 37 is just a random prime number being used as a seed.
+  return AltHashing::murmur3_32(37, (const jbyte*)m->constMethod(), sizeof(ConstMethod));
+}
+
+uint
 StaticAnalysis::add_index(Hashtable<ContextIndex*, mtInternal> * hashtable, char * method, char * bci, char* index)
 {
-  uint key = hash(method, bci);
+  uint key = bci == NULL ? hash(method) : hash(method, bci);
   int iindex = strtol(index, NULL, 10);
   ContextIndex * ci = new ContextIndex(iindex);
   HashtableEntry<ContextIndex*, mtInternal> * entry = hashtable->new_entry(key, ci);
@@ -51,21 +65,20 @@ StaticAnalysis::parse_from_file() {
     line[strcspn(line, "\n")] = 0;
 
     char* type = strtok (line, ":");
+    char* index = strtok (NULL, ":");
     char* method = strtok (NULL, ":");
     char* bci = strtok (NULL, ":");
-    char* index = strtok (NULL, ":");
 
-    if (type == NULL || method == NULL || bci == NULL || index == NULL) {
+    if (type == NULL || method == NULL || index == NULL) {
       gclog_or_tty->print_cr("[ng2c-sanalysis] file = %s: unparsable line = %s", 
-          NG2CStaticAnalysis == NULL ? "null" : NG2CStaticAnalysis,
-          line);
+          NG2CStaticAnalysis, line);
       return false;
     }
-    else if (!strncmp(type, "INVK", sizeof("INVK"))) {
-      key = add_index(_invoke2index, method, bci, index);
+    else if (!strncmp(type, "MID", sizeof("MID"))) {
+      key = add_index(_invoke2Context, method, bci, index);
     } 
-    else if (!strncmp(type, "ALLC", sizeof("ALLC"))) {
-      key = add_index(_alloc2index, method, bci, index);
+    else if (!strncmp(type, "NID", sizeof("NID"))) {
+      key = add_index(_alloc2Context, method, bci, index);
     } 
     else {
       gclog_or_tty->print_cr("[ng2c-sanalysis] file = %s: unknown type = %s", 
@@ -73,6 +86,7 @@ StaticAnalysis::parse_from_file() {
           type);
       return false;
     }
+
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
     gclog_or_tty->print_cr("[ng2c-sanalysis] target=%s method=%s bci=%s index=%s",
         type, method, bci, index);
@@ -85,8 +99,8 @@ StaticAnalysis::parse_from_file() {
 
 StaticAnalysis::StaticAnalysis(const char* input_file) : 
     _input_file(input_file), 
-    _invoke2index(new Hashtable<ContextIndex*, mtInternal>(NG2C_MAX_ALLOC_SITE, sizeof(ContextIndex))), 
-    _alloc2index(new Hashtable<ContextIndex*, mtInternal>(NG2C_MAX_ALLOC_SITE, sizeof(ContextIndex)))
+    _invoke2Context(new Hashtable<ContextIndex*, mtInternal>(NG2C_MAX_ALLOC_SITE, sizeof(ContextIndex))), 
+    _alloc2Context(new Hashtable<ContextIndex*, mtInternal>(NG2C_MAX_ALLOC_SITE, sizeof(ContextIndex)))
 {
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
   gclog_or_tty->print_cr("[ng2c-sanalysis] parsing file=%s", NG2CStaticAnalysis);
@@ -112,16 +126,16 @@ StaticAnalysis::get_value(Hashtable<ContextIndex*, mtInternal> * hashtable, uint
 }
 
 uint
-StaticAnalysis::get_invoke_index (Method * m, int bci) 
+StaticAnalysis::get_invoke_context(Method * m)
 {
-  uint key = hash(m, bci);
-  return get_value(_invoke2index, key);
+  uint key = hash(m);
+  return get_value(_invoke2Context, key);
 }
 
 uint
-StaticAnalysis::get_alloc_slot(Method * m, int bci)
+StaticAnalysis::get_alloc_context(Method * m, int bci)
 {
   uint key = hash(m, bci);
-  return get_value(_alloc2index, key);
+  return get_value(_alloc2Context, key);
 }
 
