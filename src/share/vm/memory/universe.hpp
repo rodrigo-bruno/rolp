@@ -30,6 +30,7 @@
 #include "utilities/growableArray.hpp"
 
 #include "ng2c/method_bci_hashtable.hpp"
+#include "ng2c/promotion_counter.hpp"
 #include "ng2c/ng2c_static_analysis.hpp"
 
 // Universe is a name space holding known system classes and objects in the VM.
@@ -217,6 +218,7 @@ class Universe: AllStatic {
 
   // TODO - should I remove this?
   static MethodBciHashtable* _method_bci_hashtable;
+  static PromotionCounters * _promotion_counters;
   static StaticAnalysis* _static_analysis;
 
   static jint initialize_heap();
@@ -345,6 +347,8 @@ class Universe: AllStatic {
   static CollectedHeap* heap() { return _collectedHeap; }
 
   static MethodBciHashtable* method_bci_hashtable()   { return _method_bci_hashtable; }
+  static PromotionCounters* promotion_counters()   { return _promotion_counters; }
+  static StaticAnalysis* static_analysis()   { return _static_analysis; }
 
   // For UseCompressedOops
   // Narrow Oop encoding mode:

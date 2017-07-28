@@ -24,11 +24,14 @@ class NG2C_MergeAllocCounters : public VM_Operation
   friend class NG2C_MergeWorkerThreads;
 
  private:
+  // Note: number of times this vm operation ran.
   static uint   _total_update_target_gen;
 
   // TODO - this methods should be part of closures not the operation...
-  void update_promotions(NGenerationArray * global, NGenerationArray * survivors);
+  void update_promotions(PromotionCounter * global, PromotionCounter * survivors);
   void update_promotions(NamedThread * thread);
+  bool should_inc_gen(PromotionCounter * pc);
+  bool should_use_context(PromotionCounter * pc);
   void update_target_gen();
 
  public:
@@ -49,7 +52,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
 #ifdef DEBUG_NG2C_PROF_VMOP
       {
-        MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
+        PromotionCounters * hashtable = Universe::promotion_counters();
 
         gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable>");
         hashtable->print_on(gclog_or_tty);
@@ -65,7 +68,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
 #ifdef DEBUG_NG2C_PROF_VMOP
       {
-        MethodBciHashtable * hashtable = Universe::method_bci_hashtable();
+        PromotionCounters * hashtable = Universe::promotion_counters();
 
         gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable>");
         hashtable->print_on(gclog_or_tty);

@@ -1081,7 +1081,9 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab,
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_TLAB)
-      volatile long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
+      // TODO - update this call, its obsolete!
+      //volatile long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
+      volatile long* target_gen_ptr = NULL;
       int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
       Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
@@ -1228,7 +1230,11 @@ void PhaseMacroExpand::expand_allocate_common(
   Method* m = alloc->jvms()->method()->get_Method();
 
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2)
-  int alloc_gen = Universe::method_bci_hashtable()->add_entry(m, bci);
+  // 'alloc_gen' is a 16bit allocation site id.
+  unsigned int alloc_gen = Universe::static_analysis()->get_alloc_context(m, bci);
+  if (alloc_gen != 0) {
+    Universe::method_bci_hashtable()->add_entry(alloc_gen);
+  }
 #else
   int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
 #endif
@@ -1733,12 +1739,15 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
+  // TODO - skip if ng2c_prof == 0
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_COUNTER)
   uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
   rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
 
   // Allocation has been done thus we can incr the local count for the generation
-  ngen_t * alloc_counter_adr = Universe::method_bci_hashtable()->get_alloc_slot(ng2c_prof);
+  // TODO - this line is outdated. Needs to be updated.
+  //ngen_t * alloc_counter_adr = Universe::method_bci_hashtable()->get_alloc_slot(ng2c_prof);
+  ngen_t * alloc_counter_adr = NULL;
 
 #ifdef DEBUG_NG2C_PROF_C2
    gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT,

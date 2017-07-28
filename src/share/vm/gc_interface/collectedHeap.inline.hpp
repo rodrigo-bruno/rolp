@@ -64,12 +64,6 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
 #endif
   }
 
-#ifdef NG2C_PROF
-  if (klass.as_hash()) {
-    (*Universe::method_bci_hashtable()->get_alloc_slot(klass.as_hash()))++;
-  }
-#endif
-
 #ifdef DEBUG_NG2C_PROF
   markOop m = obj->mark();
   gclog_or_tty->print_cr("[ng2c-prof] post_allocation_setup_no_klass_install oop="INTPTR_FORMAT" mark="INTPTR_FORMAT" age=%d, as_hash="INTPTR_FORMAT,
@@ -252,10 +246,24 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   // Note: if NG2C_PROF is enabled, gen will contain a hash of the allocation site.
   // If gen is zero, it means that are probably coming from interpreted code.
   if (gen != 0) {
-    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
-    klass.set_as_hash(gen);
+    unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
+    unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
+    // Note: gen := 16 bit of context followed by 16 bit alloc site id.
+    unsigned int mark = (context << 16) & alloc_site_id;
+    NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
+
+    assert(ngen != NULL, "there should be an ngen array for each alloc site id");
+
+    // Deciding in which generation to allocate.
+    klass.set_alloc_gen(ngen->target_gen(context));
+   // Incrementing the correct counter.
+    ngen->inc_number_allocs(context);
+    // Setting allocation site hash into handle (will be used to mark header).
+    klass.set_as_hash(mark);
+    // Setting up thread's current alloc gen (will be used by the slow path alloc).
     THREAD->set_alloc_gen(klass.alloc_gen());
   }
+  // TODO - check thread for bit that requests for gen reconstruction.
 #else
   klass.set_alloc_gen(gen);
 #endif
@@ -287,8 +295,21 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   // Note: if NG2C_PROF is enabled, gen will contain a hash of the allocation site.
   // If gen is zero, it means that are probably coming from interpreted code.
   if (gen != 0) {
-    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
-    klass.set_as_hash(gen);
+    unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
+    unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
+    // Note: gen := 16 bit of context followed by 16 bit alloc site id.
+    unsigned int mark = (context << 16) & alloc_site_id;
+    NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
+
+    assert(ngen != NULL, "there should be an ngen array for each alloc site id");
+
+    // Deciding in which generation to allocate.
+    klass.set_alloc_gen(ngen->target_gen(context));
+   // Incrementing the correct counter.
+    ngen->inc_number_allocs(context);
+    // Setting allocation site hash into handle (will be used to mark header).
+    klass.set_as_hash(mark);
+    // Setting up thread's current alloc gen (will be used by the slow path alloc).
     THREAD->set_alloc_gen(klass.alloc_gen());
   }
 #else
@@ -322,8 +343,21 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   // Note: if NG2C_PROF is enabled, gen will contain a hash of the allocation site.
   // If gen is zero, it means that are probably coming from interpreted code.
   if (gen != 0) {
-    klass.set_alloc_gen(*(Universe::method_bci_hashtable()->get_target_gen(gen)));
-    klass.set_as_hash(gen);
+    unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
+    unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
+    // Note: gen := 16 bit of context followed by 16 bit alloc site id.
+    unsigned int mark = (context << 16) & alloc_site_id;
+    NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
+
+    assert(ngen != NULL, "there should be an ngen array for each alloc site id");
+
+    // Deciding in which generation to allocate.
+    klass.set_alloc_gen(ngen->target_gen(context));
+   // Incrementing the correct counter.
+    ngen->inc_number_allocs(context);
+    // Setting allocation site hash into handle (will be used to mark header).
+    klass.set_as_hash(mark);
+    // Setting up thread's current alloc gen (will be used by the slow path alloc).
     THREAD->set_alloc_gen(klass.alloc_gen());
   }
 #else

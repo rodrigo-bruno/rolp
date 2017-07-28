@@ -363,6 +363,7 @@ class markOopDesc: public oopDesc {
     return hash() == no_hash;
   }
 #ifdef NG2C_PROF
+    // TODO - fix this to use 32 bits if possible!
     uint    ng2c_prof()               const { return mask_bits(value() >> ng2c_prof_shift, ng2c_prof_mask); }
     markOop set_ng2c_prof(uint v) const {
       assert((v & ~ng2c_prof_mask) == 0, "shouldn't overflow ng2c_prof field");

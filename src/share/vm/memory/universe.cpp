@@ -144,8 +144,10 @@ CollectedHeap*  Universe::_collectedHeap = NULL;
 
 #ifdef NG2C_PROF
 MethodBciHashtable* Universe::_method_bci_hashtable   = new MethodBciHashtable(NG2C_MAX_ALLOC_SITE);
+PromotionCounters* Universe::_promotion_counters   = new PromotionCounters(NG2C_MAX_ALLOC_SITE);
 #else
 MethodBciHashtable* Universe::_method_bci_hashtable   = NULL;
+PromotionCounters* Universe::_promotion_counters   = NULL;
 #endif
 StaticAnalysis* Universe::_static_analysis = NULL;
 

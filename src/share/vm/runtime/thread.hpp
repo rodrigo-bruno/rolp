@@ -288,6 +288,8 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer* _curTlab;
   // Indicates in which gen we are currently allocating.
   int _alloc_gen;
+  // Integer that represents the context of this thread. 
+  volatile unsigned int _context;
   // </underscore>
 
   ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
@@ -467,6 +469,7 @@ class Thread: public ThreadShadow {
 
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);
+  unsigned int context() { return _context; }
 
   ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
   void set_cur_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
@@ -680,6 +683,7 @@ public:
   static ByteSize gen_tlab_offset()              { return byte_offset_of(Thread, _genTlab ); } // <underscore>
   static ByteSize cur_tlab_offset()              { return byte_offset_of(Thread, _curTlab ); } // <underscore>
   static ByteSize gen_tlabs_offset()             { return byte_offset_of(Thread, _tlabGenArray ); }
+  static ByteSize gen_context()                  { return byte_offset_of(Thread, _context ); }
 
   // <underscore> TODO - check if these also need to be done for the old tlab.
 #define TLAB_FIELD_OFFSET(name) \
@@ -763,7 +767,7 @@ class NamedThread: public Thread {
   JavaThread* _processed_thread;
 
   // <underscore> TODO - we need to free the data structure when the thread is destroyed!
-  MethodBciHashtable * _method_bci_hashtable;
+  PromotionCounters * _promotion_counters;
 
  public:
   NamedThread();
@@ -774,7 +778,7 @@ class NamedThread: public Thread {
   virtual char* name() const { return _name == NULL ? (char*)"Unknown Thread" : _name; }
   JavaThread *processed_thread() { return _processed_thread; }
   void set_processed_thread(JavaThread *thread) { _processed_thread = thread; }
-  MethodBciHashtable * method_bci_hashtable() const { return _method_bci_hashtable; }
+  PromotionCounters * promotion_counters() const { return _promotion_counters; }
 };
 
 // Worker threads are named and have an id of an assigned work.

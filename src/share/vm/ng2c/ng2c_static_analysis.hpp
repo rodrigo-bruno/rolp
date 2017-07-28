@@ -4,7 +4,7 @@
 # include "ng2c/ng2c_globals.hpp"
 # include "utilities/hashtable.hpp"
 
-class StaticAnalysis : public CHeapObj<mtInternal>
+class StaticAnalysis : public CHeapObj<mtGC>
 {
 
  private:
@@ -16,16 +16,17 @@ class StaticAnalysis : public CHeapObj<mtInternal>
   const char* _input_file;
 
   // These maps take an hash and return a 16bit unique id.
-  Hashtable<ContextIndex*, mtInternal> * _invoke2Context;
-  Hashtable<ContextIndex*, mtInternal> * _alloc2Context;
+  Hashtable<ContextIndex*, mtGC> * _invoke2Context;
+  Hashtable<ContextIndex*, mtGC> * _alloc2Context;
 
   bool parse_from_file();
-  uint add_index(Hashtable<ContextIndex*, mtInternal> * hashtable, char* method, char* bci, char* index);
-  uint get_value(Hashtable<ContextIndex*, mtInternal> * hashtable, uint key);
+  unsigned int add_index(Hashtable<ContextIndex*, mtGC> * hashtable, char* method, int bci, unsigned int index);
+  unsigned int get_value(Hashtable<ContextIndex*, mtGC> * hashtable, unsigned int key);
+  void print_on(outputStream * st, Hashtable<ContextIndex*, mtGC> * hashtable, const char * tag);
   uint hash(Method * m, int bci);
+  uint hash(char * m, int bci);
   uint hash(Method * m);
-  uint hash(char * m, char * bci);
-  uint hash(char * m);;
+  uint hash(char * m);
 
  public:
 

@@ -4952,8 +4952,23 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       Thread * thread = Thread::current();
       assert(thread->is_Named_thread(), "should be named thread");
       NamedThread * nthread = (NamedThread*)thread;
-      nthread->method_bci_hashtable()->get_entry_not_null(rhash)->update(
-         age == markOopDesc::max_age ? age : age +1);
+
+      unsigned int alloc_site_id = mask_bits ((uintptr_t)rhash, 0xFFFF);
+
+      // If there is no context tracking, simply use the alloc_site_id.
+      NGenerationArray * arr = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
+      // Checks if we known an allocation site identified by the mark.
+      if (arr != NULL) {
+        PromotionCounter * pc;
+        if (arr->contexts() == NULL) {
+          pc = nthread->promotion_counters()->get_counter_not_null(alloc_site_id);
+        }
+        // Otherwise, use the full hash (context + alloc_site_id).
+        else {
+          pc = nthread->promotion_counters()->get_counter_not_null(rhash);
+        }
+        pc->update(age == markOopDesc::max_age ? age : age +1);
+      }
     }
 #endif
     size_t* surv_young_words = _par_scan_state->surviving_young_words();

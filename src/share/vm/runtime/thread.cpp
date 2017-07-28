@@ -1218,9 +1218,9 @@ void JavaThread::allocate_threadObj(Handle thread_group, char* thread_name, bool
 // uniquely named instances should derive from this.
 NamedThread::NamedThread() : Thread()
 #ifdef NG2C_PROF
-   , _method_bci_hashtable(new MethodBciHashtable(NG2C_MAX_ALLOC_SITE))
+   , _promotion_counters(new PromotionCounters(NG2C_MAX_ALLOC_SITE))
 #else
-   , _method_bci_hashtable(NULL)
+   , _promotion_counters(NULL)
 #endif
 {
   _name = NULL;
@@ -3205,6 +3205,7 @@ void JavaThread::print_frame_layout(int depth, bool validate_only) {
 }
 #endif
 
+// <underscore> Here is an example of how to traverse the stack frame.
 void JavaThread::trace_stack_from(vframe* start_vf) {
   ResourceMark rm;
   int vframe_no = 1;

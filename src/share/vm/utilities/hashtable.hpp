@@ -281,6 +281,7 @@ protected:
   static int literal_size(oop oop);
   static int literal_size(NGenerationArray * v ) { return v->size(); }
   static int literal_size(ContextIndex * v ) { return sizeof(ContextIndex); }
+  static int literal_size(PromotionCounter * v ) { return sizeof(PromotionCounter); }
 
   // The following two are currently not used, but are needed anyway because some
   // C++ compilers (MacOS and Solaris) force the instantiation of
