@@ -8,15 +8,15 @@ MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {
 }
 
-unsigned int
+NGenerationArray *
 MethodBciHashtable::add_entry(uint hash)
 {
-  // If we already have this hash inserted, just return.
-  if (get_entry(hash)) {
-    return hash;
-  }
+  NGenerationArray * array = get_entry(hash);
 
-  NGenerationArray * array = new NGenerationArray(hash);
+  // If we already have this hash inserted, just return.
+  if (array != NULL) return array;
+
+  array = new NGenerationArray(hash);
   MethodBciEntry * entry =
     (MethodBciEntry*)Hashtable<NGenerationArray*, mtGC>::new_entry(hash, array);
 
@@ -29,7 +29,7 @@ MethodBciHashtable::add_entry(uint hash)
     (intptr_t)hash, hash_to_index(hash), bucket(hash_to_index(hash)));
 #endif
 
-  return hash;
+  return array;
 }
 
 NGenerationArray *

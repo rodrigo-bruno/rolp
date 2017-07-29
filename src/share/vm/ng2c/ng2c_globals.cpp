@@ -7,52 +7,47 @@ NGenerationArray::prepare_contexts()
 {
   // Note: we use NG2C_GEN_ARRAY_SIZE * 2 because we are allocating memory for
   // the target generation and for the allocation counter.
-  _contexts = NEW_C_HEAP_ARRAY(ngen_t, NG2C_GEN_ARRAY_SIZE * 2, mtGC);
-  memset(_contexts, 0, (NG2C_GEN_ARRAY_SIZE * 2) * sizeof(ngen_t));
+  ngen_t * preva = (ngen_t*)_contexts;
+  ngen_t * newa = NEW_C_HEAP_ARRAY(ngen_t, NG2C_GEN_ARRAY_SIZE * 2, mtGC);
+  memset(newa, 0, (NG2C_GEN_ARRAY_SIZE * 2) * sizeof(ngen_t));
+  // Note: copy the only two values that were being used.
+  newa[0] = _contexts[0];
+  newa[1] = _contexts[1];
+  // Note: atomic xchg
+  Atomic::xchg_ptr(newa, _contexts);
+  // Note: free previous array
+  FREE_C_HEAP_ARRAY(ngen_t*, preva, mtGC);
+  // Note: use the new factor
+  _factor = 2;
 }
 
 void
 NGenerationArray::inc_target_gen(unsigned int context)
 {
-  if (_contexts == NULL)
-    Atomic::inc((volatile jint *)&_target_gen);
-  else
-    Atomic::inc((volatile jint *)&_contexts[context * 2]);
+  Atomic::inc((volatile jint *)&_contexts[context * _factor]);
 }
 
 ngen_t
 NGenerationArray::number_allocs(unsigned int context)
 {
-  if (_contexts == NULL)
-    return _counter;
-  else
-    return _contexts[context * 2];
+  return _contexts[context * _factor];
 }
 
 void
 NGenerationArray::inc_number_allocs(unsigned int context)
 {
-  if (_contexts == NULL)
-    _counter++;
-  else
-    _contexts[context * 2]++;
+  _contexts[context * _factor]++;
 }
 void
 NGenerationArray::reset_allocs(unsigned int context)
 {
-  if (_contexts == NULL)
-    _counter = 0;
-  else
-    _contexts[context * 2] = 0;
+  _contexts[context * _factor] = 0;
 }
 
 long
 NGenerationArray::target_gen(unsigned int context)
 {
-  if (_contexts == NULL)
-    return _target_gen;
-  else
-    return _contexts[context * 2 + 1];
+  return _contexts[context * _factor + 1];
 }
 
 void

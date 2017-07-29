@@ -38,29 +38,30 @@ class NGenerationArray : public CHeapObj<mtGC>
   // The identifier of the allocation site described by this object.
   uint _hash;
 
-  // The generation that should be used for allocations taking place at the
-  // allocation site identified by the '_hash' and that require no context
-  // profiling.
-  volatile long _target_gen;
-
-  // The actual number of objects allocated in the target gen.
-  ngen_t _counter;
+  // The factor can have two values: '0' and '2'. It basicaly controls how
+  // methods further below use the '_contexts' array.
+  uint _factor;
 
   // Contain information for fine grained allocation context profiling.
-  // *(_contexts[contextID * 2]) contains the target generation.
-  // *(_contexts[contextID * 2 + 1]) contains the number of allocated objects.
-  ngen_t * _contexts;
+  // *(_contexts[contextID * _factor]) contains the target generation.
+  // *(_contexts[contextID * _factor + 1]) contains the number of allocated objects.
+  volatile ngen_t * _contexts;
 
 
  public:
-  NGenerationArray(uint hash) :
-      _hash(hash), _target_gen(0), _counter(0), _contexts(NULL) { }
+  NGenerationArray(uint hash) : _hash(hash), _factor(0) {
+    _contexts = NEW_C_HEAP_ARRAY(ngen_t, 2, mtGC);
+    memset((void*)_contexts, 0, 2 * sizeof(ngen_t));
+  }
 
   uint     hash()  const { return _hash; }
   int      size()  const { return NG2C_GEN_ARRAY_SIZE; } // hard-coded for now
+  uint *    factor_addr()   { return &_factor; }
+  ngen_t ** gen_addr() { return (ngen_t**) &_contexts; }
+  ngen_t ** acc_addr() { return (ngen_t**) &_contexts[1]; }
 
   void     prepare_contexts();
-  ngen_t * contexts() { return _contexts; }
+  bool     expanded_contexts() { return _factor != 0; }
 
   void     inc_target_gen(unsigned int context);
   long     target_gen(unsigned int context);

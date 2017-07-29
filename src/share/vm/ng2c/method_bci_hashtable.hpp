@@ -27,7 +27,7 @@ class MethodBciHashtable : public Hashtable<NGenerationArray*, mtGC>
 
   MethodBciHashtable (int table_size);
 
-  unsigned int       add_entry (uint hash);
+  NGenerationArray * add_entry (uint hash);
   NGenerationArray * get_entry(uint hash);
   NGenerationArray * get_entry_not_null(uint hash);
   void               print_on(outputStream * st, const char * tag = "global hashtable");
