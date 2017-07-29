@@ -44,6 +44,7 @@
 //
 //  64 bits:
 //  --------
+//  ng2c_context:32 hash:24 unused:1 age:4 biased_lock:1 lock:2 (NG2C)
 //  unused:25 hash:31 -->| unused:1   age:4    biased_lock:1 lock:2 (normal object)
 //  JavaThread*:54 epoch:2 unused:1   age:4    biased_lock:1 lock:2 (biased object)
 //  PromotedObject*:61 --------------------->| promo_bits:3 ----->| (CMS promoted object)
@@ -112,13 +113,16 @@ class markOopDesc: public oopDesc {
   enum { age_bits                 = 4,
          lock_bits                = 2,
          biased_lock_bits         = 1,
-         max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits,
-         hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits,
          cms_bits                 = LP64_ONLY(1) NOT_LP64(0),
          epoch_bits               = 2
 #ifdef NG2C_PROF
-          ,ng2c_prof_bits         = 25
+          ,ng2c_prof_bits         = 32,
+         max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits - ng2c_prof_bits,
+#else
+         max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits,
+
 #endif
+         hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits
   };
 
   // The biased locking code currently requires that the age bits be
@@ -130,8 +134,7 @@ class markOopDesc: public oopDesc {
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift
 #ifdef NG2C_PROF
-         ,ng2c_prof_shift        = hash_shift + hash_bits,
-         ng2c_32bit_prof_shift   = ng2c_prof_shift - 32
+         ,ng2c_prof_shift        = hash_shift + hash_bits
 #endif
   };
 
@@ -363,7 +366,6 @@ class markOopDesc: public oopDesc {
     return hash() == no_hash;
   }
 #ifdef NG2C_PROF
-    // TODO - fix this to use 32 bits if possible!
     uint    ng2c_prof()               const { return mask_bits(value() >> ng2c_prof_shift, ng2c_prof_mask); }
     markOop set_ng2c_prof(uint v) const {
       assert((v & ~ng2c_prof_mask) == 0, "shouldn't overflow ng2c_prof field");

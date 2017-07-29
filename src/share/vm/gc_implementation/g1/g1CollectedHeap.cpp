@@ -4953,14 +4953,15 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       assert(thread->is_Named_thread(), "should be named thread");
       NamedThread * nthread = (NamedThread*)thread;
 
-      unsigned int alloc_site_id = mask_bits ((uintptr_t)rhash, 0xFFFF);
+      // Extract the upper 16 bits.
+      unsigned int alloc_site_id = rhash >> 16;
 
       // If there is no context tracking, simply use the alloc_site_id.
       NGenerationArray * arr = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
       // Checks if we known an allocation site identified by the mark.
       if (arr != NULL) {
         PromotionCounter * pc;
-        if (arr->contexts() == NULL) {
+        if (!arr->expanded_contexts()) {
           pc = nthread->promotion_counters()->get_counter_not_null(alloc_site_id);
         }
         // Otherwise, use the full hash (context + alloc_site_id).

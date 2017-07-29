@@ -248,8 +248,8 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
   if (gen != 0) {
     unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
     unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
-    // Note: gen := 16 bit of context followed by 16 bit alloc site id.
-    unsigned int mark = (context << 16) & alloc_site_id;
+    // Note: gen := 16 bit alloc site id followed by 16 bit context.
+    unsigned int mark = (alloc_site_id << 16) & context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
@@ -297,8 +297,8 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   if (gen != 0) {
     unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
     unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
-    // Note: gen := 16 bit of context followed by 16 bit alloc site id.
-    unsigned int mark = (context << 16) & alloc_site_id;
+    // Note: gen := 16 bit alloc site id followed by 16 bit context.
+    unsigned int mark = (alloc_site_id << 16) & context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
@@ -345,8 +345,8 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
   if (gen != 0) {
     unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
     unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
-    // Note: gen := 16 bit of context followed by 16 bit alloc site id.
-    unsigned int mark = (context << 16) & alloc_site_id;
+    // Note: gen := 16 bit alloc site id followed by 16 bit context.
+    unsigned int mark = (alloc_site_id << 16) & context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
