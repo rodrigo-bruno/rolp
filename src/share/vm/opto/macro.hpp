@@ -59,6 +59,10 @@ private:
     Node* mul = new (C) MulLNode(long1, long2);
     return transform_later(mul);
   }
+  Node* basic_mul_int(Node* int1, Node* int2) {
+    Node* mul = new (C) MulINode(int1, int2);
+    return transform_later(mul);
+  }
 
   Node* transform_later(Node* n) {
     // equivalent to _gvn.transform in GraphKit, Ideal, etc.
@@ -66,13 +70,16 @@ private:
     return n;
   }
 
-  void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen);
+  void set_eden_pointers(Node* ctl, Node* mem, Node* &gen_tlab_adr, Node* &eden_top_adr, Node* &eden_end_adr, Node * alloc_gen);
   Node* make_load( Node* ctl, Node* mem, Node* base, Node* offset,
                    const Type* value_type, BasicType bt);
   Node* make_load( Node* ctl, Node* mem, Node* base, int offset,
                    const Type* value_type, BasicType bt);
   Node* make_store(Node* ctl, Node* mem, Node* base, int offset,
                    Node* value, BasicType bt);
+  Node* make_store(Node* ctl, Node* mem, Node* base, Node * offset,
+                   Node* value, BasicType bt);
+
 
   // projections extracted from a call node
   ProjNode *_fallthroughproj;
@@ -119,6 +126,7 @@ private:
                           Node* control, Node* rawmem, Node* object,
 #ifdef NG2C_PROF
                           int ng2c_prof,
+                          Node * context,
 #endif
                           Node* klass_node, Node* length,
                           Node* size_in_bytes);

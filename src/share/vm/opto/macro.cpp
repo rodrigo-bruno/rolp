@@ -1065,12 +1065,12 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
 // <underscore> Added alloc_gen to arguments and differentiated from the
 // alloc_gen == 0
 //---------------------------set_eden_pointers-------------------------
-void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab, Node* &eden_top_adr, Node* &eden_end_adr, int alloc_gen) {
+void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab, Node* &eden_top_adr, Node* &eden_end_adr, Node* target_gen) {
   if (UseTLAB) {                // Private allocation: load from TLS
     Node* thread = transform_later(new (C) ThreadLocalNode());
     int tlab_top_offset, tlab_end_offset;
 
-    if(alloc_gen == 0) {
+    if(target_gen == NULL) {
       tlab_top_offset = in_bytes(JavaThread::tlab_top_offset());
       tlab_end_offset = in_bytes(JavaThread::tlab_end_offset());
       eden_top_adr = basic_plus_adr(top()/*not oop*/, thread, tlab_top_offset);
@@ -1081,12 +1081,8 @@ void PhaseMacroExpand::set_eden_pointers(Node* ctrl, Node* mem, Node* &gen_tlab,
       tlab_end_offset = in_bytes(ThreadLocalAllocBuffer::end_offset());
 
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_TLAB)
-      // TODO - update this call, its obsolete!
-      //volatile long* target_gen_ptr =  Universe::method_bci_hashtable()->get_target_gen(alloc_gen);
-      volatile long* target_gen_ptr = NULL;
       int tlab_array_offset = in_bytes(JavaThread::gen_tlabs_offset());
       Node* tlab_array = make_load(ctrl, mem, thread, tlab_array_offset, TypeRawPtr::BOTTOM, T_ADDRESS);
-      Node* target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address) target_gen_ptr)), 0, TypeLong::LONG, T_LONG);
       Node* tlab_offset = basic_mul_long(
           longcon((jlong)sizeof(ThreadLocalAllocBuffer*)),
           target_gen);
@@ -1127,6 +1123,13 @@ Node* PhaseMacroExpand::make_load(Node* ctl, Node* mem, Node* base, int offset, 
 
 
 Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset, Node* value, BasicType bt) {
+  Node* adr = basic_plus_adr(base, offset);
+  mem = StoreNode::make(_igvn, ctl, mem, adr, NULL, value, bt);
+  transform_later(mem);
+  return mem;
+}
+
+Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, Node * offset, Node* value, BasicType bt) {
   Node* adr = basic_plus_adr(base, offset);
   mem = StoreNode::make(_igvn, ctl, mem, adr, NULL, value, bt);
   transform_later(mem);
@@ -1225,28 +1228,6 @@ void PhaseMacroExpand::expand_allocate_common(
             address slow_call_address  // Address of slow call
     )
 {
-// <underscore>
-  int bci = alloc->jvms()->bci();
-  Method* m = alloc->jvms()->method()->get_Method();
-
-#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2)
-  // 'alloc_gen' is a 16bit allocation site id.
-  unsigned int alloc_gen = Universe::static_analysis()->get_alloc_context(m, bci);
-  if (alloc_gen != 0) {
-    Universe::method_bci_hashtable()->add_entry(alloc_gen);
-  }
-#else
-  int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
-#endif
-
-#ifdef DEBUG_C2
-  gclog_or_tty->print_cr("[ng2c-c2] bci=%d, Method=%p GEN=%d ",
-    alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
-  alloc->jvms()->method()->print(gclog_or_tty);
-  gclog_or_tty->print_cr("");
-#endif
-// </underscore>
-
   Node* ctrl = alloc->in(TypeFunc::Control);
   Node* mem  = alloc->in(TypeFunc::Memory);
   Node* i_o  = alloc->in(TypeFunc::I_O);
@@ -1262,6 +1243,29 @@ void PhaseMacroExpand::expand_allocate_common(
   Node *result_phi_rawmem;
   Node *result_phi_rawoop;
   Node *result_phi_i_o;
+
+// <underscore>
+  int bci = alloc->jvms()->bci();
+  Method* m = alloc->jvms()->method()->get_Method();
+  Node * context = NULL;
+  Node * target_gen = NULL;
+
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2)
+  // 'alloc_gen' is a 16bit allocation site id.
+  unsigned int alloc_gen = Universe::static_analysis()->get_alloc_context(m, bci);
+  NGenerationArray * arr = alloc_gen == 0 ? NULL : Universe::method_bci_hashtable()->add_entry(alloc_gen);
+#else
+  unsigned int alloc_gen = get_alloc_gen_2(m->alloc_anno_cache(), bci);
+#endif
+
+#ifdef DEBUG_C2
+  gclog_or_tty->print_cr("[ng2c-c2] bci=%d, Method=%p GEN=%d ",
+    alloc->jvms()->bci(), alloc->jvms()->method()->get_Method(), alloc_gen);
+  alloc->jvms()->method()->print(gclog_or_tty);
+  gclog_or_tty->print_cr("");
+#endif
+// </underscore>
+
 
   // The initial slow comparison is a size check, the comparison
   // we want to do is a BoolTest::gt
@@ -1324,7 +1328,43 @@ void PhaseMacroExpand::expand_allocate_common(
     Node* eden_end_adr;
     Node* gen_tlab_adr = NULL; // <underscore>
 
-    set_eden_pointers(ctrl, mem, gen_tlab_adr, eden_top_adr, eden_end_adr, alloc_gen);
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2)
+  if (alloc_gen != 0) {
+    assert(arr != NULL, "ngen should not be null");
+    assert(arr->gen_addr() != NULL, "gen address should not be null");
+    assert(arr->acc_addr() != NULL, "acc address should not be null");
+    assert(arr->factor_addr() != NULL, "factor address hould not be null");
+
+    // Get thread node.
+    Node* thread = new (C) ThreadLocalNode();
+    transform_later(thread);
+
+    // Get context from thread and mask it to 16 bits.
+    context = make_load(ctrl, mem, thread, in_bytes(JavaThread::gen_context()), TypeInt::INT, T_INT);
+    context = new (C) AndINode(context, intcon(0xFFFF));
+    transform_later(context);
+
+    // Get factor from ngen array
+    Node * factor = make_load(ctrl, mem, makecon(TypeRawPtr::make((address)arr->factor_bytes_addr())), 0, TypeInt::INT, T_INT);
+
+    // Calculating the offset from 'factor' and 'context'
+    Node* offset = basic_mul_int(factor, context);
+    Node * offset_long = new (C) ConvI2LNode(offset);
+    transform_later(offset_long);
+
+    // Preparing set_eden_pointers
+    target_gen = make_load(ctrl, mem, makecon(TypeRawPtr::make((address)arr->gen_addr())), offset_long, TypeLong::LONG, T_LONG);
+
+    // Increment number of allocated objects // TODO - remove inc in collected heap to avoid duplication?
+    Node * acc_addr = makecon(TypeRawPtr::make((address)arr->acc_addr()));
+    Node * alloc_counter = make_load(ctrl, mem, acc_addr, offset_long, TypeLong::LONG, T_LONG);
+    Node * inc_count = new (C) AddLNode(alloc_counter, longcon((jlong)1));
+    transform_later(inc_count);
+    mem = make_store(ctrl, mem, acc_addr, offset_long, inc_count, T_LONG);
+  }
+#endif
+
+    set_eden_pointers(ctrl, mem, gen_tlab_adr, eden_top_adr, eden_end_adr, target_gen);
 
     // Load Eden::end.  Loop invariant and hoisted.
     //
@@ -1465,6 +1505,7 @@ void PhaseMacroExpand::expand_allocate_common(
                                         fast_oop_ctrl, fast_oop_rawmem, fast_oop,
 #ifdef NG2C_PROF
                                         alloc_gen,
+                                        context,
 #endif
                                         klass_node, length, size_in_bytes);
 
@@ -1723,7 +1764,8 @@ Node*
 PhaseMacroExpand::initialize_object(AllocateNode* alloc,
                                     Node* control, Node* rawmem, Node* object,
 #ifdef NG2C_PROF
-                                    int ng2c_prof,
+                                    int alloc_site_id,
+                                    Node * context,
 #endif
                                     Node* klass_node, Node* length,
                                     Node* size_in_bytes) {
@@ -1739,26 +1781,21 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 
   rawmem = make_store(control, rawmem, object, oopDesc::mark_offset_in_bytes(), mark_node, T_ADDRESS);
 
-  // TODO - skip if ng2c_prof == 0
-#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_COUNTER)
-  uint prof_mask = (((uint)ng2c_prof) << markOopDesc::ng2c_32bit_prof_shift);
-  rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), intcon((juint)prof_mask), T_INT);
-
-  // Allocation has been done thus we can incr the local count for the generation
-  // TODO - this line is outdated. Needs to be updated.
-  //ngen_t * alloc_counter_adr = Universe::method_bci_hashtable()->get_alloc_slot(ng2c_prof);
-  ngen_t * alloc_counter_adr = NULL;
+  if (alloc_site_id != 0 && context != NULL) {
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_TAGGING)
+    uint alloc_site_mask = (((uint)alloc_site_id) << 16);
+    Node * header = new (C) AndINode(intcon(alloc_site_mask), context);
+    transform_later(header);
+    // Install header in mark oop's upper 32 bits.
+    rawmem = make_store(control, rawmem, object, oopDesc::ng2c_install_offset_in_bytes(), header, T_INT);
 
 #ifdef DEBUG_NG2C_PROF_C2
-   gclog_or_tty->print_cr("[ng2c-prof-c2] ng2c_prof="INTPTR_FORMAT", prof_mask="INTPTR_FORMAT,
-     ng2c_prof, prof_mask);
+     gclog_or_tty->print_cr("[ng2c-prof-c2] alloc_site_id="INTPTR_FORMAT", alloc_site_mask="INTPTR_FORMAT,
+         alloc_site_id, alloc_site_mask);
 #endif // DEBUG_NG2C_PROF_C2
 
-   Node * alloc_counter = make_load(control, rawmem, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, TypeLong::LONG, T_LONG);
-   Node * inc_count = new (C) AddLNode(alloc_counter, longcon((jlong)1));
-  transform_later(inc_count);
-  rawmem = make_store(control, rawmem, makecon(TypeRawPtr::make((address)alloc_counter_adr)), 0, inc_count, T_LONG);
 #endif // NG2C_PROF
+  }
   
   rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);
 
