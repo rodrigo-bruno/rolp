@@ -306,6 +306,7 @@ Thread::Thread() : _tlab(this) {
   set_alloc_gen(1);
   // This will make eden tlab the 'last used tlab'.
   set_cur_tlab(false);
+  _context = 0;
   // </underscore>
 }
 
