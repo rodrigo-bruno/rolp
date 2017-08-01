@@ -33,6 +33,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
   bool should_inc_gen(PromotionCounter * pc);
   bool should_use_context(PromotionCounter * pc);
   void update_target_gen();
+  unsigned int get_cur_tenuring_threshold();
 
  public:
   // There is no need to call the set_calling_thread since the VMThread::execute(&op)
@@ -43,7 +44,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
     {
       assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
       
-      // TODO - print how much time is spent on each of these steps.
+      // TODO - this closure could be done only when we decide to update the target gen, right?
       {
         NG2C_MergeWorkerThreads mwt_cljr(this);
         MutexLocker mu(Threads_lock);
@@ -52,11 +53,17 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
 #ifdef DEBUG_NG2C_PROF_VMOP
       {
-        PromotionCounters * hashtable = Universe::promotion_counters();
+        gclog_or_tty->print_cr("[ng2c-vmop] cur_tenuring_threshold=%u",
+           get_cur_tenuring_threshold());
 
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable>");
-        hashtable->print_on(gclog_or_tty);
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable> done!");
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters>");
+        Universe::promotion_counters()->print_on(gclog_or_tty);
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters> done!");
+
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters>");
+        Universe::method_bci_hashtable()->print_on(gclog_or_tty);
+        gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters> done!");
+
       }
 #endif
 
@@ -65,17 +72,6 @@ class NG2C_MergeAllocCounters : public VM_Operation
       if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
         update_target_gen();
       }
-
-#ifdef DEBUG_NG2C_PROF_VMOP
-      {
-        PromotionCounters * hashtable = Universe::promotion_counters();
-
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable>");
-        hashtable->print_on(gclog_or_tty);
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing hashtable> done!");
-      }
-#endif
-
     }
 
   virtual bool doit_prologue();

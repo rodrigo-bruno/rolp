@@ -3835,9 +3835,13 @@ class CommandLineFlags {
           "Sets the number of GC cycles required to update the "            \
           "target gen value.")                                              \
                                                                             \
-  product(double, NG2CPromotionThreshold, 0.5,                              \
-          "Sets the threshold between number of promotions and "            \
-          "since the last update of the target generation.")                \
+  product(double, NG2CGenUpdateThreshold, 0.9,                              \
+          "Target generation is updated if the ratio between promoted"      \
+          "and allocated objects is superior to this value.")               \
+                                                                            \
+  product(double, NG2CGenContextThreshold, 0.5,                             \
+          "Context analysis is turned on if the ratio between promoted"     \
+          "and allocated objects is superior to this value.")               \
                                                                             \
   product(ccstrlist, NG2CStaticAnalysis, NULL,                              \
           "Path to file with static analysis.")                             \

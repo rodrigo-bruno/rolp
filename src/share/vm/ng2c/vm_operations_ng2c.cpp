@@ -37,17 +37,17 @@ NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
     for (; surv != NULL; surv = surv->next()) {
       PromotionCounter * surv_arr = surv->literal();
       uint hash = surv_arr->hash();
-      PromotionCounter * glbl_arr = global_hashtable->get_counter(hash);
+      PromotionCounter * glbl_arr = global_hashtable->get_counter_not_null(hash);
 
-#ifdef DEBUG_NG2C_PROF_VMOP
+/*
+#ifdef DEBUG_NG2C_PROF_VMOP // TODO - necessary?
       for (unsigned int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
         if (surv_arr->array()[i])
-          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash=%u age=%d promotions=%lu",
+          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash="INTPTR_FORMAT" age=%d promotions=%lu",
              glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
 #endif
-      // Note: some hashes might get corrupted. If this happens, survivors will
-      // register a hash that is not valid, leading to a null global array.
-      if (glbl_arr != NULL) update_promotions(glbl_arr, surv_arr);
+*/
+      update_promotions(glbl_arr, surv_arr);
     }
   }
 }
@@ -55,9 +55,16 @@ NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
 bool
 NG2C_MergeAllocCounters::should_use_context(PromotionCounter * pc)
 {
-  // TODO - implement should_use_context.
-  // - check if we have more than 75% of objects in one slot
-  // - check if we have more than X objects
+  unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
+  long promo_counter = 0;
+  promo_counter = pc->array()[cur_tenuring_threshold];
+  long alloc_counter = pc->array()[0];
+  bool above = promo_counter > alloc_counter * NG2CGenContextThreshold; 
+  bool below = promo_counter < alloc_counter * NG2CGenUpdateThreshold;
+
+  if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above && below) {
+    return true;
+  }
   return false;
 }
 
@@ -66,13 +73,11 @@ NG2C_MergeAllocCounters::should_inc_gen(PromotionCounter * pc)
 {
   unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
   long promo_counter = 0;
-  //for (unsigned int i = 1; i < NG2CUpdateThreshold; i++) promo_counter += ngen_arr->array()[i];
   promo_counter = pc->array()[cur_tenuring_threshold];
   long alloc_counter = pc->array()[0];
-  // TODO - improve should_inc_gen
-  // - if we exceed  NG2C_GEN_ARRAY_SIZE, then we need to create a new gen
-  // - make this 50 a constant somewhere!
-  if (cur_tenuring_threshold > 1 && alloc_counter > 50 && promo_counter > alloc_counter * NG2CPromotionThreshold) {
+  bool above = promo_counter > alloc_counter * NG2CGenUpdateThreshold;
+
+  if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above) {
     return true;
   }
   return false;
@@ -82,40 +87,39 @@ void
 NG2C_MergeAllocCounters::update_target_gen()
 {
   PromotionCounters * hashtable = Universe::promotion_counters();
-
-#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
-  unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
-  gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> cur_tenuring_threshold=%u",
-        cur_tenuring_threshold);
-#endif
+  unsigned int cur_tenuring_threshold = get_cur_tenuring_threshold();
 
   for (int i = 0; i < hashtable->get_counters()->table_size(); i++) {
     HashtableEntry<PromotionCounter *, mtInternal> * p = (HashtableEntry<PromotionCounter *, mtInternal>*)hashtable->get_counters()->bucket(i);
 
     for (; p != NULL; p = p->next()) {
       PromotionCounter * ngen_arr = p->literal();
-      unsigned int context = ((unsigned int)ngen_arr->hash()) >> 16;
-      unsigned int alloc_site_id = mask_bits ((uintptr_t)ngen_arr->hash(), 0xFFFF);
+      unsigned int context = mask_bits ((uintptr_t)ngen_arr->hash(), 0xFFFF);
+      unsigned int alloc_site_id = ((unsigned int)ngen_arr->hash()) >> 16;
       NGenerationArray * allocs = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
       ngen_arr->array()[0] = allocs->number_allocs(context);
 
       if (context == 0 && should_use_context(ngen_arr)) {
-#if defined(NG2C_PROF_ALLOC) && !defined(DISABLE_NG2C_PROF_CONTEXT)
+#ifdef NG2C_PROF_CONTEXT
         allocs->prepare_contexts();
+#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
+        gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" target_gen=%u",
+           ngen_arr->hash(), allocs->target_gen(context));
 #endif
-        // TODO - delete entry in the global promotion counter
+        continue;
+#endif
       }
 
       if (should_inc_gen(ngen_arr)) {
 #ifdef NG2C_PROF_ALLOC
         allocs->inc_target_gen(context);
 #endif
-
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
-        gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash=%u target_gen=%u",
+        gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash="INTPTR_FORMAT" target_gen=%u",
            ngen_arr->hash(), allocs->target_gen(context));
 #endif
+        continue;
       }
       // Note: we clean the arry to ensure that we look at a single time window.
       memset(ngen_arr->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
@@ -128,4 +132,11 @@ bool
 NG2C_MergeAllocCounters::doit_prologue()
 {
   return true;
+}
+
+
+unsigned int
+NG2C_MergeAllocCounters::get_cur_tenuring_threshold()
+{
+  return ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
 }

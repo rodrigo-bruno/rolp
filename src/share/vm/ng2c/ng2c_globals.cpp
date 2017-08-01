@@ -5,6 +5,7 @@
 void
 NGenerationArray::prepare_contexts()
 {
+/*
   // Note: backup a copy to delete and backup previous values.
   ngen_t * prev_target = (ngen_t*)_target_gen;
   ngen_t * prev_allocs = (ngen_t*)_allocs_gen;
@@ -20,13 +21,13 @@ NGenerationArray::prepare_contexts()
   new_allocs[0] = prev_allocs[0];
 
   // Note: atomic xchg
-  Atomic::xchg_ptr(new_target, _target_gen);
-  Atomic::xchg_ptr(new_allocs, _allocs_gen);
+  Atomic::xchg_ptr(new_target, &_target_gen);
+  Atomic::xchg_ptr(new_allocs, &_allocs_gen);
 
   // Note: free previous array
   FREE_C_HEAP_ARRAY(ngen_t*, prev_target, mtGC);
   FREE_C_HEAP_ARRAY(ngen_t*, prev_allocs, mtGC);
-
+*/
   // Note: use the new factor
   _factor = 1;
   _factor_bytes = sizeof(ngen_t);

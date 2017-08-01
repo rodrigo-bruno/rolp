@@ -117,12 +117,10 @@ class markOopDesc: public oopDesc {
          epoch_bits               = 2
 #ifdef NG2C_PROF
           ,ng2c_prof_bits         = 32,
-         max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits - ng2c_prof_bits,
-#else
-         max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits,
-
 #endif
+         max_hash_bits            = BitsPerWord - age_bits - lock_bits - biased_lock_bits,
          hash_bits                = max_hash_bits > 31 ? 31 : max_hash_bits
+
   };
 
   // The biased locking code currently requires that the age bits be
@@ -134,7 +132,7 @@ class markOopDesc: public oopDesc {
          hash_shift               = cms_shift + cms_bits,
          epoch_shift              = hash_shift
 #ifdef NG2C_PROF
-         ,ng2c_prof_shift        = hash_shift + hash_bits
+         ,ng2c_prof_shift        = 32
 #endif
   };
 
@@ -368,6 +366,7 @@ class markOopDesc: public oopDesc {
 #ifdef NG2C_PROF
     uint    ng2c_prof()               const { return mask_bits(value() >> ng2c_prof_shift, ng2c_prof_mask); }
     markOop set_ng2c_prof(uint v) const {
+      if (!v) return markOop(value());
       assert((v & ~ng2c_prof_mask) == 0, "shouldn't overflow ng2c_prof field");
       return markOop((value() & ~ng2c_prof_mask_in_place) | (((uintptr_t)v & ng2c_prof_mask) << ng2c_prof_shift));
   }

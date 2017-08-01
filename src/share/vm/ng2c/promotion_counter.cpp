@@ -46,5 +46,16 @@ PromotionCounters::get_counter_not_null(unsigned int hash)
 void
 PromotionCounters::print_on(outputStream * st, const char * tag)
 {
-  // TODO - implement!
+  for (int i = 0; i < _counters->table_size(); i++) {
+    HashtableEntry<PromotionCounter*, mtGC> * entry = _counters->bucket(i);
+    for(; entry != NULL; entry = entry->next()) {
+      PromotionCounter * pc = entry->literal();
+      ngen_t * arr = pc->array();
+
+      st->print("[ng2c-%s] hash="INTPTR_FORMAT" [", tag, pc->hash());
+      for (unsigned int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
+        st->print(INT64_FORMAT "; ", arr[k]);
+      st->print_cr("]");
+    }
+  }
 }

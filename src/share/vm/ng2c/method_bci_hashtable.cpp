@@ -3,7 +3,6 @@
 # include "memory/nogc.h"
 # include "oops/method.hpp"
 
-// TODO - check the size of the table
 MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {
 }
@@ -24,7 +23,7 @@ MethodBciHashtable::add_entry(uint hash)
 
   Hashtable<NGenerationArray*, mtGC>::add_entry((hash_to_index(hash)), entry);
 
-#ifdef DEBUG_NG2C_PROF_TABLE
+#ifdef DEBUG_NG2C_PROF_ALLOCS_TABLE
   gclog_or_tty->print_cr("[ng2c-prof-table] add_entry hash="INTPTR_FORMAT" hash_to_index=%d, bucket="INTPTR_FORMAT,
     (intptr_t)hash, hash_to_index(hash), bucket(hash_to_index(hash)));
 #endif
@@ -40,7 +39,7 @@ MethodBciHashtable::get_entry(uint hash)
   int idx = hash_to_index(hash);
   MethodBciEntry * entry = (MethodBciEntry*)bucket(idx);
 
-#ifdef DEBUG_NG2C_PROF_TABLE
+#ifdef DEBUG_NG2C_PROF_ALLOCS_TABLE
   gclog_or_tty->print_cr("[ng2c-prof-table] get_entry(hash="INTPTR_FORMAT") -> "INTPTR_FORMAT,
                          hash, entry);
 #endif
@@ -83,8 +82,16 @@ MethodBciHashtable::print_on(outputStream * st, const char * tag)
     MethodBciEntry * p = (MethodBciEntry*)bucket(i);
 
     for (; p != NULL; p = p->next()) {
-      NGenerationArray * arr = p->literal();
-      // TODO - implement print_on for MethodBciHashtable
+      ngen_t * allocs = p->literal()->acc_addr();
+      ngen_t * target = p->literal()->gen_addr();
+      uint alloc_site_id = p->literal()->hash();
+      unsigned int size = p->literal()->expanded_contexts() ? NG2C_MAX_ALLOC_SITE : 1;
+
+      for (unsigned int j = 0; j < size; j++) {
+        if (allocs[j] == 0) continue;
+        st->print_cr("[ng2c-%s] alloc_site_id="INTPTR_FORMAT" context="INTPTR_FORMAT" target_gen=%d allocs=%d",
+            tag, alloc_site_id, j, target[j], allocs[j]);
+      }
     }
   }
 }

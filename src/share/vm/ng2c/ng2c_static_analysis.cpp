@@ -190,7 +190,7 @@ StaticAnalysis::print_on(outputStream * st, Hashtable<ContextIndex*, mtGC> * has
     for(; entry != NULL; entry = entry->next()) {
       ContextIndex * ci = entry->literal();
       uint key = entry->hash();
-      st->print_cr("[ng2c-sanalysis-print] %s key="INTPTR_FORMAT" index="INTPTR_FORMAT, tag, key, ci->index());
+      st->print_cr("[ng2c-%s] key="INTPTR_FORMAT" index="INTPTR_FORMAT, tag, key, ci->index());
     }
   }
 }

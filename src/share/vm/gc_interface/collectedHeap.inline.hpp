@@ -249,15 +249,14 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
     unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
     unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
     // Note: gen := 16 bit alloc site id followed by 16 bit context.
-    unsigned int mark = (alloc_site_id << 16) & context;
+    unsigned int mark = (alloc_site_id << 16) | context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
+    assert(context == 0, "context should be zero for now"); // TODO - fix this.
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
 
     // Deciding in which generation to allocate.
     klass.set_alloc_gen(ngen->target_gen(context));
-   // Incrementing the correct counter.
-    ngen->inc_number_allocs(context);
     // Setting allocation site hash into handle (will be used to mark header).
     klass.set_as_hash(mark);
     // Setting up thread's current alloc gen (will be used by the slow path alloc).
@@ -269,7 +268,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
 #endif
 
 #if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate -> size="SIZE_FORMAT" gen=%d hash=%u",
+  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate -> size="SIZE_FORMAT" gen=%d hash="INTPTR_FORMAT,
           size, klass.alloc_gen(), klass.as_hash());
 #endif
 // </undescore>
@@ -298,15 +297,14 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
     unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
     unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
     // Note: gen := 16 bit alloc site id followed by 16 bit context.
-    unsigned int mark = (alloc_site_id << 16) & context;
+    unsigned int mark = (alloc_site_id << 16) | context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
+    assert(context == 0, "context should be zero for now"); // TODO - fix this
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
 
     // Deciding in which generation to allocate.
     klass.set_alloc_gen(ngen->target_gen(context));
-   // Incrementing the correct counter.
-    ngen->inc_number_allocs(context);
     // Setting allocation site hash into handle (will be used to mark header).
     klass.set_as_hash(mark);
     // Setting up thread's current alloc gen (will be used by the slow path alloc).
@@ -317,7 +315,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
 #endif
 
 #if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate -> size="SIZE_FORMAT" gen=%d hash=%u length=%d",
+  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate -> size="SIZE_FORMAT" gen=%d hash="INTPTR_FORMAT" length=%d",
           size, klass.alloc_gen(), klass.as_hash(), length);
 #endif
 // </undescore>
@@ -346,15 +344,14 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
     unsigned int context        = mask_bits ((uintptr_t)THREAD->context(),  0xFFFF);
     unsigned int alloc_site_id  = mask_bits ((uintptr_t)gen,                0xFFFF);
     // Note: gen := 16 bit alloc site id followed by 16 bit context.
-    unsigned int mark = (alloc_site_id << 16) & context;
+    unsigned int mark = (alloc_site_id << 16) | context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
+    assert(context == 0, "context should be zero for now"); // TODO - fix this.
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
 
     // Deciding in which generation to allocate.
     klass.set_alloc_gen(ngen->target_gen(context));
-   // Incrementing the correct counter.
-    ngen->inc_number_allocs(context);
     // Setting allocation site hash into handle (will be used to mark header).
     klass.set_as_hash(mark);
     // Setting up thread's current alloc gen (will be used by the slow path alloc).
@@ -365,7 +362,7 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
 #endif
 
 #if DEBUG_SLOW_PATH_ALLOC
-  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate_nozero -> size="SIZE_FORMAT" gen=%d hash=%u length=%d",
+  gclog_or_tty->print_cr("[ng2c-slow-path-alloc] CollectedHeap::array_allocate_nozero -> size="SIZE_FORMAT" gen=%d hash="INTPTR_FORMAT" length=%d",
           size, klass.alloc_gen(), klass.as_hash(), length);
 #endif
 // </undescore>
