@@ -29,6 +29,7 @@ NG2C_MergeAllocCounters::update_promotions(PromotionCounter * global, PromotionC
 void
 NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
 {
+  // TODO - global array should have only one entry per alloc site id if the context is not expanded.
   PromotionCounters * hashtable = thread->promotion_counters();
   PromotionCounters * global_hashtable = Universe::promotion_counters();
 
@@ -100,18 +101,16 @@ NG2C_MergeAllocCounters::update_target_gen()
 
       ngen_arr->array()[0] = allocs->number_allocs(context);
 
-      if (context == 0 && should_use_context(ngen_arr)) {
+      if (!allocs->expanded_contexts() && should_use_context(ngen_arr)) {
 #ifdef NG2C_PROF_CONTEXT
         allocs->prepare_contexts();
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
         gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" target_gen=%u",
            ngen_arr->hash(), allocs->target_gen(context));
 #endif
-        continue;
 #endif
       }
-
-      if (should_inc_gen(ngen_arr)) {
+      else if (should_inc_gen(ngen_arr)) {
 #ifdef NG2C_PROF_ALLOC
         allocs->inc_target_gen(context);
 #endif
@@ -119,7 +118,6 @@ NG2C_MergeAllocCounters::update_target_gen()
         gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash="INTPTR_FORMAT" target_gen=%u",
            ngen_arr->hash(), allocs->target_gen(context));
 #endif
-        continue;
       }
       // Note: we clean the arry to ensure that we look at a single time window.
       memset(ngen_arr->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));

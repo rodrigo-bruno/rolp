@@ -96,7 +96,7 @@ StaticAnalysis::parse_from_file() {
 
     char* type = strtok (line, ":");
     // TODO - check for strol errors?
-    unsigned int index = (unsigned short) strtol(strtok (NULL, ":"), NULL, 10);
+    unsigned int index = (unsigned short) strtol(strtok (NULL, ":"), NULL, 16);
     char* method = strtok (NULL, ":");
     uint key = 0;
     int bci = -1;

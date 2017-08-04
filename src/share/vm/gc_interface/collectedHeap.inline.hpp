@@ -252,9 +252,9 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int gen, int size, TRAPS) {
     unsigned int mark = (alloc_site_id << 16) | context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
-    assert(context == 0, "context should be zero for now"); // TODO - fix this.
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
 
+    ngen->inc_number_allocs(context);
     // Deciding in which generation to allocate.
     klass.set_alloc_gen(ngen->target_gen(context));
     // Setting allocation site hash into handle (will be used to mark header).
@@ -300,9 +300,9 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
     unsigned int mark = (alloc_site_id << 16) | context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
-    assert(context == 0, "context should be zero for now"); // TODO - fix this
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
 
+    ngen->inc_number_allocs(context);
     // Deciding in which generation to allocate.
     klass.set_alloc_gen(ngen->target_gen(context));
     // Setting allocation site hash into handle (will be used to mark header).
@@ -347,9 +347,9 @@ oop CollectedHeap::array_allocate_nozero(KlassHandle klass,
     unsigned int mark = (alloc_site_id << 16) | context;
     NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
 
-    assert(context == 0, "context should be zero for now"); // TODO - fix this.
     assert(ngen != NULL, "there should be an ngen array for each alloc site id");
 
+    ngen->inc_number_allocs(context);
     // Deciding in which generation to allocate.
     klass.set_alloc_gen(ngen->target_gen(context));
     // Setting allocation site hash into handle (will be used to mark header).

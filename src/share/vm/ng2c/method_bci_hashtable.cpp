@@ -3,6 +3,12 @@
 # include "memory/nogc.h"
 # include "oops/method.hpp"
 
+#include<pthread.h>
+
+// This is required to serialize insertions into the hashtable.
+// This should be done properly by using internal locks (and not directly mutexes...)
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
+
 MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {
 }
@@ -10,10 +16,14 @@ MethodBciHashtable::MethodBciHashtable(int table_size)
 NGenerationArray *
 MethodBciHashtable::add_entry(uint hash)
 {
+  pthread_mutex_lock(&lock);
   NGenerationArray * array = get_entry(hash);
 
   // If we already have this hash inserted, just return.
-  if (array != NULL) return array;
+  if (array != NULL) {
+    pthread_mutex_unlock(&lock);
+    return array;
+  }
 
   array = new NGenerationArray(hash);
   MethodBciEntry * entry =
@@ -28,6 +38,7 @@ MethodBciHashtable::add_entry(uint hash)
     (intptr_t)hash, hash_to_index(hash), bucket(hash_to_index(hash)));
 #endif
 
+  pthread_mutex_unlock(&lock);
   return array;
 }
 
@@ -89,8 +100,8 @@ MethodBciHashtable::print_on(outputStream * st, const char * tag)
 
       for (unsigned int j = 0; j < size; j++) {
         if (allocs[j] == 0) continue;
-        st->print_cr("[ng2c-%s] alloc_site_id="INTPTR_FORMAT" context="INTPTR_FORMAT" target_gen=%d allocs=%d",
-            tag, alloc_site_id, j, target[j], allocs[j]);
+        st->print_cr("[ng2c-%s] alloc_site_id="INTPTR_FORMAT" expanded=%s context="INTPTR_FORMAT" target_gen=%d allocs=%d",
+            tag, alloc_site_id, size > 1 ? "true" : "false", j, target[j], allocs[j]);
       }
     }
   }

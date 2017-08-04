@@ -31,35 +31,45 @@ NGenerationArray::prepare_contexts()
   // Note: use the new factor
   _factor = 1;
   _factor_bytes = sizeof(ngen_t);
+  // Clear prev values
+  _target_gen[0] = 0;
+  _allocs_gen[0] = 0;
 }
 
 void
 NGenerationArray::inc_target_gen(unsigned int context)
 {
-  Atomic::inc((volatile jint *)&_target_gen[context * _factor]);
+  assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
+  _target_gen[context * _factor]++;
 }
 
 ngen_t
 NGenerationArray::number_allocs(unsigned int context)
 {
+  assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
   return _allocs_gen[context * _factor];
 }
 
 void
 NGenerationArray::inc_number_allocs(unsigned int context)
 {
+  assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
   _allocs_gen[context * _factor]++;
 }
 void
 NGenerationArray::reset_allocs(unsigned int context)
 {
+  assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
   _allocs_gen[context * _factor] = 0;
 }
 
 long
 NGenerationArray::target_gen(unsigned int context)
 {
-  return _target_gen[context * _factor];
+  assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
+  long target_gen = _target_gen[context * _factor];
+  assert(target_gen => 0 && target_gen < NG2C_GEN_ARRAY_SIZE, "");
+  return target_gen;
 }
 
 void

@@ -72,13 +72,12 @@ class NGenerationArray : public CHeapObj<mtGC>
 
   uint     hash()  const { return _hash; }
   int      size()  const { return NG2C_GEN_ARRAY_SIZE; } // hard-coded for now
-  int *    factor_addr()        { return &_factor; }
   int *    factor_bytes_addr()  { return &_factor_bytes; }
   ngen_t * gen_addr() { return (ngen_t*)_target_gen; } // TODO - rename to target_addr
   ngen_t * acc_addr() { return (ngen_t*)_allocs_gen; } // TODO - rename to allocs_addr
 
   void     prepare_contexts();
-  bool     expanded_contexts() { return _factor != 0; } // TODO - not used.
+  bool     expanded_contexts() { return _factor > 0; }
 
   void     inc_target_gen(unsigned int context);
   long     target_gen(unsigned int context);

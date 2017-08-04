@@ -127,6 +127,8 @@ private:
 #ifdef NG2C_PROF
                           int ng2c_prof,
                           Node * context,
+                          Node * offset_long,
+                          Node * acc_addr,
 #endif
                           Node* klass_node, Node* length,
                           Node* size_in_bytes);
