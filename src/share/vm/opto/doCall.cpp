@@ -399,6 +399,59 @@ bool Parse::can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass* kl
 }
 
 
+void
+Parse::do_uncontext()
+{
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
+  // 'invoke_context' is a 16bit invocation method (caller) id.
+  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method());
+
+  if (invoke_context != 0) {
+
+#ifdef DEBUG_C2
+  gclog_or_tty->print("[ng2c-c2-return] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
+    invoke_context, bci(), method()->get_Method());
+  method()->print(gclog_or_tty);
+  gclog_or_tty->print_cr("");
+#endif
+
+    Node* ctrl = control();
+    Node* thread = _gvn.transform(new (C) ThreadLocalNode());
+    Node* context_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::gen_context()));
+    Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw, false);
+    Node* incr = _gvn.transform(new (C) SubINode(cnt, _gvn.intcon(invoke_context)));
+    store_to_memory(ctrl, context_addr, incr, T_INT, Compile::AliasIdxRaw, false);
+
+  }
+#endif
+}
+
+void Parse::do_context()
+{
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
+  // 'invoke_context' is a 16bit invocation method (caller) id.
+  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method());
+
+#ifdef DEBUG_C2
+  gclog_or_tty->print("[ng2c-c2-invoke] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
+    invoke_context, bci(), method()->get_Method());
+  method()->print(gclog_or_tty);
+  gclog_or_tty->print_cr("");
+#endif
+
+  if (invoke_context != 0) {
+    Node* ctrl = control();
+    Node* thread = _gvn.transform(new (C) ThreadLocalNode());
+    Node* context_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::gen_context()));
+    Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw, false);
+    Node* incr = _gvn.transform(new (C) AddINode(cnt, _gvn.intcon(invoke_context)));
+    store_to_memory(ctrl, context_addr, incr, T_INT, Compile::AliasIdxRaw, false);
+
+  }
+#endif
+
+}
+
 //------------------------------do_call----------------------------------------
 // Handle your basic call.  Inline if we can & want to, else just setup call.
 void Parse::do_call() {
@@ -420,6 +473,8 @@ void Parse::do_call() {
   ciKlass*         holder       = iter().get_declared_method_holder();
   ciInstanceKlass* klass = ciEnv::get_instance_klass_for_declared_method_holder(holder);
   assert(declared_signature != NULL, "cannot be null");
+
+  do_context();
 
   // uncommon-trap when callee is unloaded, uninitialized or will not link
   // bailout when too many arguments for register representation

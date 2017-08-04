@@ -2338,6 +2338,7 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_invokeinterface:
     // <underscore> This is the correct place!
     do_call();
+    do_uncontext();
     break;
   case Bytecodes::_checkcast:
     do_checkcast();
