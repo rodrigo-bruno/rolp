@@ -44,32 +44,33 @@ class NG2C_MergeAllocCounters : public VM_Operation
     {
       assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
       
-      // TODO - this closure could be done only when we decide to update the target gen, right?
-      {
-        NG2C_MergeWorkerThreads mwt_cljr(this);
-        MutexLocker mu(Threads_lock);
-        Threads::threads_do(&mwt_cljr);
-      }
-
-#ifdef DEBUG_NG2C_PROF_VMOP
-      {
-        gclog_or_tty->print_cr("[ng2c-vmop] cur_tenuring_threshold=%u",
-           get_cur_tenuring_threshold());
-
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters>");
-        Universe::promotion_counters()->print_on(gclog_or_tty);
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters> done!");
-
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters>");
-        Universe::method_bci_hashtable()->print_on(gclog_or_tty);
-        gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters> done!");
-
-      }
-#endif
-
       // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
       _total_update_target_gen++;
       if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
+        // Sum up promotion counters.
+        {
+          NG2C_MergeWorkerThreads mwt_cljr(this);
+          MutexLocker mu(Threads_lock);
+          Threads::threads_do(&mwt_cljr);
+        }
+
+#ifdef DEBUG_NG2C_PROF_VMOP
+        {
+          gclog_or_tty->print_cr("[ng2c-vmop] cur_tenuring_threshold=%u",
+             get_cur_tenuring_threshold());
+
+          gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters>");
+          Universe::promotion_counters()->print_on(gclog_or_tty);
+          gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters> done!");
+
+          gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters>");
+          Universe::method_bci_hashtable()->print_on(gclog_or_tty);
+          gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters> done!");
+
+        }
+#endif
+
+        // Try to expand contexts or increment gens.
         update_target_gen();
       }
     }

@@ -11,7 +11,7 @@ typedef unsigned long ngen_t;
 // should increase the target gen. In other words, I don't need to track the
 // age of an object. I only need to know that it was allocated in a specific gen
 // and if it survived or not to collections. Think about it!
-const static unsigned int NG2C_GEN_ARRAY_SIZE = 16; // TODO FIXME: Why does it crash with 4?
+const static unsigned int NG2C_GEN_ARRAY_SIZE = 16; // TODO FIXME: Why does it crash with 4? -> this should depend on the current tenuring treshold!
 // 2^16, which is the number of possible alloc site ids and context ids
 const static unsigned int NG2C_MAX_ALLOC_SITE = 65536; 
 
@@ -109,6 +109,7 @@ class PromotionCounter : public CHeapObj<mtGC>
   ngen_t * array() const { return _array; }
   void   update(unsigned int age);
   unsigned int hash() { return _hash; }
+  // TODO - this method is not being used. It could be used in ng2c vm ops though.
   NGenerationArray * get_allocations();
   unsigned int new_hash (int seed) {
     assert(false, "new_hash called for PromotionCounter...");

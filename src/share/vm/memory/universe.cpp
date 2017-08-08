@@ -644,9 +644,7 @@ jint universe_init() {
   GC_locker::lock();  // do not allow gc during bootstrapping
   JavaClasses::compute_hard_coded_offsets();
 
-  if (NG2CStaticAnalysis != NULL) {
-    Universe::_static_analysis   = new StaticAnalysis(NG2CStaticAnalysis);
-  }
+  Universe::_static_analysis   = new StaticAnalysis(NG2CStaticAnalysis);
 
   jint status = Universe::initialize_heap();
   if (status != JNI_OK) {

@@ -29,7 +29,6 @@ NG2C_MergeAllocCounters::update_promotions(PromotionCounter * global, PromotionC
 void
 NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
 {
-  // TODO - global array should have only one entry per alloc site id if the context is not expanded.
   PromotionCounters * hashtable = thread->promotion_counters();
   PromotionCounters * global_hashtable = Universe::promotion_counters();
 
@@ -38,7 +37,16 @@ NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
     for (; surv != NULL; surv = surv->next()) {
       PromotionCounter * surv_arr = surv->literal();
       uint hash = surv_arr->hash();
-      PromotionCounter * glbl_arr = global_hashtable->get_counter_not_null(hash);
+      unsigned int alloc_site_id = hash >> 16;
+      NGenerationArray * ngen = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
+      assert(ngen != NULL, "there should be an ngen array for this");
+
+      // Note: for allocation sites that are expanded, we must use the hash.
+      // For others, we should only use the alloc site id with a zeroed context.
+      // See g1CollectedHeap.cpp.
+      PromotionCounter * glbl_arr = ngen->expanded_contexts() ?
+          global_hashtable->get_counter_not_null(hash) :
+          global_hashtable->get_counter_not_null(alloc_site_id << 16);
 
 /*
 #ifdef DEBUG_NG2C_PROF_VMOP // TODO - necessary?
@@ -57,6 +65,8 @@ bool
 NG2C_MergeAllocCounters::should_use_context(PromotionCounter * pc)
 {
   unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
+  cur_tenuring_threshold = NG2CUpdateThreshold > cur_tenuring_threshold ?
+      cur_tenuring_threshold : NG2CUpdateThreshold;
   long promo_counter = 0;
   promo_counter = pc->array()[cur_tenuring_threshold];
   long alloc_counter = pc->array()[0];
@@ -73,6 +83,9 @@ bool
 NG2C_MergeAllocCounters::should_inc_gen(PromotionCounter * pc)
 {
   unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
+  cur_tenuring_threshold = NG2CUpdateThreshold > cur_tenuring_threshold ?
+      cur_tenuring_threshold : NG2CUpdateThreshold;
+
   long promo_counter = 0;
   promo_counter = pc->array()[cur_tenuring_threshold];
   long alloc_counter = pc->array()[0];
@@ -88,7 +101,6 @@ void
 NG2C_MergeAllocCounters::update_target_gen()
 {
   PromotionCounters * hashtable = Universe::promotion_counters();
-  unsigned int cur_tenuring_threshold = get_cur_tenuring_threshold();
 
   for (int i = 0; i < hashtable->get_counters()->table_size(); i++) {
     HashtableEntry<PromotionCounter *, mtInternal> * p = (HashtableEntry<PromotionCounter *, mtInternal>*)hashtable->get_counters()->bucket(i);
@@ -98,7 +110,9 @@ NG2C_MergeAllocCounters::update_target_gen()
       unsigned int context = mask_bits ((uintptr_t)ngen_arr->hash(), 0xFFFF);
       unsigned int alloc_site_id = ((unsigned int)ngen_arr->hash()) >> 16;
       NGenerationArray * allocs = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
+      assert(allocs != NULL, "there should be an ngen array for this");
 
+      // Update promotions array with the number of allocs.
       ngen_arr->array()[0] = allocs->number_allocs(context);
 
       if (!allocs->expanded_contexts() && should_use_context(ngen_arr)) {

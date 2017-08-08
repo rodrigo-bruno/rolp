@@ -4961,7 +4961,14 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       // Checks if we known an allocation site identified by the mark.
       if (arr != NULL) {
         PromotionCounter * pc;
-        pc = nthread->promotion_counters()->get_counter_not_null(rhash);
+        // Note: for allocation sites that are expanded, we must use the hash.
+        // For others, we should only use the alloc site id with a zeroed context.
+        // See vm_operations_ng2c.cpp.
+        if (arr->expanded_contexts()) {
+          pc = nthread->promotion_counters()->get_counter_not_null(rhash);
+        } else {
+          pc = nthread->promotion_counters()->get_counter_not_null(alloc_site_id << 16);
+        }
         pc->update(age == markOopDesc::max_age ? age : age +1);
       }
     }

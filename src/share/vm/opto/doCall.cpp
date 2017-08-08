@@ -705,6 +705,7 @@ void Parse::do_call() {
         record_profile_for_speculation(stack(sp()-1), better_type);
       }
     }
+    do_uncontext();
   }
 
   // Restart record of parsing work after possible inlining of call

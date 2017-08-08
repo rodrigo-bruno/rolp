@@ -68,7 +68,7 @@ NGenerationArray::target_gen(unsigned int context)
 {
   assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
   long target_gen = _target_gen[context * _factor];
-  assert(target_gen => 0 && target_gen < NG2C_GEN_ARRAY_SIZE, "");
+  assert(target_gen >= 0 && target_gen < NG2C_GEN_ARRAY_SIZE, "");
   return target_gen;
 }
 
@@ -82,7 +82,7 @@ PromotionCounter::update(unsigned int age)
 NGenerationArray *
 PromotionCounter::get_allocations()
 {
-  unsigned int alloc_site_id = mask_bits ((uintptr_t)_hash, 0xFFFF);
+  unsigned int alloc_site_id = _hash >> 16;
   if (_allocations == NULL) {
     _allocations = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
   }

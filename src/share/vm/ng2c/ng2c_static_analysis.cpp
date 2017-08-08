@@ -148,7 +148,7 @@ StaticAnalysis::StaticAnalysis(const char* input_file) :
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
   gclog_or_tty->print_cr("[ng2c-sanalysis] parsing file=%s", NG2CStaticAnalysis);
 #endif
-  parse_from_file();
+  if (input_file != NULL) parse_from_file();
 }
 
 uint
