@@ -3,6 +3,9 @@
 
 # include "memory/allocation.inline.hpp"
 
+// TODO - missing stuff. We need to reset the thread's context summary periodically.
+// Exceptions and other things like that can easily break the context and therefore
+// allocates are out of track. I saw that hapenning in cassandra!
 typedef unsigned long ngen_t;
 
 // TODO - NG2C_GEN_ARRAY_SIZE is not necessary. If I only increase or reduce

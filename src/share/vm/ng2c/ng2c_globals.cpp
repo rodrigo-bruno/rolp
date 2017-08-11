@@ -31,9 +31,10 @@ NGenerationArray::prepare_contexts()
   // Note: use the new factor
   _factor = 1;
   _factor_bytes = sizeof(ngen_t);
-  // Clear prev values
-  _target_gen[0] = 0;
+  // Reset values.
   _allocs_gen[0] = 0;
+  // Copy current target generation to everyone.
+  memset((void*)_target_gen, _target_gen[0], NG2C_MAX_ALLOC_SITE * sizeof(ngen_t));
 }
 
 void

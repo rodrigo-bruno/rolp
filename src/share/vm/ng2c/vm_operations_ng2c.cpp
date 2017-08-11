@@ -68,12 +68,17 @@ NG2C_MergeAllocCounters::should_use_context(PromotionCounter * pc)
   cur_tenuring_threshold = NG2CUpdateThreshold > cur_tenuring_threshold ?
       cur_tenuring_threshold : NG2CUpdateThreshold;
   long promo_counter = 0;
-  promo_counter = pc->array()[cur_tenuring_threshold];
+  promo_counter = pc->array()[cur_tenuring_threshold - 1];
   long alloc_counter = pc->array()[0];
-  bool above = promo_counter > alloc_counter * NG2CGenContextThreshold; 
-  bool below = promo_counter < alloc_counter * NG2CGenUpdateThreshold;
 
-  if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above && below) {
+  long factor = alloc_counter;
+  for (unsigned int i = 0; i < cur_tenuring_threshold; i++) {
+    factor = factor * NG2CGenContextThreshold;
+  }
+
+  bool above = promo_counter > factor; 
+
+  if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above) {
     return true;
   }
   return false;
@@ -87,9 +92,15 @@ NG2C_MergeAllocCounters::should_inc_gen(PromotionCounter * pc)
       cur_tenuring_threshold : NG2CUpdateThreshold;
 
   long promo_counter = 0;
-  promo_counter = pc->array()[cur_tenuring_threshold];
+  promo_counter = pc->array()[cur_tenuring_threshold - 1];
   long alloc_counter = pc->array()[0];
-  bool above = promo_counter > alloc_counter * NG2CGenUpdateThreshold;
+
+  long factor = alloc_counter;
+  for (unsigned int i = 0; i < cur_tenuring_threshold; i++) {
+    factor = factor * NG2CGenUpdateThreshold;
+  }
+
+  bool above = promo_counter > factor;
 
   if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above) {
     return true;
@@ -115,22 +126,22 @@ NG2C_MergeAllocCounters::update_target_gen()
       // Update promotions array with the number of allocs.
       ngen_arr->array()[0] = allocs->number_allocs(context);
 
-      if (!allocs->expanded_contexts() && should_use_context(ngen_arr)) {
-#ifdef NG2C_PROF_CONTEXT
-        allocs->prepare_contexts();
-#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
-        gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" target_gen=%u",
-           ngen_arr->hash(), allocs->target_gen(context));
-#endif
-#endif
-      }
-      else if (should_inc_gen(ngen_arr)) {
+      if (should_inc_gen(ngen_arr)) {
 #ifdef NG2C_PROF_ALLOC
         allocs->inc_target_gen(context);
 #endif
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
         gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash="INTPTR_FORMAT" target_gen=%u",
            ngen_arr->hash(), allocs->target_gen(context));
+#endif
+      }
+      else if (!allocs->expanded_contexts() && should_use_context(ngen_arr)) {
+#ifdef NG2C_PROF_CONTEXT
+        allocs->prepare_contexts();
+#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
+        gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" target_gen=%u",
+           ngen_arr->hash(), allocs->target_gen(context));
+#endif
 #endif
       }
       // Note: we clean the arry to ensure that we look at a single time window.
