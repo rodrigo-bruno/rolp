@@ -76,7 +76,7 @@ NG2C_MergeAllocCounters::should_use_context(PromotionCounter * pc)
     factor = factor * NG2CGenContextThreshold;
   }
 
-  bool above = promo_counter > factor; 
+  bool above = promo_counter > factor;
 
   if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above) {
     return true;
@@ -144,9 +144,6 @@ NG2C_MergeAllocCounters::update_target_gen()
 #endif
 #endif
       }
-      // Note: we clean the arry to ensure that we look at a single time window.
-      memset(ngen_arr->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
-      allocs->reset_allocs(context);
     }
   }
 }

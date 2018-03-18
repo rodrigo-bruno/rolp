@@ -7,7 +7,7 @@
 
 // This is required to serialize insertions into the hashtable.
 // This should be done properly by using internal locks (and not directly mutexes...)
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 MethodBciHashtable::MethodBciHashtable(int table_size)
   : Hashtable<NGenerationArray*, mtGC>(table_size, sizeof(MethodBciEntry)) {
@@ -102,6 +102,24 @@ MethodBciHashtable::print_on(outputStream * st, const char * tag)
         if (allocs[j] == 0) continue;
         st->print_cr("[ng2c-%s] alloc_site_id="INTPTR_FORMAT" expanded=%s context="INTPTR_FORMAT" target_gen=%d allocs=%d",
             tag, alloc_site_id, size > 1 ? "true" : "false", j, target[j], allocs[j]);
+      }
+    }
+  }
+}
+
+void
+MethodBciHashtable::zero()
+{
+  for (int i = 0; i < table_size(); i++) {
+    MethodBciEntry * p = (MethodBciEntry*)bucket(i);
+
+    for (; p != NULL; p = p->next()) {
+      ngen_t * allocs = p->literal()->acc_addr();
+      uint alloc_site_id = p->literal()->hash();
+      unsigned int size = p->literal()->expanded_contexts() ? NG2C_MAX_ALLOC_SITE : 1;
+
+      for (unsigned int j = 0; j < size; j++) {
+        allocs[j] = 0;
       }
     }
   }

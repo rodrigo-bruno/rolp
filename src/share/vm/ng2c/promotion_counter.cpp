@@ -59,3 +59,15 @@ PromotionCounters::print_on(outputStream * st, const char * tag)
     }
   }
 }
+
+void
+PromotionCounters::zero()
+{
+  for (int i = 0; i < _counters->table_size(); i++) {
+    HashtableEntry<PromotionCounter*, mtGC> * entry = _counters->bucket(i);
+    for(; entry != NULL; entry = entry->next()) {
+      PromotionCounter * pc = entry->literal();
+      memset(pc->array(), 0, (NG2C_GEN_ARRAY_SIZE) * sizeof(ngen_t));
+    }
+  }
+}

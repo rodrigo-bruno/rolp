@@ -43,7 +43,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
   virtual void doit()
     {
       assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
-      
+
       // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
       _total_update_target_gen++;
       if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
@@ -69,9 +69,13 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
         }
 #endif
+      // Try to expand contexts or increment gens.
+      update_target_gen();
 
-        // Try to expand contexts or increment gens.
-        update_target_gen();
+      // Note: we clean the arry to ensure that we look at a single time window.
+      Universe::method_bci_hashtable()->zero();
+      Universe::promotion_counters()->zero();
+
       }
     }
 
