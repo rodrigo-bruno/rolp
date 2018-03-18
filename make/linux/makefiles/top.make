@@ -69,8 +69,8 @@ AD_Files_If_Required = $(AD_Files_If_Required/$(TYPE))
 
 # Wierd argument adjustment for "gnumake -j..."
 adjust-mflags   = $(GENERATED)/adjust-mflags
-MFLAGS-adjusted = -r `$(adjust-mflags) "$(MFLAGS)" "$(HOTSPOT_BUILD_JOBS)"`
-
+#MFLAGS-adjusted = -r `$(adjust-mflags) "$(MFLAGS)" "$(HOTSPOT_BUILD_JOBS)"`
+MFLAGS-adjusted = -r -j$(HOTSPOT_BUILD_JOBS) $(MFLAGS)
 
 # default target: update lists, make vm
 # done in stages to force sequential order with parallel make
