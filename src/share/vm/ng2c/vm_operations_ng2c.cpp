@@ -48,64 +48,51 @@ NG2C_MergeAllocCounters::update_promotions(NamedThread * thread)
           global_hashtable->get_counter_not_null(hash) :
           global_hashtable->get_counter_not_null(alloc_site_id << 16);
 
-/*
-#ifdef DEBUG_NG2C_PROF_VMOP // TODO - necessary?
-      for (unsigned int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++)
-        if (surv_arr->array()[i])
-          gclog_or_tty->print_cr("[ng2c-vmop] <promotions> %s hash="INTPTR_FORMAT" age=%d promotions=%lu",
-             glbl_arr == NULL ? "unkown" : "", hash, i, surv_arr->array()[i]);
-#endif
-*/
       update_promotions(glbl_arr, surv_arr);
     }
   }
 }
 
-bool
-NG2C_MergeAllocCounters::should_use_context(PromotionCounter * pc)
+int
+NG2C_MergeAllocCounters::normalize_derive_analyze(PromotionCounter * pc)
 {
-  unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
-  cur_tenuring_threshold = NG2CUpdateThreshold > cur_tenuring_threshold ?
-      cur_tenuring_threshold : NG2CUpdateThreshold;
-  long promo_counter = 0;
-  promo_counter = pc->array()[cur_tenuring_threshold - 1];
-  long alloc_counter = pc->array()[0];
+    float normalized[NG2C_GEN_ARRAY_SIZE] = {0};
+    float derivative[NG2C_GEN_ARRAY_SIZE] = {0};
+		unsigned long * curve = pc->array();
+    unsigned int segm = NG2C_GEN_ARRAY_SIZE;
+    unsigned int min = 0;
 
-  long factor = alloc_counter;
-  for (unsigned int i = 0; i < cur_tenuring_threshold; i++) {
-    factor = factor * NG2CGenContextThreshold;
-  }
+    // Normalize
+    for (unsigned int i = 0; i < NG2C_GEN_ARRAY_SIZE - 1; i++) {
+        if (curve[i]  != 0) {
+            normalized[i] = (float) curve[i] / curve[0];
+        }
+    }
 
-  bool above = promo_counter > factor;
+    // Derive
+    for (unsigned int i = 0; i < NG2C_GEN_ARRAY_SIZE - 1; i++) {
+        derivative[i] = normalized[i + 1] - normalized[i];
+        if (derivative[i] > -0.1) {
+            derivative[i] = 0;
+        }
+    }
 
-  if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above) {
-    return true;
-  }
-  return false;
-}
-
-bool
-NG2C_MergeAllocCounters::should_inc_gen(PromotionCounter * pc)
-{
-  unsigned int cur_tenuring_threshold = ((G1CollectedHeap*)Universe::heap())->g1_policy()->tenuring_threshold();
-  cur_tenuring_threshold = NG2CUpdateThreshold > cur_tenuring_threshold ?
-      cur_tenuring_threshold : NG2CUpdateThreshold;
-
-  long promo_counter = 0;
-  promo_counter = pc->array()[cur_tenuring_threshold - 1];
-  long alloc_counter = pc->array()[0];
-
-  long factor = alloc_counter;
-  for (unsigned int i = 0; i < cur_tenuring_threshold; i++) {
-    factor = factor * NG2CGenUpdateThreshold;
-  }
-
-  bool above = promo_counter > factor;
-
-  if (cur_tenuring_threshold >= 1 && alloc_counter > 50 && above) {
-    return true;
-  }
-  return false;
+    // Analyze
+    for (unsigned int i = 0; i < NG2C_GEN_ARRAY_SIZE; i++) {
+        if (derivative[i] != 0) {
+						// If it is not a consecutive segment and if a previous segment
+						// was already found
+            if (i != segm + 1 && segm != NG2C_GEN_ARRAY_SIZE) {
+                return -1; // Conflict!
+            } else {
+                segm = i;
+            }
+            if (derivative[i] < derivative[min]) {
+                min = i;
+            }
+        }
+    }
+    return min;
 }
 
 void
@@ -118,6 +105,7 @@ NG2C_MergeAllocCounters::update_target_gen()
 
     for (; p != NULL; p = p->next()) {
       PromotionCounter * ngen_arr = p->literal();
+      int decision = 0;
       unsigned int context = mask_bits ((uintptr_t)ngen_arr->hash(), 0xFFFF);
       unsigned int alloc_site_id = ((unsigned int)ngen_arr->hash()) >> 16;
       NGenerationArray * allocs = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
@@ -126,22 +114,24 @@ NG2C_MergeAllocCounters::update_target_gen()
       // Update promotions array with the number of allocs.
       ngen_arr->array()[0] = allocs->number_allocs(context);
 
-      if (should_inc_gen(ngen_arr)) {
+      decision = normalize_derive_analyze(ngen_arr);
+
+      if (decision > 0) {
 #ifdef NG2C_PROF_ALLOC
         allocs->inc_target_gen(context);
 #endif
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
-        gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash="INTPTR_FORMAT" target_gen=%u",
-           ngen_arr->hash(), allocs->target_gen(context));
+        gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash="INTPTR_FORMAT" decision=%d target_gen=%u",
+           ngen_arr->hash(), decision, allocs->target_gen(context));
 #endif
       }
-      else if (!allocs->expanded_contexts() && should_use_context(ngen_arr)) {
+      else if (!allocs->expanded_contexts() && decision < 0) {
 #ifdef NG2C_PROF_CONTEXT
         allocs->prepare_contexts();
-#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
-        gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" target_gen=%u",
-           ngen_arr->hash(), allocs->target_gen(context));
 #endif
+#if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
+        gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" decision=%d target_gen=%u",
+           ngen_arr->hash(), decision, allocs->target_gen(context));
 #endif
       }
     }

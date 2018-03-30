@@ -8,7 +8,7 @@ class StaticAnalysis : public CHeapObj<mtGC>
 {
 
  private:
-  // File that contains context information. The file is expected to follow 
+  // File that contains context information. The file is expected to follow
   // this syntax:
   // MID:<mid>:<class name>.<method name>(<args>)
   // NID:<nid>:<class name>.<method name>(<args>):bci
@@ -25,14 +25,12 @@ class StaticAnalysis : public CHeapObj<mtGC>
   void print_on(outputStream * st, Hashtable<ContextIndex*, mtGC> * hashtable, const char * tag = "sanalysis");
   uint hash(Method * m, int bci);
   uint hash(char * m, int bci);
-  uint hash(Method * m);
-  uint hash(char * m);
 
  public:
 
   StaticAnalysis (const char* input_file);
 
-  uint       get_invoke_context(Method * m);
+  uint       get_invoke_context(Method * m, int bci);
   uint       get_alloc_context(Method * m, int bci);
 };
 

@@ -288,12 +288,12 @@ class Thread: public ThreadShadow {
   ThreadLocalAllocBuffer* _curTlab;
   // Indicates in which gen we are currently allocating.
   int _alloc_gen;
-  // Integer that represents the context of this thread. 
+  // Integer that represents the context of this thread.
   volatile unsigned int _context;
   // </underscore>
 
   ThreadLocalAllocBuffer _tlab;                 // Thread-local eden
-  
+
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
                                                 // the Java heap
 
@@ -470,6 +470,7 @@ class Thread: public ThreadShadow {
   int alloc_gen() { return _alloc_gen; }
   void set_alloc_gen(int gen);
   unsigned int context() { return _context; }
+  void set_context(unsigned int context) { _context = context; }
 
   ThreadLocalAllocBuffer& tlab_gen() { return *_genTlab; }
   void set_cur_tlab(bool gen_alloc)  { _curTlab = gen_alloc ? &tlab_gen() : &tlab(); }
@@ -1535,6 +1536,8 @@ public:
     return pd_last_frame();
   }
   javaVFrame* last_java_vframe(RegisterMap* reg_map);
+
+  void do_uncontext();
 
   // Returns method at 'depth' java or native frames down the stack
   // Used for security checks

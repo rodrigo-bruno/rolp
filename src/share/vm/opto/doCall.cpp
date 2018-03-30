@@ -404,11 +404,10 @@ Parse::do_uncontext()
 {
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
   // 'invoke_context' is a 16bit invocation method (caller) id.
-  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method());
+  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method(), bci());
 
   if (invoke_context != 0) {
-
-#ifdef DEBUG_C2
+#ifdef DEBUG_NG2C_PROF_C2_CONTEXT
   gclog_or_tty->print("[ng2c-c2-return] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
     invoke_context, bci(), method()->get_Method());
   method()->print(gclog_or_tty);
@@ -418,9 +417,10 @@ Parse::do_uncontext()
     Node* ctrl = control();
     Node* thread = _gvn.transform(new (C) ThreadLocalNode());
     Node* context_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::gen_context()));
-    Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw, false);
+    const TypePtr* adr_type = _gvn.type(context_addr)->is_ptr();
+    Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, adr_type);
     Node* incr = _gvn.transform(new (C) SubINode(cnt, _gvn.intcon(invoke_context)));
-    store_to_memory(ctrl, context_addr, incr, T_INT, Compile::AliasIdxRaw, false);
+    store_to_memory(ctrl, context_addr, incr, T_INT, adr_type);
 
   }
 #endif
@@ -430,22 +430,23 @@ void Parse::do_context()
 {
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
   // 'invoke_context' is a 16bit invocation method (caller) id.
-  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method());
+  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method(), bci());
 
-#ifdef DEBUG_C2
+  if (invoke_context != 0) {
+#ifdef DEBUG_NG2C_PROF_C2_CONTEXT
   gclog_or_tty->print("[ng2c-c2-invoke] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
     invoke_context, bci(), method()->get_Method());
   method()->print(gclog_or_tty);
   gclog_or_tty->print_cr("");
 #endif
 
-  if (invoke_context != 0) {
     Node* ctrl = control();
     Node* thread = _gvn.transform(new (C) ThreadLocalNode());
     Node* context_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::gen_context()));
-    Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw, false);
+    const TypePtr* adr_type = _gvn.type(context_addr)->is_ptr();
+    Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, adr_type);
     Node* incr = _gvn.transform(new (C) AddINode(cnt, _gvn.intcon(invoke_context)));
-    store_to_memory(ctrl, context_addr, incr, T_INT, Compile::AliasIdxRaw, false);
+    store_to_memory(ctrl, context_addr, incr, T_INT, adr_type);
 
   }
 #endif
@@ -473,8 +474,6 @@ void Parse::do_call() {
   ciKlass*         holder       = iter().get_declared_method_holder();
   ciInstanceKlass* klass = ciEnv::get_instance_klass_for_declared_method_holder(holder);
   assert(declared_signature != NULL, "cannot be null");
-
-  do_context();
 
   // uncommon-trap when callee is unloaded, uninitialized or will not link
   // bailout when too many arguments for register representation
@@ -583,6 +582,10 @@ void Parse::do_call() {
   // because exceptions don't return to the call site.)
   profile_call(receiver);
 
+  if (!cg->is_inline()) {
+    do_context();
+  }
+
   JVMState* new_jvms = cg->generate(jvms, this);
   if (new_jvms == NULL) {
     // When inlining attempt fails (e.g., too many arguments),
@@ -607,6 +610,8 @@ void Parse::do_call() {
     // Accumulate has_loops estimate
     C->set_has_loops(C->has_loops() || cg->method()->has_loops());
     C->env()->notice_inlined_method(cg->method());
+  }  else {
+    do_uncontext();
   }
 
   // Reset parser state from [new_]jvms, which now carries results of the call.
@@ -705,7 +710,6 @@ void Parse::do_call() {
         record_profile_for_speculation(stack(sp()-1), better_type);
       }
     }
-    do_uncontext();
   }
 
   // Restart record of parsing work after possible inlining of call
@@ -755,6 +759,7 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
   int len = bcis->length();
   CatchNode *cn = new (C) CatchNode(control(), i_o, len+1);
   Node *catch_ = _gvn.transform(cn);
+
 
   // now branch with the exception state to each of the (potential)
   // handlers

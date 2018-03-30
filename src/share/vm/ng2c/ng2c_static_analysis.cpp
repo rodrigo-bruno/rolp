@@ -5,65 +5,41 @@
 
 # include <string.h>
 
-
-uint
-StaticAnalysis::hash(char * m)
-{
-  // 37 is just a random prime number being used as a seed.
-  uint key = AltHashing::murmur3_32(37, (const jbyte*)m, strlen(m));
-
-#ifdef DEBUG_NG2C_PROF_SANALYSIS
-  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing] %s (len=%d); key="INTPTR_FORMAT, m, strlen(m), key);
-#endif
-
-  return key;
-}
-
 uint
 StaticAnalysis::hash(Method * m, int bci)
 {
   char buf[1024];
-  m->name_and_sig_as_C_string(buf, 1024);
-  uint key = AltHashing::murmur3_32(bci, (const jbyte*)buf, strlen(buf));
+	uint key = m->constMethod()->context();
+
+  if (key == 0) {
+    m->name_and_sig_as_C_string(buf, 1024);
+    key = AltHashing::murmur3_32(37, (const jbyte*)buf, strlen(buf));
+    m->constMethod()->set_context(key);
+  }
 
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
   gclog_or_tty->print_cr("[ng2c-sanalysis-hashing] %s (len=%d) at %d; key="INTPTR_FORMAT, buf, strlen(buf), bci, key);
 #endif
 
-  return key;
+  return key + bci;
 }
 
 uint
 StaticAnalysis::hash(char * m, int bci)
 {
-  uint key = AltHashing::murmur3_32(bci, (const jbyte*)m, strlen(m));
+  uint key = AltHashing::murmur3_32(37, (const jbyte*)m, strlen(m));
 
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
   gclog_or_tty->print_cr("[ng2c-sanalysis-hashing] %s (len=%d) at %d; key="INTPTR_FORMAT, m, strlen(m), bci, key);
 #endif
 
-  return key;
-}
-
-uint
-StaticAnalysis::hash(Method * m)
-{
-  char buf[1024];
-  m->name_and_sig_as_C_string(buf, 1024);
-  // 37 is just a random prime number being used as a seed.
-  uint key = AltHashing::murmur3_32(37, (const jbyte*)buf, strlen(buf));
-
-#ifdef DEBUG_NG2C_PROF_SANALYSIS
-  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing] %s (len=%d); key="INTPTR_FORMAT, buf, strlen(buf), key);
-#endif
-
-  return key;
+  return key + bci;
 }
 
 uint
 StaticAnalysis::add_index(Hashtable<ContextIndex*, mtGC> * hashtable, char * method, int bci, unsigned int index)
 {
-  uint key = bci < 0 ? hash(method) : hash(method, bci);
+  uint key = hash(method, bci);
   ContextIndex * ci = new ContextIndex(index);
   HashtableEntry<ContextIndex*, mtGC> * entry = hashtable->new_entry(key, ci);
   int bucket = hashtable->hash_to_index(key);
@@ -107,6 +83,9 @@ StaticAnalysis::parse_from_file() {
       return false;
     }
     else if (!strncmp(type, "MID", sizeof("MID"))) {
+			char * sbci = strtok (NULL, ":");
+      assert(sbci != NULL, "could not parse bci");
+      bci = strtol(sbci, NULL, 10);
       key = add_index(_invoke2Context, method, bci, index);
       assert(get_value(_invoke2Context, key) == index, "could not retrieve value from hashtable");
     }
@@ -169,9 +148,9 @@ StaticAnalysis::get_value(Hashtable<ContextIndex*, mtGC> * hashtable, uint key)
 }
 
 uint
-StaticAnalysis::get_invoke_context(Method * m)
+StaticAnalysis::get_invoke_context(Method * m, int bci)
 {
-  uint key = hash(m);
+  uint key = hash(m, bci);
   return get_value(_invoke2Context, key);
 }
 

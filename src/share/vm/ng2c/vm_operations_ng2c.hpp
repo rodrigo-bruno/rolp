@@ -30,10 +30,10 @@ class NG2C_MergeAllocCounters : public VM_Operation
   // TODO - this methods should be part of closures not the operation...
   void update_promotions(PromotionCounter * global, PromotionCounter * survivors);
   void update_promotions(NamedThread * thread);
-  bool should_inc_gen(PromotionCounter * pc);
-  bool should_use_context(PromotionCounter * pc);
   void update_target_gen();
   unsigned int get_cur_tenuring_threshold();
+	// TODO - document!
+  int normalize_derive_analyze(PromotionCounter * pc);
 
  public:
   // There is no need to call the set_calling_thread since the VMThread::execute(&op)
@@ -54,11 +54,14 @@ class NG2C_MergeAllocCounters : public VM_Operation
           Threads::threads_do(&mwt_cljr);
         }
 
+        // Try to expand contexts or increment gens.
+        update_target_gen();
+
 #ifdef DEBUG_NG2C_PROF_VMOP
         {
           gclog_or_tty->print_cr("[ng2c-vmop] cur_tenuring_threshold=%u",
              get_cur_tenuring_threshold());
-
+					// TODO - merge these two prints in one!
           gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters>");
           Universe::promotion_counters()->print_on(gclog_or_tty);
           gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters> done!");
@@ -69,12 +72,16 @@ class NG2C_MergeAllocCounters : public VM_Operation
 
         }
 #endif
-      // Try to expand contexts or increment gens.
-      update_target_gen();
 
-      // Note: we clean the arry to ensure that we look at a single time window.
-      Universe::method_bci_hashtable()->zero();
-      Universe::promotion_counters()->zero();
+        // TODO - we should be zeroing to ensure fresh data. However, it cramps
+        // up the evolution since after a cleanup we will see objects that were
+        // allocated previously and are now with age 2 (for example). This
+        // messes up the algorithm that determines the inc gen or context. We
+        // should have a counter and only account for survivors of the current
+        // "epoch".
+        // Note: we clean the arry to ensure that we look at a single time window.
+         Universe::method_bci_hashtable()->zero();
+         Universe::promotion_counters()->zero();
 
       }
     }

@@ -3075,6 +3075,28 @@ oop JavaThread::current_park_blocker() {
   return NULL;
 }
 
+void JavaThread::do_uncontext() {
+#if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
+
+  if (!has_last_Java_frame()) return;
+
+  ResourceMark rm;
+  HandleMark   hm;
+  RegisterMap reg_map(this);
+  javaVFrame* jvf = last_java_vframe(&reg_map);
+
+  // 'invoke_context' is a 16bit invocation method (caller) id.
+  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(jvf->method(), jvf->bci());
+
+  if (invoke_context == 0) return;
+
+#ifdef DEBUG_NG2C_PROF_C2_CONTEXT
+  gclog_or_tty->print_cr("[do_uncontext] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
+    invoke_context, jvf->bci(), jvf->method());
+#endif
+  set_context(context() - invoke_context);
+#endif
+}
 
 void JavaThread::print_stack_on(outputStream* st) {
   if (!has_last_Java_frame()) return;

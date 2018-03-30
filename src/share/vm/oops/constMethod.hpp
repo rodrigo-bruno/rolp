@@ -223,6 +223,8 @@ private:
   u2                _max_locals;                 // Number of local variables used by this method
   u2                _size_of_parameters;         // size of the parameter block (receiver + arguments) in words
 
+  uint32_t _context;
+
   // Constructor
   ConstMethod(int byte_code_size,
               InlineTableSizes* sizes,
@@ -491,6 +493,10 @@ public:
   void deallocate_contents(ClassLoaderData* loader_data);
   bool is_klass() const { return false; }
   DEBUG_ONLY(bool on_stack() { return false; })
+
+  // ROLP context
+  void set_context(uint32_t context) { _context = context; }
+  uint32_t context() { return _context; }
 
 private:
   // Since the size of the compressed line number table is unknown, the
