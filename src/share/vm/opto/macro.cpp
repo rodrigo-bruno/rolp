@@ -1254,7 +1254,7 @@ void PhaseMacroExpand::expand_allocate_common(
 
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2)
   // 'alloc_gen' is a 16bit allocation site id.
-  unsigned int alloc_gen = Universe::static_analysis()->get_alloc_context(m, bci);
+  unsigned int alloc_gen = Universe::static_analysis()->get_alloc_index(m, bci);
   NGenerationArray * arr = alloc_gen == 0 ? NULL : Universe::method_bci_hashtable()->add_entry(alloc_gen);
 
 #if !defined(FORCE_SLOWPATH_C2)
@@ -1815,7 +1815,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 #endif // DEBUG_NG2C_PROF_C2
 
   }
-  
+
   rawmem = make_store(control, rawmem, object, oopDesc::klass_offset_in_bytes(), klass_node, T_METADATA);
 
   int header_size = alloc->minimum_header_size();  // conservatively small

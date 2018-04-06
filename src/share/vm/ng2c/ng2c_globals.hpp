@@ -3,9 +3,6 @@
 
 # include "memory/allocation.inline.hpp"
 
-// TODO - missing stuff. We need to reset the thread's context summary periodically.
-// Exceptions and other things like that can easily break the context and therefore
-// allocates are out of track. I saw that hapenning in cassandra!
 typedef unsigned long ngen_t;
 
 // TODO - NG2C_GEN_ARRAY_SIZE is not necessary. If I only increase or reduce
@@ -16,16 +13,29 @@ typedef unsigned long ngen_t;
 // and if it survived or not to collections. Think about it!
 const static unsigned int NG2C_GEN_ARRAY_SIZE = 16; // TODO FIXME: Why does it crash with 4? -> this should depend on the current tenuring treshold!
 // 2^16, which is the number of possible alloc site ids and context ids
-const static unsigned int NG2C_MAX_ALLOC_SITE = 65536; 
+const static unsigned int NG2C_MAX_ALLOC_SITE = 65536;
+
+class Method;
 
 class ContextIndex : public CHeapObj<mtGC>
 {
  private:
   uint _index;
+  Method * _method;
+  uint _bci;
+  uint _track_context;
 
  public:
-  ContextIndex(uint index) : _index(index) { }
-  int index() { return _index; }
+  ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(false) { }
+  uint index() { return _index; }
+  Method *method() { return _method; }
+  uint bci() { return _bci; }
+  void set_method(Method* method) { _method = method; }
+  void set_bci(uint bci) { _bci = bci; }
+  void set_track_context(uint track) { _track_context = track; }
+  uint track_context() { return _track_context; }
+  uint *track_context_addr() { return &_track_context; }
+
   // Necessary to used in hashtables.
   unsigned int new_hash (int seed) {
     assert(false, "new_hash called for ContextIndex...");

@@ -306,7 +306,10 @@ Thread::Thread() : _tlab(this) {
   set_alloc_gen(1);
   // This will make eden tlab the 'last used tlab'.
   set_cur_tlab(false);
-  _context = 0;
+  // Note, we previously had _context = 0 but some crazy compiler optimization
+  // was leading to garbage in the last 3 bits of the context. This solves the
+  // problem.
+  _context = 0xFFFF;
   // </underscore>
 }
 
@@ -3084,18 +3087,61 @@ void JavaThread::do_uncontext() {
   HandleMark   hm;
   RegisterMap reg_map(this);
   javaVFrame* jvf = last_java_vframe(&reg_map);
+  ContextIndex* ci = Universe::static_analysis()->get_invoke_context(jvf->method(), jvf->bci());
 
-  // 'invoke_context' is a 16bit invocation method (caller) id.
-  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(jvf->method(), jvf->bci());
-
-  if (invoke_context == 0) return;
-
+  if (jvf->is_compiled_frame() && ci != NULL && ci->track_context()) {
+    set_context(context() - ci->index());
 #ifdef DEBUG_NG2C_PROF_C2_CONTEXT
-  gclog_or_tty->print_cr("[do_uncontext] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
-    invoke_context, jvf->bci(), jvf->method());
+    gclog_or_tty->print_cr("[do_uncontext] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
+      ci->index(), jvf->bci(), jvf->method());
 #endif
-  set_context(context() - invoke_context);
+  }
 #endif
+}
+
+void JavaThread::calculate_context() {
+  if (!has_last_Java_frame()) return;
+  ResourceMark rm;
+  HandleMark   hm;
+
+#ifdef DEBUG_NG2C_PROF_CALCULATE_CONTEXT
+  print_stack_on(gclog_or_tty);
+#endif
+
+  RegisterMap reg_map(this);
+  vframe* start_vf = last_java_vframe(&reg_map);
+  int count = 0;
+  unsigned int calc_context = 0xFFFF; // initial thread context
+  for (vframe* f = start_vf; f; f = f->sender() ) {
+    if (!f->is_java_frame()) continue;
+
+    // We ignore the first frame because we only update the context upon a call.
+    if (count++ == 0) continue;
+
+    // Bail-out case for too deep stacks
+    if (MaxJavaStackTraceDepth == count) {
+      gclog_or_tty->print_cr("[calculate_context] warning stack too deep: thread=%p curr_context="INTPTR_FORMAT" calculated_context="INTPTR_FORMAT,
+        this, context(), calc_context);
+      return;
+    }
+
+    javaVFrame* jvf = javaVFrame::cast(f);
+    ContextIndex* ci = Universe::static_analysis()->get_invoke_context(jvf->method(), jvf->bci());
+
+    if (jvf->is_compiled_frame() && ci != NULL && ci->track_context()) {
+      calc_context += ci->index();
+#ifdef DEBUG_NG2C_PROF_CALCULATE_CONTEXT
+      gclog_or_tty->print_cr("[calculate_context] thread=%p curr_context="INTPTR_FORMAT" calculated_context="INTPTR_FORMAT" method_context="INTPTR_FORMAT" is_compiled=%d should_track=%d bci=%d Method=%p ",
+        this, context(), calc_context, ci->index(), jvf->is_compiled_frame(), ci->track_context(), jvf->bci(), jvf->method());
+#endif
+    }
+  }
+  // Set context if the thread has a wrong context.
+  if (calc_context != context()) {
+    gclog_or_tty->print_cr("[calculate_context] warning thread=%p curr_context="INTPTR_FORMAT" calculated_context="INTPTR_FORMAT,
+      this, context(), calc_context);
+    set_context(calc_context);
+  }
 }
 
 void JavaThread::print_stack_on(outputStream* st) {

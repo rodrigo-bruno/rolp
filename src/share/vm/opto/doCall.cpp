@@ -34,6 +34,7 @@
 #include "opto/cfgnode.hpp"
 #include "opto/mulnode.hpp"
 #include "opto/parse.hpp"
+#include "opto/idealKit.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
@@ -399,14 +400,21 @@ bool Parse::can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass* kl
 }
 
 
+#define __ ideal.
+#define dynamic_context
+
+// TODO - change exception handling!
+
 void
 Parse::do_uncontext()
 {
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
   // 'invoke_context' is a 16bit invocation method (caller) id.
-  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method(), bci());
+  ContextIndex * cindex = Universe::static_analysis()->get_invoke_context(method()->get_Method(), bci());
 
-  if (invoke_context != 0) {
+  if (cindex != NULL) {
+    unsigned int invoke_context = cindex->index();
+
 #ifdef DEBUG_NG2C_PROF_C2_CONTEXT
   gclog_or_tty->print("[ng2c-c2-return] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
     invoke_context, bci(), method()->get_Method());
@@ -414,6 +422,24 @@ Parse::do_uncontext()
   gclog_or_tty->print_cr("");
 #endif
 
+#ifdef dynamic_context
+    IdealKit ideal(this, true, false);
+    Node* tls = __ thread();
+    Node* no_base = __ top();
+    Node * should_context_addr = makecon(TypeRawPtr::make((address)cindex->track_context_addr()));
+    Node * should_context =  make_load(control(), should_context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw);
+
+    __ if_then(should_context, BoolTest::ne, intcon(0)); {
+
+      Node* context_addr = __ AddP(no_base, tls, longcon(in_bytes(JavaThread::gen_context())));
+      Node* context      = __ load(__ ctrl(), context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw);
+      Node* new_context  = __ SubI(context, intcon(invoke_context));
+      __ store(__ ctrl(), context_addr, new_context, T_INT, Compile::AliasIdxRaw);
+
+    } __ end_if();
+
+    final_sync(ideal);
+#else
     Node* ctrl = control();
     Node* thread = _gvn.transform(new (C) ThreadLocalNode());
     Node* context_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::gen_context()));
@@ -421,18 +447,21 @@ Parse::do_uncontext()
     Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, adr_type);
     Node* incr = _gvn.transform(new (C) SubINode(cnt, _gvn.intcon(invoke_context)));
     store_to_memory(ctrl, context_addr, incr, T_INT, adr_type);
-
+#endif // dynamic_context
   }
-#endif
+#endif // ng2c_prof && ! disable prof c2 && | disable ng2c c2 context
 }
+
 
 void Parse::do_context()
 {
 #if defined(NG2C_PROF) && !defined(DISABLE_NG2C_PROF_C2) && !defined(DISABLE_NG2C_PROF_C2_CONTEXT)
   // 'invoke_context' is a 16bit invocation method (caller) id.
-  unsigned int invoke_context = Universe::static_analysis()->get_invoke_context(method()->get_Method(), bci());
+  ContextIndex * cindex = Universe::static_analysis()->get_invoke_context(method()->get_Method(), bci());
 
-  if (invoke_context != 0) {
+  if (cindex != NULL) {
+    unsigned int invoke_context = cindex->index();
+
 #ifdef DEBUG_NG2C_PROF_C2_CONTEXT
   gclog_or_tty->print("[ng2c-c2-invoke] invoke_context="INTPTR_FORMAT" bci=%d, Method=%p ",
     invoke_context, bci(), method()->get_Method());
@@ -440,6 +469,24 @@ void Parse::do_context()
   gclog_or_tty->print_cr("");
 #endif
 
+#ifdef dynamic_context
+    IdealKit ideal(this, true, false);
+    Node* tls = __ thread();
+    Node* no_base = __ top();
+    Node * should_context_addr = makecon(TypeRawPtr::make((address)cindex->track_context_addr()));
+    Node * should_context =  make_load(control(), should_context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw);
+
+    __ if_then(should_context, BoolTest::ne, intcon(0)); {
+
+      Node* context_addr = __ AddP(no_base, tls, longcon(in_bytes(JavaThread::gen_context())));
+      Node* context      = __ load(__ ctrl(), context_addr, TypeInt::INT, T_INT, Compile::AliasIdxRaw);
+      Node* new_context  = __ AddI(context, intcon(invoke_context));
+      __ store(__ ctrl(), context_addr, new_context, T_INT, Compile::AliasIdxRaw);
+
+    } __ end_if();
+
+    final_sync(ideal);
+#else
     Node* ctrl = control();
     Node* thread = _gvn.transform(new (C) ThreadLocalNode());
     Node* context_addr = basic_plus_adr(top(), thread, in_bytes(JavaThread::gen_context()));
@@ -447,11 +494,13 @@ void Parse::do_context()
     Node* cnt  = make_load(ctrl, context_addr, TypeInt::INT, T_INT, adr_type);
     Node* incr = _gvn.transform(new (C) AddINode(cnt, _gvn.intcon(invoke_context)));
     store_to_memory(ctrl, context_addr, incr, T_INT, adr_type);
-
+#endif // dynamic_context
   }
-#endif
+
+#endif // ng2c_prof && ! disable prof c2 && | disable ng2c c2 context
 
 }
+#undef __
 
 //------------------------------do_call----------------------------------------
 // Handle your basic call.  Inline if we can & want to, else just setup call.

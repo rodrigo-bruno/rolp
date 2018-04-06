@@ -11,6 +11,13 @@ NG2C_MergeWorkerThreads::do_thread(Thread * thread)
   _op->update_promotions((NamedThread*)thread);
 }
 
+void
+NG2C_SetThreadsContext::do_thread(Thread * thread)
+{
+  if (!thread->is_Java_thread()) return;
+  JavaThread * jthread = (JavaThread*)thread;
+  jthread->calculate_context();
+}
 
 void
 NG2C_MergeAllocCounters::update_promotions(PromotionCounter * global, PromotionCounter * survivors)
@@ -125,14 +132,17 @@ NG2C_MergeAllocCounters::update_target_gen()
            ngen_arr->hash(), decision, allocs->target_gen(context));
 #endif
       }
-      else if (!allocs->expanded_contexts() && decision < 0) {
+      else if (decision < 0) {
+        _need_more_context = true;
+        if (!allocs->expanded_contexts()) {
 #ifdef NG2C_PROF_CONTEXT
-        allocs->prepare_contexts();
+          allocs->prepare_contexts();
 #endif
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
-        gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" decision=%d target_gen=%u",
-           ngen_arr->hash(), decision, allocs->target_gen(context));
+          gclog_or_tty->print_cr("[ng2c-vmop] <expanding contexts> hash="INTPTR_FORMAT" decision=%d target_gen=%u",
+             ngen_arr->hash(), decision, allocs->target_gen(context));
 #endif
+        }
       }
     }
   }

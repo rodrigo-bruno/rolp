@@ -21,7 +21,7 @@ class StaticAnalysis : public CHeapObj<mtGC>
 
   bool parse_from_file();
   unsigned int add_index(Hashtable<ContextIndex*, mtGC> * hashtable, char* method, int bci, unsigned int index);
-  unsigned int get_value(Hashtable<ContextIndex*, mtGC> * hashtable, unsigned int key);
+  ContextIndex *get_value(Hashtable<ContextIndex*, mtGC> * hashtable, unsigned int key);
   void print_on(outputStream * st, Hashtable<ContextIndex*, mtGC> * hashtable, const char * tag = "sanalysis");
   uint hash(Method * m, int bci);
   uint hash(char * m, int bci);
@@ -30,8 +30,11 @@ class StaticAnalysis : public CHeapObj<mtGC>
 
   StaticAnalysis (const char* input_file);
 
-  uint       get_invoke_context(Method * m, int bci);
-  uint       get_alloc_context(Method * m, int bci);
+  ContextIndex* get_invoke_context(Method * m, int bci);
+  ContextIndex* get_alloc_context(Method * m, int bci);
+  unsigned int  get_invoke_index(Method * m, int bci);
+  unsigned int  get_alloc_index(Method * m, int bci);
+  void          more_context(bool need_more_context);
 };
 
 #endif // SHARE_VM_NG2C_STATIC_ANALYSIS_HPP

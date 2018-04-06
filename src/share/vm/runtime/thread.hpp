@@ -289,6 +289,8 @@ class Thread: public ThreadShadow {
   // Indicates in which gen we are currently allocating.
   int _alloc_gen;
   // Integer that represents the context of this thread.
+  // This is volatile because we might be changing almost at the same time
+  // as the compiled code.
   volatile unsigned int _context;
   // </underscore>
 
@@ -1538,6 +1540,7 @@ public:
   javaVFrame* last_java_vframe(RegisterMap* reg_map);
 
   void do_uncontext();
+  void calculate_context();
 
   // Returns method at 'depth' java or native frames down the stack
   // Used for security checks

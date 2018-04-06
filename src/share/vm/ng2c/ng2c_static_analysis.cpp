@@ -87,14 +87,14 @@ StaticAnalysis::parse_from_file() {
       assert(sbci != NULL, "could not parse bci");
       bci = strtol(sbci, NULL, 10);
       key = add_index(_invoke2Context, method, bci, index);
-      assert(get_value(_invoke2Context, key) == index, "could not retrieve value from hashtable");
+      assert(get_value(_invoke2Context, key)->index() == index, "could not retrieve value from hashtable");
     }
     else if (!strncmp(type, "NID", sizeof("NID"))) {
       char * sbci = strtok (NULL, ":");
       assert(sbci != NULL, "could not parse bci");
       bci = strtol(sbci, NULL, 10);
       key = add_index(_alloc2Context, method, bci, index);
-      assert(get_value(_alloc2Context, key) == index, "could not retrieve value from hashtable");
+      assert(get_value(_alloc2Context, key)->index() == index, "could not retrieve value from hashtable");
     }
     else {
       gclog_or_tty->print_cr("[ng2c-sanalysis] file = %s: unknown type = %s",
@@ -130,35 +130,71 @@ StaticAnalysis::StaticAnalysis(const char* input_file) :
   if (input_file != NULL) parse_from_file();
 }
 
-uint
+ContextIndex*
 StaticAnalysis::get_value(Hashtable<ContextIndex*, mtGC> * hashtable, uint key)
 {
   HashtableEntry<ContextIndex*, mtGC> * entry = hashtable->bucket(hashtable->hash_to_index(key));
 
-  if (entry == NULL) return 0;
+  if (entry == NULL) return NULL;
 
   while (entry->next() != NULL && entry->hash() != key) entry = entry->next();
 
   if (entry->hash() == key) {
     ContextIndex * ci = (ContextIndex*) entry->literal();
-    return ci->index();
+    return ci;
   }
 
-  return 0;
+  return NULL;
 }
 
-uint
+
+
+ContextIndex*
 StaticAnalysis::get_invoke_context(Method * m, int bci)
 {
   uint key = hash(m, bci);
-  return get_value(_invoke2Context, key);
+	ContextIndex * ci = get_value(_invoke2Context, key);
+  if (ci != NULL) {
+    ci->set_method(m);
+    ci->set_bci(bci);
+    return ci;
+  }
+  return NULL;
 }
 
-uint
+ContextIndex*
 StaticAnalysis::get_alloc_context(Method * m, int bci)
 {
   uint key = hash(m, bci);
-  return get_value(_alloc2Context, key);
+  ContextIndex * ci = get_value(_alloc2Context, key);
+  if (ci != NULL) {
+    ci->set_method(m);
+    ci->set_bci(bci);
+    return ci;
+  }
+  return NULL;
+}
+
+unsigned int
+StaticAnalysis::get_invoke_index(Method * m, int bci)
+{
+  ContextIndex * ci = get_invoke_context(m, bci);
+  if (ci == NULL) {
+    return 0;
+  } else {
+    return ci->index();
+  }
+}
+
+unsigned int
+StaticAnalysis::get_alloc_index(Method * m, int bci)
+{
+  ContextIndex * ci = get_alloc_context(m, bci);
+  if (ci == NULL) {
+    return 0;
+  } else {
+    return ci->index();
+  }
 }
 
 void
@@ -174,3 +210,21 @@ StaticAnalysis::print_on(outputStream * st, Hashtable<ContextIndex*, mtGC> * has
   }
 }
 
+void
+StaticAnalysis::more_context(bool need_more_context)
+{
+  for (int i = 0; i < _invoke2Context->table_size(); i++) {
+    HashtableEntry<ContextIndex*, mtGC> * entry = _invoke2Context->bucket(i);
+    for(; entry != NULL; entry = entry->next()) {
+      ContextIndex * ci = entry->literal();
+      uint key = entry->hash();
+      // TODO - improve implementation!
+//      if (ci->track_context() != need_more_context) {
+//      if (true) {
+//        ci->set_track_context(need_more_context);
+//      }
+      gclog_or_tty->print_cr("[ng2c-more_context] key="INTPTR_FORMAT" index="INTPTR_FORMAT " %s",
+        key, ci->index(), ci->track_context() ? "ON" : "OFF");
+    }
+  }
+}
