@@ -15,11 +15,13 @@ StaticAnalysis::hash(Method * m, int bci)
     m->name_and_sig_as_C_string(buf, 1024);
     key = AltHashing::murmur3_32(37, (const jbyte*)buf, strlen(buf));
     m->constMethod()->set_context(key);
-  }
 
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
-  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing] %s (len=%d) at %d; key="INTPTR_FORMAT, buf, strlen(buf), bci, key);
+  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing-method] %s (len=%d) at %d; key="INTPTR_FORMAT, buf, strlen(buf), bci, key);
 #endif
+
+  }
+
 
   return key + bci;
 }
@@ -30,7 +32,7 @@ StaticAnalysis::hash(char * m, int bci)
   uint key = AltHashing::murmur3_32(37, (const jbyte*)m, strlen(m));
 
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
-  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing] %s (len=%d) at %d; key="INTPTR_FORMAT, m, strlen(m), bci, key);
+  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing-string] %s (len=%d) at %d; key="INTPTR_FORMAT, m, strlen(m), bci, key);
 #endif
 
   return key + bci;
