@@ -119,13 +119,13 @@ NG2C_MergeAllocCounters::update_target_gen()
       assert(allocs != NULL, "there should be an ngen array for this");
 
       // Update promotions array with the number of allocs.
-      ngen_arr->array()[0] = allocs->number_allocs(context);
+      ngen_arr->array()[0] += allocs->number_allocs(context);
 
       decision = normalize_derive_analyze(ngen_arr);
 
       if (decision > 0) {
 #ifdef NG2C_PROF_ALLOC
-        allocs->inc_target_gen(context);
+        allocs->inc_target_gen(context, decision);
 #endif
 #if defined(DEBUG_NG2C_PROF_VMOP) || defined(DEBUG_NG2C_PROF_VMOP_UPDATE)
         gclog_or_tty->print_cr("[ng2c-vmop] <updating target-gen> hash="INTPTR_FORMAT" decision=%d target_gen=%u",

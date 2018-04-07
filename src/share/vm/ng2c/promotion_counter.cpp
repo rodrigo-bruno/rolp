@@ -52,7 +52,8 @@ PromotionCounters::print_on(outputStream * st, const char * tag)
       PromotionCounter * pc = entry->literal();
       ngen_t * arr = pc->array();
 
-      st->print("[ng2c-%s] hash="INTPTR_FORMAT" [", tag, pc->hash());
+      st->print("[ng2c-%s] hash="INTPTR_FORMAT" target_gen=%d [",
+        tag, pc->hash(), pc->target_gen());
       for (unsigned int k = 0; k < NG2C_GEN_ARRAY_SIZE; k++)
         st->print(INT64_FORMAT "; ", arr[k]);
       st->print_cr("]");

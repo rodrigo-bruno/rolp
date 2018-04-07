@@ -10,8 +10,8 @@ class StaticAnalysis : public CHeapObj<mtGC>
  private:
   // File that contains context information. The file is expected to follow
   // this syntax:
-  // MID:<mid>:<class name>.<method name>(<args>)
-  // NID:<nid>:<class name>.<method name>(<args>):bci
+  // MID:<class name>.<method name>(<args>):bci:<mid>
+  // NID:<class name>.<method name>(<args>):bci:<nid>
   // Note: <mid> and <nid> are 16bit (represented as text) unique ids.
   const char* _input_file;
 

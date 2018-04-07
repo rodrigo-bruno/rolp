@@ -5,14 +5,16 @@
 
 # include <string.h>
 
+#define BUF_LEN 8*1024+1
+
 uint
 StaticAnalysis::hash(Method * m, int bci)
 {
-  char buf[1024];
+  char buf[BUF_LEN];
 	uint key = m->constMethod()->context();
 
   if (key == 0) {
-    m->name_and_sig_as_C_string(buf, 1024);
+    m->name_and_sig_as_C_string(buf, BUF_LEN);
     key = AltHashing::murmur3_32(37, (const jbyte*)buf, strlen(buf));
     m->constMethod()->set_context(key);
 
@@ -29,11 +31,24 @@ StaticAnalysis::hash(Method * m, int bci)
 uint
 StaticAnalysis::hash(char * m, int bci)
 {
-  uint key = AltHashing::murmur3_32(37, (const jbyte*)m, strlen(m));
+  static char buf[BUF_LEN];
+  static uint key;
+
+  int mlen = strlen(m);
+
+  if (mlen > BUF_LEN) {
+    gclog_or_tty->print_cr("[ng2c-sanalysis-hashing-string] warning m len > BUF_LEN %s (len=%d)",
+      m, strlen(m));
+  }
+
+  if (strncmp(m, buf, mlen) != 0) {
+    strncpy(buf, m, mlen);
+    key = AltHashing::murmur3_32(37, (const jbyte*)m, mlen);
 
 #ifdef DEBUG_NG2C_PROF_SANALYSIS
-  gclog_or_tty->print_cr("[ng2c-sanalysis-hashing-string] %s (len=%d) at %d; key="INTPTR_FORMAT, m, strlen(m), bci, key);
+    gclog_or_tty->print_cr("[ng2c-sanalysis-hashing-string] %s (len=%d) at %d; key="INTPTR_FORMAT, m, strlen(m), bci, key);
 #endif
+  }
 
   return key + bci;
 }
@@ -60,41 +75,42 @@ StaticAnalysis::add_index(Hashtable<ContextIndex*, mtGC> * hashtable, char * met
 bool
 StaticAnalysis::parse_from_file() {
   assert(_input_file != NULL, "Static analysis file not provided.");
+  char line[BUF_LEN];
   FILE* stream = fopen(_input_file, "rt");
+
   if (stream == NULL) {
     gclog_or_tty->print_cr("[ng2c-sanalysis] failed to open %s (errno=%d)", _input_file, errno);
     return false;
   }
 
-  size_t bf_sz = 8*1024 + 1; // Just to make sure strcspn does not crash.
-  char line[bf_sz];
-
-  while(fgets(line, bf_sz, stream)) {
+  while(fgets(line, BUF_LEN, stream)) {
     line[strcspn(line, "\n")] = 0;
 
-    char* type = strtok (line, ":");
-    // TODO - check for strol errors?
-    unsigned int index = (unsigned short) strtol(strtok (NULL, ":"), NULL, 16);
-    char* method = strtok (NULL, ":");
     uint key = 0;
-    int bci = -1;
+    char* type = strtok (line, ":");
+    char* method = strtok (NULL, ":");
+    char* sbci = strtok (NULL, ":");
+    char* sindex = strtok(NULL, ":");
 
-    if (type == NULL || method == NULL) {
-      gclog_or_tty->print_cr("[ng2c-sanalysis] file = %s: unparsable line = %s",
-          NG2CStaticAnalysis, line);
-      return false;
-    }
-    else if (!strncmp(type, "MID", sizeof("MID"))) {
-			char * sbci = strtok (NULL, ":");
-      assert(sbci != NULL, "could not parse bci");
-      bci = strtol(sbci, NULL, 10);
-      key = add_index(_invoke2Context, method, bci, index);
+    assert(type != NULL, "unknown type in static analysis");
+    assert(sindex != NULL, "could not parse index in static analysis");
+    assert(method != NULL, "could not parse method in static analysis");
+    assert(sbci != NULL, "could not parse bci");
+
+    // TODO - check for strol errors?
+    int bci = strtol(sbci, NULL, 10);
+    unsigned int index = (unsigned short) strtol(sindex, NULL, 16);
+
+#ifdef DEBUG_NG2C_PROF_SANALYSIS
+    gclog_or_tty->print_cr("[ng2c-sanalysis] target=%s method=%s bci=%d id="INTPTR_FORMAT" key="INTPTR_FORMAT,
+        type, method, bci, index, key);
+#endif
+
+   if (!strncmp(type, "MID", sizeof("MID"))) {
+			key = add_index(_invoke2Context, method, bci, index);
       assert(get_value(_invoke2Context, key)->index() == index, "could not retrieve value from hashtable");
     }
     else if (!strncmp(type, "NID", sizeof("NID"))) {
-      char * sbci = strtok (NULL, ":");
-      assert(sbci != NULL, "could not parse bci");
-      bci = strtol(sbci, NULL, 10);
       key = add_index(_alloc2Context, method, bci, index);
       assert(get_value(_alloc2Context, key)->index() == index, "could not retrieve value from hashtable");
     }
@@ -104,11 +120,6 @@ StaticAnalysis::parse_from_file() {
           type);
       return false;
     }
-
-#ifdef DEBUG_NG2C_PROF_SANALYSIS
-    gclog_or_tty->print_cr("[ng2c-sanalysis] target=%s method=%s bci=%d id="INTPTR_FORMAT" key="INTPTR_FORMAT,
-        type, method, bci, index, key);
-#endif
   }
 
   fclose(stream);

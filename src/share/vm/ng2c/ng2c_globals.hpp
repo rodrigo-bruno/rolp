@@ -26,7 +26,8 @@ class ContextIndex : public CHeapObj<mtGC>
   uint _track_context;
 
  public:
-  ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(false) { }
+//   ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(false) { }
+  ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(true) { }
   uint index() { return _index; }
   Method *method() { return _method; }
   uint bci() { return _bci; }
@@ -93,6 +94,7 @@ class NGenerationArray : public CHeapObj<mtGC>
   bool     expanded_contexts() { return _factor > 0; }
 
   void     inc_target_gen(unsigned int context);
+  void     inc_target_gen(unsigned int context, unsigned int new_gen);
   long     target_gen(unsigned int context);
 
   ngen_t   number_allocs(unsigned int context);
@@ -122,8 +124,7 @@ class PromotionCounter : public CHeapObj<mtGC>
   ngen_t * array() const { return _array; }
   void   update(unsigned int age);
   unsigned int hash() { return _hash; }
-  // TODO - this method is not being used. It could be used in ng2c vm ops though.
-  NGenerationArray * get_allocations();
+  long target_gen();
   unsigned int new_hash (int seed) {
     assert(false, "new_hash called for PromotionCounter...");
     return (unsigned int)0;

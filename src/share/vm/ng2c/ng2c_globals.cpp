@@ -34,7 +34,10 @@ NGenerationArray::prepare_contexts()
   // Reset values.
   _allocs_gen[0] = 0;
   // Copy current target generation to everyone.
-  memset((void*)_target_gen, _target_gen[0], NG2C_MAX_ALLOC_SITE * sizeof(ngen_t));
+  ngen_t target = _target_gen[0];
+  ngen_t* aux = (ngen_t*)_target_gen;
+  // Note: memset does not work because we are using long values!
+  for (unsigned int i = 0; i < NG2C_MAX_ALLOC_SITE; i++) *aux++ = target;
 }
 
 void
@@ -42,6 +45,15 @@ NGenerationArray::inc_target_gen(unsigned int context)
 {
   assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
   _target_gen[context * _factor]++;
+  assert(_target_gen[context * _factor] >= 0 && _target_gen[context * _factor] < NG2C_GEN_ARRAY_SIZE, "");
+}
+
+void
+NGenerationArray::inc_target_gen(unsigned int context, unsigned int new_gen)
+{
+  assert((context * _factor) < NG2C_MAX_ALLOC_SITE, "index falls outside");
+  _target_gen[context * _factor] = new_gen;
+  assert(_target_gen[context * _factor] >= 0 && _target_gen[context * _factor] < NG2C_GEN_ARRAY_SIZE, "");
 }
 
 ngen_t
@@ -80,12 +92,12 @@ PromotionCounter::update(unsigned int age)
   _array[age >= NG2C_GEN_ARRAY_SIZE ? NG2C_GEN_ARRAY_SIZE - 1 : age]++;
 }
 
-NGenerationArray *
-PromotionCounter::get_allocations()
+long
+PromotionCounter::target_gen()
 {
-  unsigned int alloc_site_id = _hash >> 16;
-  if (_allocations == NULL) {
-    _allocations = Universe::method_bci_hashtable()->get_entry(alloc_site_id);
-  }
-  return _allocations;
+  unsigned int alloc_site = _hash >> 16;
+  unsigned int context    = mask_bits ((uintptr_t)_hash, 0xFFFF);
+  NGenerationArray* allocs = Universe::method_bci_hashtable()->get_entry(alloc_site);
+  assert(allocs != NULL, "allocs should not be null");
+  return allocs->target_gen(context);
 }

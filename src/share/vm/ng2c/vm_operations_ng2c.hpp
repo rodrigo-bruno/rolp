@@ -51,7 +51,8 @@ class NG2C_MergeAllocCounters : public VM_Operation
     {
       assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
 
-      // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles.
+      // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles, and avoid
+      // the first one because the JVM is still warming up.
       _total_update_target_gen++;
       if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
         // Sum up promotion counters.
@@ -62,43 +63,43 @@ class NG2C_MergeAllocCounters : public VM_Operation
           Threads::threads_do(&mwt_cljr);
         }
 
-        // Try to expand contexts or increment gens.
-        update_target_gen();
+        if (_total_update_target_gen / NG2CUpdateThreshold > 1) {
 
-        if (_need_more_context) {
-          Universe::static_analysis()->more_context(_need_more_context);
-          gclog_or_tty->print_cr("[ng2c-vmop] need more context!");
-        } else {
-          Universe::static_analysis()->more_context(_need_more_context);
-          gclog_or_tty->print_cr("[ng2c-vmop] do not need more context!");
-        }
+          // Try to expand contexts or increment gens.
+          update_target_gen();
+
+          if (_need_more_context) {
+            //Universe::static_analysis()->more_context(_need_more_context);
+            gclog_or_tty->print_cr("[ng2c-vmop] need more context!");
+          } else {
+            //Universe::static_analysis()->more_context(_need_more_context);
+            gclog_or_tty->print_cr("[ng2c-vmop] do not need more context!");
+          }
 
 #ifdef DEBUG_NG2C_PROF_VMOP
-        {
-          gclog_or_tty->print_cr("[ng2c-vmop] cur_tenuring_threshold=%u",
-             get_cur_tenuring_threshold());
-					// TODO - merge these two prints in one!
-          gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters>");
-          Universe::promotion_counters()->print_on(gclog_or_tty);
-          gclog_or_tty->print_cr("[ng2c-vmop] <printing promo counters> done!");
-
-          gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters>");
-          Universe::method_bci_hashtable()->print_on(gclog_or_tty);
-          gclog_or_tty->print_cr("[ng2c-vmop] <printing alloc counters> done!");
-        }
+          {
+            gclog_or_tty->print_cr("[ng2c-vmop] cur_tenuring_threshold=%u",
+               get_cur_tenuring_threshold());
+            gclog_or_tty->print_cr("[ng2c-vmop] <printing vmop counters>");
+            Universe::promotion_counters()->print_on(gclog_or_tty);
+            gclog_or_tty->print_cr("[ng2c-vmop] <printing vmop counters> done!");
+          }
 #endif
+        }
 
-        // TODO - we should be zeroing to ensure fresh data. However, it cramps
-        // up the evolution since after a cleanup we will see objects that were
-        // allocated previously and are now with age 2 (for example). This
-        // messes up the algorithm that determines the inc gen or context. We
-        // should have a counter and only account for survivors of the current
-        // "epoch".
         // Note: we clean the arry to ensure that we look at a single time window.
-         Universe::method_bci_hashtable()->zero();
-         Universe::promotion_counters()->zero();
-
+        // Note 2: However, it cramps up the evolution since after a cleanup we
+        // will see objects that were allocated previously and are now with age
+        // 2 (for example). This messes up the algorithm that determines the
+        // inc gen or context. We should have a counter and only account for
+        // survivors of the current "epoch".
+        // Note 3: The NG2CUpdateThreshold should be set to at least 16 to avoid
+        // the aforementioned problem. No object will be in the pipeline whose
+        // allocation was not tracked.
+        Universe::method_bci_hashtable()->zero();
+        Universe::promotion_counters()->zero();
       }
+
       // TODO - do we need to do this everytime?
       // TODO - we might need to do it everytime we change something?
       {
