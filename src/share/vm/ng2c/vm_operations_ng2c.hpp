@@ -51,10 +51,17 @@ class NG2C_MergeAllocCounters : public VM_Operation
     {
       assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
 
+      // Avoid running vmop if jvm is not using NG2C profiler.
+      if (NG2CStaticAnalysis == NULL) { return; }
+
       // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles, and avoid
       // the first one because the JVM is still warming up.
       _total_update_target_gen++;
-      if (_total_update_target_gen % NG2CUpdateThreshold == 0) {
+
+      gclog_or_tty->print_cr("[ng2c-vmop] gc=%u cur_tenuring_threshold=%u",
+               _total_update_target_gen, get_cur_tenuring_threshold());
+
+      if (_total_update_target_gen % NG2CUpdateThreshold == 0 && should_profile()) {
         // Sum up promotion counters.
         {
           NG2C_MergeWorkerThreads mwt_cljr(this);
@@ -98,15 +105,19 @@ class NG2C_MergeAllocCounters : public VM_Operation
         // allocation was not tracked.
         Universe::method_bci_hashtable()->zero();
         Universe::promotion_counters()->zero();
+
+        // TODO - do we need to do this everytime?
+        // TODO - we might need to do it everytime we change something?
+        {
+          NG2C_SetThreadsContext stc_cljr;
+          // Note: this lock is necessary if this vm_op is concurrent.
+          // MutexLocker mu(Threads_lock);
+          Threads::threads_do(&stc_cljr);
+        }
       }
 
-      // TODO - do we need to do this everytime?
-      // TODO - we might need to do it everytime we change something?
-      {
-        NG2C_SetThreadsContext stc_cljr;
-        // Note: this lock is necessary if this vm_op is concurrent.
-        // MutexLocker mu(Threads_lock);
-        Threads::threads_do(&stc_cljr);
+      if (!should_profile()) {
+        MaxTenuringThreshold = 1;
       }
     }
 
@@ -115,6 +126,11 @@ class NG2C_MergeAllocCounters : public VM_Operation
   //virtual Mode evaluation_mode() const    { return _concurrent; }
   virtual Mode evaluation_mode() const    { return _safepoint; }
   virtual bool is_cheap_allocated() const { return true; }
+
+  // Note: profiling can be done only at start to understand the workload dynamics.
+  // Note 2: profiling can be turned back on if pausetimes increase.
+  static bool should_profile()            { return _total_update_target_gen / NG2CUpdateThreshold <= 3; }
+  //static bool should_profile()            { return true; }
 };
 
 #endif // SHARE_VM_NG2C_VM_OPERATIONS_NG2C_HPP

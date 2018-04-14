@@ -620,7 +620,7 @@ HeapRegion* G1CollectedHeap::new_region(size_t word_size, bool do_expand) {
       _expand_heap_after_alloc_failure = false;
     }
   }
-  return res; 
+  return res;
 }
 
 uint G1CollectedHeap::humongous_obj_allocate_find_first(uint num_regions,
@@ -1351,8 +1351,8 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
 
   SerialOldTracer* gc_tracer = G1MarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gc_cause(), gc_timer->gc_start());
-  // <underscore> this is how they signal the start of the GC operation. The 
-  // end of it is signaled using the destructor of this object (that is 
+  // <underscore> this is how they signal the start of the GC operation. The
+  // end of it is signaled using the destructor of this object (that is
   // automatically killed when the method returns).
   SvcGCMarker sgcm(SvcGCMarker::FULL);
   ResourceMark rm;
@@ -2057,7 +2057,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   NOT_PRODUCT(reset_evacuation_should_fail();)
 
   guarantee(_task_queues != NULL, "task_queues allocation failure.");
-  
+
   // Note: Gen 0 corresponds to eden, avoid using it here.
   _gen_alloc_regions->append(NULL);
   for (int i = 1; i < _gen_alloc_regions->max_length(); i++) {
@@ -2665,7 +2665,7 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
         }
       }
     } else {
-      if (cause == GCCause::_gc_locker 
+      if (cause == GCCause::_gc_locker
           /* <underscore> support for migration w/ no conc_mark. */
           || cause == GCCause::_prepare_migration
           DEBUG_ONLY(|| cause == GCCause::_scavenge_alot)) {
@@ -2679,7 +2679,7 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
                                    cause);
         VMThread::execute(&op);
       } else {
-        // <underscore> this will trigger a global mark sweep.  
+        // <underscore> this will trigger a global mark sweep.
         // Schedule a Full GC.
         VM_G1CollectFull op(gc_count_before, old_marking_count_before, cause);
         VMThread::execute(&op);
@@ -3964,7 +3964,7 @@ void G1CollectedHeap::log_gc_header() {
   GCCauseString gc_cause_str = GCCauseString("GC pause", gc_cause())
     .append(g1_policy()->gcs_are_young() ? "(young)" : "(mixed)")
     .append(g1_policy()->during_initial_mark_pause() ? " (initial-mark)" : "");
-  
+
   gclog_or_tty->print("[%s", (const char*)gc_cause_str);
 }
 
@@ -4080,7 +4080,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
     { // Call to jvmpi::post_class_unload_events must occur outside of active GC
       IsGCActiveMark x;
- 
+
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
       increment_gc_time_stamp();
@@ -4162,10 +4162,10 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         g1_policy()->print_collection_set(g1_policy()->inc_cset_head(), gclog_or_tty);
 #endif // YOUNG_LIST_VERBOSE
 
-        
+
         // <underscore> IF introduced to select the correct cset construction.
         if (_min_migration_bandwidth > 0) {
-          g1_policy()->finalize_cset_for_migration(_min_migration_bandwidth, 
+          g1_policy()->finalize_cset_for_migration(_min_migration_bandwidth,
                                                    evacuation_info);
         }
         else {
@@ -4179,7 +4179,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         print_extended_on(gclog_or_tty);
 #endif
 // </underscore>
-        
+
         _cm->note_start_of_gc();
         // We should not verify the per-thread SATB buffers given that
         // we have not filtered them yet (we'll do so during the
@@ -4947,8 +4947,8 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
       obj->set_mark(m);
     }
 #ifdef NG2C_PROF
-    uint rhash = m->ng2c_prof();
-    if (rhash != 0) {
+    uint rhash;
+    if (NG2C_MergeAllocCounters::should_profile() && ((rhash = m->ng2c_prof()))) {
       Thread * thread = Thread::current();
       assert(thread->is_Named_thread(), "should be named thread");
       NamedThread * nthread = (NamedThread*)thread;
@@ -6514,7 +6514,7 @@ private:
   OldRegionSet *_old_set;
 
 public:
-  TearDownRegionSetsClosure(G1CollectedHeap* g1h, OldRegionSet* old_set) : 
+  TearDownRegionSetsClosure(G1CollectedHeap* g1h, OldRegionSet* old_set) :
       _g1h(g1h), _old_set(old_set) { }
 
   bool doHeapRegion(HeapRegion* r) {
