@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JAVA_HOME=~/mercurial/jdk8/build/linux-x86_64-normal-server-slowdebug/jdk
+JAVA_HOME=/usr/local/jvm/openjdk-1.8.0-internal-debug
 JAVA_EXE="$JAVA_HOME/bin/java"
 
 mdir=`dirname $0`

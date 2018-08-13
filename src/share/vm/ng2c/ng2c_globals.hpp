@@ -26,8 +26,8 @@ class ContextIndex : public CHeapObj<mtGC>
   uint _track_context;
 
  public:
-//   ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(false) { }
-  ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(true) { }
+   ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(false) { }
+//  ContextIndex(uint index) : _index(index), _method(NULL), _bci(0), _track_context(true) { }
   uint index() { return _index; }
   Method *method() { return _method; }
   uint bci() { return _bci; }

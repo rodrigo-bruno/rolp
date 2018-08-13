@@ -6,34 +6,37 @@ GC="G1"
 # <Common opts>
 JVM_OPTS="$JVM_OPTS -server"
 JVM_OPTS="$JVM_OPTS -XX:-TieredCompilation"
+JVM_OPTS="$JVM_OPTS -XX:-UseBiasedLocking"
+#JVM_OPTS="$JVM_OPTS -XX:-UseCompressedOops"
 
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCDetails"
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCApplicationStoppedTime"
 JVM_OPTS="$JVM_OPTS -XX:+PrintGCDateStamps"
 JVM_OPTS="$JVM_OPTS -Xloggc:/tmp/jvm.log"
 
-# Heap sizing options
-JVM_OPTS="$JVM_OPTS -Xms6g"
-JVM_OPTS="$JVM_OPTS -Xmx6g"
-#JVM_OPTS="$JVM_OPTS -XX:NewSize=1g"
-#JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=1g"
-JVM_OPTS="$JVM_OPTS -XX:NewSize=256m"
-JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=256m"
-
-# Compressed Stuff
-JVM_OPTS="$JVM_OPTS -XX:-UseCompressedOops"
-JVM_OPTS="$JVM_OPTS -XX:-UseCompressedClassPointers"
+JVM_OPTS="$JVM_OPTS -Xms12g"
+JVM_OPTS="$JVM_OPTS -Xmx12g"
+JVM_OPTS="$JVM_OPTS -XX:NewSize=512m"
+#JVM_OPTS="$JVM_OPTS -XX:NewSize=2g"
+JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=512m"
+#JVM_OPTS="$JVM_OPTS -XX:MaxNewSize=2g"
 
 
 JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
 JVM_OPTS="$JVM_OPTS -XX:-ResizeTLAB"
-JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=16k"
+JVM_OPTS="$JVM_OPTS -XX:MinTLABSize=64k"
 
-# JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
-# JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
-#JVM_OPTS="$JVM_OPTS -XX:InitialTenuringThreshold=15"
-#JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=4"
+#JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=0"
+JVM_OPTS="$JVM_OPTS -XX:+PrintTenuringDistribution"
+JVM_OPTS="$JVM_OPTS -XX:InitialTenuringThreshold=15"
+JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=2"
 
+# <NG2C options>
+#JVM_OPTS="$JVM_OPTS -XX:NG2CStaticAnalysis=/home/rbruno/git/java-callgraph/results/lucene/app.ids"
+#JVM_OPTS="$JVM_OPTS -XX:NG2CStaticAnalysis=/home/rbruno/git/java-callgraph/results/graphchi/app.ids"
+#JVM_OPTS="$JVM_OPTS -XX:NG2CStaticAnalysis=/home/rbruno/git/java-callgraph/results/test2/app.ids"
+#JVM_OPTS="$JVM_OPTS -XX:NG2CStaticAnalysis=/home/rbruno/git/java-callgraph/results/ng3/app.ids"
+JVM_OPTS="$JVM_OPTS -XX:+UseROLP"
 
 if [ "$GC" == "CMS" ]
 then
@@ -56,8 +59,7 @@ then
 	# <G1 opts>
 	JVM_OPTS="$JVM_OPTS -XX:MaxGCPauseMillis=100"
 	JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
-	# Note: we use 32M heap regions for graphchi
-	# JVM_OPTS="$JVM_OPTS -XX:G1HeapRegionSize=32m"
+	JVM_OPTS="$JVM_OPTS -XX:G1HeapRegionSize=32m"
 	JVM_OPTS="$JVM_OPTS -XX:G1RSetUpdatingPauseTimePercent=10"
 	JVM_OPTS="$JVM_OPTS -XX:InitiatingHeapOccupancyPercent=50"
 	JVM_OPTS="$JVM_OPTS -XX:G1HeapWastePercent=25"
@@ -68,14 +70,21 @@ else
 	exit 1
 fi
 
-# <NG2C options>
-JVM_OPTS="$JVM_OPTS -XX:NG2CUpdateThreshold=2"
+# <Optional but useful>
+JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions"
+JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
+#JVM_OPTS="$JVM_OPTS -XX:+PrintInlining"
+#JVM_OPTS="$JVM_OPTS -XX:+PrintCompilation"
+#JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
+#JVM_OPTS="$JVM_OPTS -XX:+PrintFlagsFinal"
+JVM_OPTS="$JVM_OPTS -XX:CompileCommand=dontinline,*.*"
+#JVM_OPTS="$JVM_OPTS -XX:CompileCommand=dontinline,NG3.allocate1"
+JVM_OPTS="$JVM_OPTS -XX:CompileCommand=print,NG3.allocate"
+JVM_OPTS="$JVM_OPTS -XX:CompileCommand=print,NG3.allocate1"
+JVM_OPTS="$JVM_OPTS -XX:CompileCommand=print,NG3.allocate2"
+#JVM_OPTS="$JVM_OPTS -XX:CompileCommand=print,NG3.iteration"
 
-# <Optional>
-# JVM_OPTS="$JVM_OPTS -XX:+G1TraceHeapRegionRememberedSet"
-# JVM_OPTS="$JVM_OPTS -XX:CompileThreshold=10"
-JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
-#-XX:+PrintCompilation
+# Other stuff
 #-XX:+G1SummarizeRSetStats
 #-XX:G1SummarizeRSetStatsPeriod=1
 #JVM_OPTS="$JVM_OPTS -XX:+SafepointALot -XX:GuaranteedSafepointInterval=100"
@@ -83,7 +92,3 @@ JVM_OPTS="$JVM_OPTS -XX:+LogCompilation"
 
 # YourKit Java Profiler
 #JVM_OPTS="$JVM_OPTS -agentpath:/home/rbruno/software/yjp-2016.02/bin/linux-x86-64/libyjpagent.so"
-
-# DEBUG C2
-#JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:+PrintCompilation -XX:+PrintAssembly"
-#JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly -XX:+PrintCompilation -XX:MaxInlineSize=0 -XX:+PrintInlining -XX:CompileCommand=compileonly,*ByteBuffer.allocate*"

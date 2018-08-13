@@ -3087,6 +3087,11 @@ void JavaThread::do_uncontext() {
   HandleMark   hm;
   RegisterMap reg_map(this);
   javaVFrame* jvf = last_java_vframe(&reg_map);
+
+  // Means that the method was not used during JIT (and saves potential problem
+  // during the get_invoke_context
+  if (jvf->method()->constMethod()->context() == 0) return;
+
   ContextIndex* ci = Universe::static_analysis()->get_invoke_context(jvf->method(), jvf->bci());
 
   if (jvf->is_compiled_frame() && ci != NULL && ci->track_context()) {
@@ -3126,9 +3131,17 @@ void JavaThread::calculate_context() {
     }
 
     javaVFrame* jvf = javaVFrame::cast(f);
+
+    // Means that the method was not used during JIT (and saves potential problem
+    // during the get_invoke_context
+    if (jvf->method()->constMethod()->context() == 0) return;
+
+    // If the frame is not compiled, continue.
+    if (!jvf->is_compiled_frame()) continue;
+
     ContextIndex* ci = Universe::static_analysis()->get_invoke_context(jvf->method(), jvf->bci());
 
-    if (jvf->is_compiled_frame() && ci != NULL && ci->track_context()) {
+    if (ci != NULL && ci->track_context()) {
       calc_context += ci->index();
 #ifdef DEBUG_NG2C_PROF_CALCULATE_CONTEXT
       gclog_or_tty->print_cr("[calculate_context] thread=%p curr_context="INTPTR_FORMAT" calculated_context="INTPTR_FORMAT" method_context="INTPTR_FORMAT" is_compiled=%d should_track=%d bci=%d Method=%p ",

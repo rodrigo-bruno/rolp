@@ -1,0 +1,113 @@
+--> Exception, dontinline allocate1
+[ng2c-vmop] <updating target-gen> hash=0x00000000a0000000 decision=2 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x00000000dff60000 decision=3 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x0000000020a63008 decision=4 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x0000000020a68f2b decision=1 target_gen=0
+[ng2c-vmop] cur_tenuring_threshold=15
+[ng2c-vmop] <printing promo counters>
+[ng2c-promocounters] hash=0x00000000e0020000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x0000000020a60000 [0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff20000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0030000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0000000 [36; 36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x000000009ff90000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff60000 [36; 36; 36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x0000000020a63008 [36; 36; 36; 36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x0000000020a68f2b [36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-vmop] <printing promo counters> done!
+[ng2c-vmop] <printing alloc counters>
+[ng2c-ngen_array] alloc_site_id=0x000000000000209e expanded=false context=0x0000000000000000 target_gen=0 allocs=4
+[ng2c-ngen_array] alloc_site_id=0x00000000000020a6 expanded=true context=0x0000000000003008 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x00000000000020a6 expanded=true context=0x0000000000008f2b target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff1 expanded=false context=0x0000000000000000 target_gen=0 allocs=4
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff9 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000a000 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000a003 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff2 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff6 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff7 expanded=false context=0x0000000000000000 target_gen=0 allocs=1663
+[ng2c-ngen_array] alloc_site_id=0x000000000000e002 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-vmop] <printing alloc counters> done!
+
+
+--> Exception, inline
+[ng2c-vmop] <updating target-gen> hash=0x00000000dff60000 decision=3 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x00000000a0000000 decision=2 target_gen=0
+[ng2c-vmop] cur_tenuring_threshold=15
+[ng2c-vmop] <printing promo counters>
+[ng2c-promocounters] hash=0x00000000e0020000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff20000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0030000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x000000009ff90000 [36; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff60000 [36; 36; 36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0000000 [36; 36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x0000000020a60000 [0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x0000000020a63008 [72; 72; 36; 36; 36; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-vmop] <printing promo counters> done!
+[ng2c-vmop] <printing alloc counters>
+[ng2c-ngen_array] alloc_site_id=0x000000000000209e expanded=false context=0x0000000000000000 target_gen=0 allocs=4
+[ng2c-ngen_array] alloc_site_id=0x00000000000020a6 expanded=true context=0x0000000000003008 target_gen=0 allocs=72
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff1 expanded=false context=0x0000000000000000 target_gen=0 allocs=4
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff9 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000a000 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000a003 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff2 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff6 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff7 expanded=false context=0x0000000000000000 target_gen=0 allocs=1664
+[ng2c-ngen_array] alloc_site_id=0x000000000000e002 expanded=false context=0x0000000000000000 target_gen=0 allocs=36
+[ng2c-vmop] <printing alloc counters> done!
+
+--> no Exception, inline
+[ng2c-vmop] <updating target-gen> hash=0x00000000a0000000 decision=2 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x00000000dff60000 decision=3 target_gen=0
+[ng2c-vmop] cur_tenuring_threshold=15
+[ng2c-vmop] <printing promo counters>
+[ng2c-promocounters] hash=0x00000000a0030000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000e0020000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff20000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x000000009ff90000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0000000 [40; 40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000b5790000 [0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff60000 [40; 40; 40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000b5799aa8 [80; 80; 40; 40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-vmop] <printing promo counters> done!
+[ng2c-vmop] <printing alloc counters>
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff1 expanded=false context=0x0000000000000000 target_gen=0 allocs=4
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff9 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000a000 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000a003 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000b579 expanded=true context=0x0000000000009aa8 target_gen=0 allocs=80
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff2 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff6 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff7 expanded=false context=0x0000000000000000 target_gen=0 allocs=1655
+[ng2c-ngen_array] alloc_site_id=0x000000000000e002 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-vmop] <printing alloc counters> done!
+
+--> no Exception, no inline
+[ng2c-vmop] <updating target-gen> hash=0x00000000dff60000 decision=3 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x00000000a0000000 decision=2 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x00000000b57931ed decision=4 target_gen=0
+[ng2c-vmop] <updating target-gen> hash=0x00000000b579f9cb decision=1 target_gen=0
+[ng2c-vmop] cur_tenuring_threshold=15
+[ng2c-vmop] <printing promo counters>
+[ng2c-promocounters] hash=0x00000000e0020000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x000000009ff90000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0030000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000b5790000 [0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff60000 [40; 40; 40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000a0000000 [40; 40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000dff20000 [40; 4; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000b57931ed [40; 40; 40; 40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-promocounters] hash=0x00000000b579f9cb [40; 40; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; ]
+[ng2c-vmop] <printing promo counters> done!
+[ng2c-vmop] <printing alloc counters>
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff1 expanded=false context=0x0000000000000000 target_gen=0 allocs=4
+[ng2c-ngen_array] alloc_site_id=0x0000000000009ff9 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000a000 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000a003 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000b579 expanded=true context=0x00000000000031ed target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000b579 expanded=true context=0x000000000000f9cb target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff2 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff6 expanded=false context=0x0000000000000000 target_gen=0 allocs=40
+[ng2c-ngen_array] alloc_site_id=0x000000000000dff7 expanded=false context=0x0000000000000000 target_gen=0 allocs=1655
+[ng2c-ngen_array] alloc_site_id=0x000000000000e002 expanded=false context=0x0000000000000000 target_gen=0 allocs=40

@@ -3830,6 +3830,9 @@ class CommandLineFlags {
   product(bool, UseLockedTracing, false,                                    \
           "Use locked-tracing when doing event-based tracing")              \
                                                                             \
+  product(bool, UseROLP, false,                                             \
+          "Use Runtime Object Lifetime Profiler")                           \
+                                                                            \
   /* NG2C profiler flag */                                                  \
   product(uintx, NG2CUpdateThreshold, 16,                                   \
           "Sets the number of GC cycles required to update the "            \

@@ -72,6 +72,24 @@ StaticAnalysis::add_index(Hashtable<ContextIndex*, mtGC> * hashtable, char * met
   return key;
 }
 
+uint
+StaticAnalysis::add_index(Hashtable<ContextIndex*, mtGC> * hashtable, uint key, Method * method, int bci, unsigned int index)
+{
+  ContextIndex * ci = new ContextIndex(index);
+  HashtableEntry<ContextIndex*, mtGC> * entry = hashtable->new_entry(key, ci);
+  int bucket = hashtable->hash_to_index(key);
+
+#ifdef DEBUG_NG2C_PROF_SANALYSIS
+  gclog_or_tty->print_cr("[ng2c-sanalysis-add] entry="INTPTR_FORMAT" key="INTPTR_FORMAT" bucket=%d index=%d %p:%d", entry, key, bucket, index, method, bci);
+#endif
+
+  assert(entry != NULL, "static analysis could not add new entry to hashmap");
+
+  hashtable->add_entry(bucket, entry);
+
+  return key;
+}
+
 bool
 StaticAnalysis::parse_from_file() {
   assert(_input_file != NULL, "Static analysis file not provided.");
@@ -160,32 +178,82 @@ StaticAnalysis::get_value(Hashtable<ContextIndex*, mtGC> * hashtable, uint key)
   return NULL;
 }
 
-
-
 ContextIndex*
 StaticAnalysis::get_invoke_context(Method * m, int bci)
 {
+  // If neither UseROLP or NG2CStaticAnalysis are activated, bail out.
+  if (!UseROLP && NG2CStaticAnalysis == NULL) return NULL;
+
+  // If we are using full mode, avoid java and sun methods
+  if (NG2CStaticAnalysis == NULL) {
+    char buf[BUF_LEN];
+    m->name_and_sig_as_C_string(buf, BUF_LEN);
+    if(!strncmp(buf, "java", strlen("java"))) return NULL;
+  }
+
   uint key = hash(m, bci);
 	ContextIndex * ci = get_value(_invoke2Context, key);
-  if (ci != NULL) {
+  // If we are not limited by an input file on what to profile
+  if (NG2CStaticAnalysis == NULL) {
+	  ci = get_value(_invoke2Context, key);
+    if (ci == NULL) {
+        uint index = key & 0xFFFF;
+        add_index(_invoke2Context, key, m, bci, index);
+	      ci = get_value(_invoke2Context, key);
+        assert(ci != NULL, "context index should exist!");
+    }
     ci->set_method(m);
     ci->set_bci(bci);
     return ci;
   }
-  return NULL;
+  // If we are limited by an input on what to profile
+  else {
+    if (ci != NULL) {
+      ci->set_method(m);
+      ci->set_bci(bci);
+      return ci;
+    }
+    return NULL;
+  }
 }
 
 ContextIndex*
 StaticAnalysis::get_alloc_context(Method * m, int bci)
 {
+  // If neither UseROLP or NG2CStaticAnalysis are activated, bail out.
+  if (!UseROLP && NG2CStaticAnalysis == NULL) return NULL;
+
+  // If we are using full mode, avoid java and sun methods
+  if (NG2CStaticAnalysis == NULL) {
+    char buf[BUF_LEN];
+    m->name_and_sig_as_C_string(buf, BUF_LEN);
+    if(!strncmp(buf, "java", strlen("java"))) return NULL;
+  }
+
   uint key = hash(m, bci);
   ContextIndex * ci = get_value(_alloc2Context, key);
-  if (ci != NULL) {
+  // If we are not limited by an input file on what to profile
+  if (NG2CStaticAnalysis == NULL) {
+	  ci = get_value(_alloc2Context, key);
+    if (ci == NULL) {
+        uint index = key & 0xFFFF;
+        add_index(_alloc2Context, key, m, bci, index);
+	      ci = get_value(_alloc2Context, key);
+        assert(ci != NULL, "context index should exist!");
+    }
     ci->set_method(m);
     ci->set_bci(bci);
     return ci;
   }
-  return NULL;
+  // If we are limited by an input on what to profile
+  else {
+    if (ci != NULL) {
+      ci->set_method(m);
+      ci->set_bci(bci);
+      return ci;
+    }
+    return NULL;
+  }
 }
 
 unsigned int

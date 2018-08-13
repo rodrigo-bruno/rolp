@@ -1,5 +1,6 @@
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,12 +54,24 @@ public class NG3 {
         }
     });
 
-    public static Object allocate() {
+	public static Object allocate() throws Exception {
+			//if (allocated_ng == 5) { throw new Exception(); }
+			//if (allocated_ng == 5) { throw new RuntimeException(); }
 			//return new byte[buf_sz];
 			return new Object();
+
+			//return ByteBuffer.allocate(1).array();
 	}
 
-    public static Object iteration() {
+	public static Object allocate1() throws Exception {
+			return allocate();
+	}
+
+    public static Object allocate2() throws Exception {
+			return allocate();
+	}
+
+    public static Object iteration() throws Exception {
         Object object;
 		HashSet hs;
 	    synchronized(counter) {
@@ -68,7 +81,7 @@ public class NG3 {
 			if (allocated_ng < 10) {
 				    allocated_ng += 1;
 					// Add 1
-             		object = allocate();
+             		object = allocate1();
 					// Note: need to do this trick to ensure that the hashset
 					// where the object is added is not already in the old gen.
 					hs = new HashSet(objects.get(1 - 1));
@@ -88,7 +101,7 @@ public class NG3 {
                     objects.set(3 - 1, hs);
 
 					// Add 4
-             		object = allocate();
+             		object = allocate2();
 					hs = new HashSet(objects.get(4 - 1));
                     hs.add(object);
                     objects.set(4 - 1, hs);
@@ -104,7 +117,8 @@ public class NG3 {
         counter.start();
 
         while(true) {
-		    iteration();
+		    try { iteration(); }
+			catch (Exception e) { System.out.println("Caught Exception!"); }
             try { Thread.sleep(5); } catch (Exception e) {}
         }
     }

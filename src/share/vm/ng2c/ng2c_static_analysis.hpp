@@ -21,6 +21,7 @@ class StaticAnalysis : public CHeapObj<mtGC>
 
   bool parse_from_file();
   unsigned int add_index(Hashtable<ContextIndex*, mtGC> * hashtable, char* method, int bci, unsigned int index);
+  unsigned int add_index(Hashtable<ContextIndex*, mtGC> * hashtable, uint key, Method * method, int bci, unsigned int index);
   ContextIndex *get_value(Hashtable<ContextIndex*, mtGC> * hashtable, unsigned int key);
   void print_on(outputStream * st, Hashtable<ContextIndex*, mtGC> * hashtable, const char * tag = "sanalysis");
   uint hash(Method * m, int bci);

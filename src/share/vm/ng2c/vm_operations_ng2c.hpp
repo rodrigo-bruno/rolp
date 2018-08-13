@@ -52,7 +52,7 @@ class NG2C_MergeAllocCounters : public VM_Operation
       assert (!calling_thread()->is_VM_thread(), "should not be called by VMThread.");
 
       // Avoid running vmop if jvm is not using NG2C profiler.
-      if (NG2CStaticAnalysis == NULL) { return; }
+      if (NG2CStaticAnalysis == NULL && !UseROLP) { return; }
 
       // Only update target gen every NG2C_GEN_ARRAY_SIZE gc cycles, and avoid
       // the first one because the JVM is still warming up.

@@ -78,7 +78,7 @@ endif
 ## Enables n-generational profiler
 SYSDEFS += -DNG2C_PROF
 ## Allows the target gen to be updated.
-SYSDEFS += -DNG2C_PROF_ALLOC
+#SYSDEFS += -DNG2C_PROF_ALLOC
 ## Allows the context to be expanded.
 SYSDEFS += -DNG2C_PROF_CONTEXT
 
@@ -89,6 +89,7 @@ SYSDEFS += -DNG2C_PROF_CONTEXT
 #SYSDEFS += -DDISABLE_NG2C_PROF_C2_TAGGING
 #SYSDEFS += -DDISABLE_NG2C_PROF_C2_TLAB
 #SYSDEFS += -DDISABLE_NG2C_PROF_C2_COUNTERS
+## Disables context tracking (method calls patching)
 #SYSDEFS += -DDISABLE_NG2C_PROF_C2_CONTEXT
 
 #SYSDEFS += -DFORCE_SLOWPATH_C2
@@ -97,7 +98,7 @@ SYSDEFS += -DNG2C_PROF_CONTEXT
 
 # This flag should be on because disabling it introduces some race condition
 # on the number of active tlabs per HR. This is specially easy to blow if
-# contexts are enabled. Turning this on seems not to lead to significant 
+# contexts are enabled. Turning this on seems not to lead to significant
 # performanace degradation.
 SYSDEFS += -DDISABLE_NG2C_PROF_BOT_UPDATES
 
@@ -106,10 +107,15 @@ SYSDEFS += -DDISABLE_NG2C_PROF_BOT_UPDATES
 
 #SYSDEFS += -DDEBUG_NG2C_PROF_ALLOCS_TABLE
 #SYSDEFS += -DDEBUG_NG2C_PROF_C2
+## Prints jit patches to track context.
+#SYSDEFS += -DDEBUG_NG2C_PROF_C2_CONTEXT
+## Prints the re-calculation of the context.
+#SYSDEFS += -DDEBUG_NG2C_PROF_CALCULATE_CONTEXT
 SYSDEFS += -DDEBUG_NG2C_PROF_VMOP
 SYSDEFS += -DDEBUG_NG2C_PROF_VMOP_UPDATE
+## Prints the building up of the static analysis map
 #SYSDEFS += -DDEBUG_NG2C_PROF_SANALYSIS
-SYSDEFS += -DPRINT_NG2C_PROF_SANALYSIS
+#SYSDEFS += -DPRINT_NG2C_PROF_SANALYSIS
 
 # SYSDEFS += -DDEBUG_REM_SET
 
